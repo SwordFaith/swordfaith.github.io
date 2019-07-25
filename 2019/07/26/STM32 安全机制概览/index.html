@@ -90,13 +90,21 @@
 
 
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="SwordFaith&#39;s Blog">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="安全目标需要保护的资产:| Type of attack | Targeted assets | Risks ||:—|:—|:—|| Data access | Sensor data(healthcare data, log of postions…), User data(ID, PIN, password, accounts…), Transactions logs, Cyptograph">
+<meta name="keywords" content="ARM,开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="STM32 安全机制概览">
+<meta property="og:url" content="http://yoursite.com/2019/07/26/STM32 安全机制概览/index.html">
 <meta property="og:site_name" content="SwordFaith&#39;s Blog">
+<meta property="og:description" content="安全目标需要保护的资产:| Type of attack | Targeted assets | Risks ||:—|:—|:—|| Data access | Sensor data(healthcare data, log of postions…), User data(ID, PIN, password, accounts…), Transactions logs, Cyptograph">
 <meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/uploads/HW&AppSecLayers.png">
+<meta property="og:image" content="http://yoursite.com/uploads/AtkTyp.png">
+<meta property="og:updated_time" content="2019-07-25T17:06:44.185Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="SwordFaith&#39;s Blog">
+<meta name="twitter:title" content="STM32 安全机制概览">
+<meta name="twitter:description" content="安全目标需要保护的资产:| Type of attack | Targeted assets | Risks ||:—|:—|:—|| Data access | Sensor data(healthcare data, log of postions…), User data(ID, PIN, password, accounts…), Transactions logs, Cyptograph">
+<meta name="twitter:image" content="http://yoursite.com/uploads/HW&AppSecLayers.png">
 
 
 
@@ -104,7 +112,7 @@
 
   
   
-  <link rel="canonical" href="http://yoursite.com/">
+  <link rel="canonical" href="http://yoursite.com/2019/07/26/STM32 安全机制概览/">
 
 
 
@@ -114,7 +122,7 @@
   };
 </script>
 
-  <title>SwordFaith's Blog</title>
+  <title>STM32 安全机制概览 | SwordFaith's Blog</title>
   
 
 
@@ -162,8 +170,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -205,7 +212,7 @@
         
         
           
-          <li class="menu-item menu-item-home menu-item-active">
+          <li class="menu-item menu-item-home">
 
     
     
@@ -332,9 +339,9 @@
           
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -366,10 +373,8 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/07/26/STM32 安全机制概览/" class="post-title-link" itemprop="url">STM32 安全机制概览</a>
+          <h2 class="post-title" itemprop="name headline">STM32 安全机制概览
+
               
             
           </h2>
@@ -453,27 +458,32 @@
       
 
       
-        
-          
-            <p>
-              安全目标需要保护的资产:| Type of attack | Targeted assets | Risks ||:—|:—|:—|| Data access | Sensor data(healthcare data, log of postions…), User data(ID, PIN, p
-              ...
-            </p>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/2019/07/26/STM32 安全机制概览/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
+        <h1 id="安全目标"><a href="#安全目标" class="headerlink" title="安全目标"></a>安全目标</h1><p>需要保护的资产:<br>| Type of attack | Targeted assets | Risks |<br>|:—|:—|:—|<br>| Data access | Sensor data(healthcare data, log of postions…), User data(ID, PIN, password, accounts…), Transactions logs, Cyptographic keys | Unauthorized sale of personal data, Usurpation(篡夺), Spying, Blackmail |<br>| Control of device | Device correct functionality, Device/User identity | Denial of service, Attacks on service providers, Fraudulent(欺骗) access to service |<br>| Reverse engineering | Device hardware architecture/design, Software patent/architecture, Tech patents | Device counterfeit, Software counterfeit, Software modification, Access to secure areas |</p>
+<h1 id="安全系统组成"><a href="#安全系统组成" class="headerlink" title="安全系统组成"></a>安全系统组成</h1><p>为了对抗多种攻击，数种安全机制必须在系统内实现，全面的安全需要从硬件到应用程序通篇考虑。一方面，如果设备没有对外部入侵（如调试接口）的保护，敏感数据的应用就无法被可信的实现于硬件平台上。另一方面，健壮的设备保护机制在潜在的应用漏洞（如允许访问设备全部地址空间）面前是无效的。</p>
+<p>完整的设备保护机制包括数种存储保护机制，使其免于外部接口，控制启动模式和设备环境监视。典型的安全应用包括：</p>
+<ul>
+<li>安全启动，保证启动时应用完整可靠未篡改</li>
+<li>支持安全的通信协议（如 TLS）</li>
+<li>安全的固件更新能力，以安全的方式下载新的固件版本</li>
+<li>安全密钥存储（Secure Key Storage，SKS）能力</li>
+</ul>
+<p><img src="/uploads/HW&AppSecLayers.png" alt="Hardware and application security layers"></p>
+<h1 id="攻击类型"><a href="#攻击类型" class="headerlink" title="攻击类型"></a>攻击类型</h1><p>对微控制器的攻击分类如下：</p>
+<ul>
+<li>软件攻击：利用软件弱点（如协议弱点）</li>
+<li>硬件非侵入攻击：专注于利用微控制器接口和环境信息</li>
+<li>硬件侵入攻击：破坏性的接触硅片的攻击方式</li>
+</ul>
+<p><img src="/uploads/AtkTyp.png" alt="Attack types and costs"></p>
+<h2 id="软件攻击"><a href="#软件攻击" class="headerlink" title="软件攻击"></a>软件攻击</h2><p>软件攻击由恶意软件实施，恶意软件尝试获得设备控制权以访问设备的任何资源（如ID，RAM&amp;Flash 内容，外设寄存器等）或者修改设备功能。恶意软件可以注入设备或者已经存在于应用中（如通过未经验证的库）。恶意软件有许多种，</p>
+
       
     </div>
 
     
 
+    
+      
     
 
     
@@ -491,365 +501,41 @@
 
     <footer class="post-footer">
       
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/11/智能音响安全风险/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="SwordFaith">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SwordFaith's Blog">
-    </span>
-
-    
-      <header class="post-header">
-
         
+          
         
-          <h2 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/07/11/智能音响安全风险/" class="post-title-link" itemprop="url">智能音箱安全风险概览</a>
-              
-            
-          </h2>
-        
-
-        <div class="post-meta">
-
+        <div class="post-tags">
           
+            <a href="/tags/ARM/" rel="tag"># ARM</a>
           
+            <a href="/tags/开发/" rel="tag"># 开发</a>
           
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-07-11 15:58:15" itemprop="dateCreated datePublished" datetime="2019-07-11T15:58:15+08:00">2019-07-11</time>
-            </span>
-          
-
-          
-            
-
-            
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-07-12 10:02:05" itemprop="dateModified" datetime="2019-07-12T10:02:05+08:00">2019-07-12</time>
-              </span>
-            
-          
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/安全/" itemprop="url" rel="index"><span itemprop="name">安全</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-            
-          
-
-          
-          
-
-          
-
-          
-
-          <br>
-          
-
-          
-
-          
-
         </div>
-      </header>
-    
+      
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
+      
       
       
 
       
-        
-          
-            <p>
-              智能音箱在传统音箱的基础上，添加语音交互能力和互联网、物联网协议能力，正在成为智能家居的交互入口。
-智能音箱功能为了支持以上能力，智能音箱应具备：
-
-语音交互
-提供本地/流媒体的内容服务
-场景化智能家居的控制能力
-
-硬件实现上，应支持：
-
-Wi-Fi 连接（访问互联网服务）
-蓝牙连接（访问手机本地媒
-              ...
-            </p>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/2019/07/11/智能音响安全风险/#more" rel="contents">
-                阅读全文 &raquo;
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/07/11/智能音响安全风险/" rel="next" title="智能音箱安全风险概览">
+                <i class="fa fa-chevron-left"></i> 智能音箱安全风险概览
               </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/10/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="SwordFaith">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SwordFaith's Blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h2 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2019/07/10/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-              
             
-          </h2>
-        
+          </div>
 
-        <div class="post-meta">
+          <span class="post-nav-divider"></span>
 
-          
-          
-          
-
-          
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2019-07-10 23:23:57" itemprop="dateCreated datePublished" datetime="2019-07-10T23:23:57+08:00">2019-07-10</time>
-            </span>
-          
-
-          
-
-          
-
-          
+          <div class="post-nav-prev post-nav-item">
             
-            
-          
-
-          
-          
-
-          
-
-          
-
-          <br>
-          
-
-          
-
-          
-
+          </div>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
       
 
       
-        
-          
-            <p>
-              Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in 
-              ...
-            </p>
-          <!--noindex-->
-          
-            <div class="post-button text-center">
-              <a class="btn" href="/2019/07/10/hello-world/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-
-    
-
-    
-    
-    
-
-    
-
-    
-      
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
       
     </footer>
   </div>
@@ -859,14 +545,15 @@ Wi-Fi 连接（访问互联网服务）
   </article>
 
 
-    
-  </section>
-
-  
+  </div>
 
 
           </div>
           
+
+  
+
+
 
         </div>
         
@@ -886,8 +573,17 @@ Wi-Fi 连接（访问互联网服务）
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <div class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <div class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -981,6 +677,23 @@ Wi-Fi 连接（访问互联网服务）
         </div>
       </div>
 
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#安全目标"><span class="nav-number">1.</span> <span class="nav-text">安全目标</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安全系统组成"><span class="nav-number">2.</span> <span class="nav-text">安全系统组成</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#攻击类型"><span class="nav-number">3.</span> <span class="nav-text">攻击类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#软件攻击"><span class="nav-number">3.1.</span> <span class="nav-text">软件攻击</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
       
 
       
@@ -1109,6 +822,10 @@ Wi-Fi 连接（访问互联网服务）
 
 
   
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
 
   <script src="/js/next-boot.js?v=7.2.0"></script>
 
@@ -1122,6 +839,8 @@ Wi-Fi 连接（访问互联网服务）
 
   
 
+
+  
 
 
   
