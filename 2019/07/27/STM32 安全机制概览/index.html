@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+<link rel="stylesheet" href="/css/main.css?v=7.2.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.2.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.2.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.2.0" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.2.0',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: false,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <meta name="description" content="安全目标需要保护的资产: 安全系统组成为了对抗多种攻击，数种安全机制必须在系统内实现，全面的安全需要从硬件到应用程序通篇考虑。一方面，如果设备没有对外部入侵（如调试接口）的保护，敏感数据的应用就无法被可信的实现于硬件平台上。另一方面，健壮的设备保护机制在潜在的应用漏洞（如允许访问设备全部地址空间）面前是无效的。 完整的设备保护机制包括数种存储保护机制，使其免于外部接口，控制启动模式和设备环境监视。">
+<meta name="keywords" content="ARM,开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="STM32 安全机制概览">
+<meta property="og:url" content="http://yoursite.com/2019/07/27/STM32 安全机制概览/index.html">
+<meta property="og:site_name" content="SwordFaith&#39;s Blog">
+<meta property="og:description" content="安全目标需要保护的资产: 安全系统组成为了对抗多种攻击，数种安全机制必须在系统内实现，全面的安全需要从硬件到应用程序通篇考虑。一方面，如果设备没有对外部入侵（如调试接口）的保护，敏感数据的应用就无法被可信的实现于硬件平台上。另一方面，健壮的设备保护机制在潜在的应用漏洞（如允许访问设备全部地址空间）面前是无效的。 完整的设备保护机制包括数种存储保护机制，使其免于外部接口，控制启动模式和设备环境监视。">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/uploads/AssetsRisk.png">
+<meta property="og:image" content="http://yoursite.com/uploads/HW&AppSecLayers.png">
+<meta property="og:image" content="http://yoursite.com/uploads/AtkTyp.png">
+<meta property="og:updated_time" content="2019-09-07T14:39:21.792Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="STM32 安全机制概览">
+<meta name="twitter:description" content="安全目标需要保护的资产: 安全系统组成为了对抗多种攻击，数种安全机制必须在系统内实现，全面的安全需要从硬件到应用程序通篇考虑。一方面，如果设备没有对外部入侵（如调试接口）的保护，敏感数据的应用就无法被可信的实现于硬件平台上。另一方面，健壮的设备保护机制在潜在的应用漏洞（如允许访问设备全部地址空间）面前是无效的。 完整的设备保护机制包括数种存储保护机制，使其免于外部接口，控制启动模式和设备环境监视。">
+<meta name="twitter:image" content="http://yoursite.com/uploads/AssetsRisk.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="http://yoursite.com/2019/07/27/STM32 安全机制概览/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>STM32 安全机制概览 | SwordFaith's Blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SwordFaith's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <h1 class="site-subtitle" itemprop="description">Enlighten our memory</h1>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-commonweal">
+
+    
+    
+      
+    
+
+    
+
+    <a href="/404/" rel="section"><i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br>公益 404</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+</div>
+    </header>
+
+    
+  
+  
+
+  
+
+  <a href="https://github.com/SwordFaith" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewbox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"/><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"/><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"/></svg></a>
+
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/27/STM32 安全机制概览/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="SwordFaith">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SwordFaith's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h2 class="post-title" itemprop="name headline">STM32 安全机制概览
+
+              
+            
+          </h2>
+        
+
+        <div class="post-meta">
+
+          
+          
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-07-27 15:58:15" itemprop="dateCreated datePublished" datetime="2019-07-27T15:58:15+08:00">2019-07-27</time>
+            </span>
+          
+
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-09-07 22:39:21" itemprop="dateModified" datetime="2019-09-07T22:39:21+08:00">2019-09-07</time>
+              </span>
+            
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/安全/" itemprop="url" rel="index"><span itemprop="name">安全</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+
+          <br>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="安全目标"><a href="#安全目标" class="headerlink" title="安全目标"></a>安全目标</h1><p>需要保护的资产:<br><img src="/uploads/AssetsRisk.png" alt="Assets to be protected"></p>
+<h1 id="安全系统组成"><a href="#安全系统组成" class="headerlink" title="安全系统组成"></a>安全系统组成</h1><p>为了对抗多种攻击，数种安全机制必须在系统内实现，全面的安全需要从硬件到应用程序通篇考虑。一方面，如果设备没有对外部入侵（如调试接口）的保护，敏感数据的应用就无法被可信的实现于硬件平台上。另一方面，健壮的设备保护机制在潜在的应用漏洞（如允许访问设备全部地址空间）面前是无效的。</p>
+<p>完整的设备保护机制包括数种存储保护机制，使其免于外部接口，控制启动模式和设备环境监视。典型的安全应用包括：</p>
+<ul>
+<li>安全启动，保证启动时应用完整可靠未篡改</li>
+<li>支持安全的通信协议（如 TLS）</li>
+<li>安全的固件更新能力，以安全的方式下载新的固件版本</li>
+<li>安全密钥存储（Secure Key Storage，SKS）能力</li>
+</ul>
+<p><img src="/uploads/HW&AppSecLayers.png" alt="Hardware and application security layers"></p>
+<h1 id="攻击类型"><a href="#攻击类型" class="headerlink" title="攻击类型"></a>攻击类型</h1><p>对微控制器的攻击分类如下：</p>
+<ul>
+<li>软件攻击：利用软件弱点（如协议弱点）</li>
+<li>硬件非侵入攻击：专注于利用微控制器接口和环境信息</li>
+<li>硬件侵入攻击：破坏性的接触硅片的攻击方式</li>
+</ul>
+<p><img src="/uploads/AtkTyp.png" alt="Attack types and costs"></p>
+<h2 id="软件攻击"><a href="#软件攻击" class="headerlink" title="软件攻击"></a>软件攻击</h2><p>软件攻击由恶意软件实施，恶意软件尝试获得设备控制权以访问设备的任何资源（如ID，RAM&amp;Flash 内容，外设寄存器等）或者修改设备功能。恶意软件可以注入设备或者已经存在于应用中（如通过未经验证的库）。恶意软件有许多种，例如：</p>
+<ul>
+<li>访问并修改设备配置（option bytes, memory attributes…）</li>
+<li>关闭保护</li>
+<li>读取内存并导出内容，以复制数据或固件</li>
+<li>跟踪或记录设备数据</li>
+<li>访问加密数据</li>
+<li>打开通信信道/接口</li>
+<li>修改或屏蔽设备功能</li>
+</ul>
+<p>除非用户应用是完全可信、无错且孤立，不使用任何方法于外部世界通信，否则软件攻击都是需要考量的。</p>
+<h3 id="恶意软件注入"><a href="#恶意软件注入" class="headerlink" title="恶意软件注入"></a>恶意软件注入</h3><p>恶意软件的尺寸取决于黑客的目标，在大多数情况下很小（几十个字节）。恶意软件需要被注入到内存或Flash中，一旦注入成功，下一步就是构建分支执行恶意软件的情况。</p>
+<p>恶意软件注入的方法分为四类：</p>
+<ol>
+<li>基本设备访问/“open doors”<ol>
+<li>调试接口：JTAG 或 SWD 接口</li>
+<li>Bootloader：如果 bootloader 可访问，可以通过任意接口读写存储</li>
+<li>外部存储执行</li>
+</ol>
+</li>
+<li>应用下载<ol>
+<li>劫持固件升级过程：使恶意软件替代新固件</li>
+<li>通过操作系统下载新应用的能力安装恶意软件</li>
+</ol>
+</li>
+<li>通信端口的弱点与漏洞利用<ol>
+<li>通过应用已知漏洞（溢出，缺乏数据验证）输入数据并执行</li>
+<li>基于栈的缓冲区溢出，基于堆的缓冲区溢出，跳转到libc攻击，仅数据攻击</li>
+</ol>
+</li>
+<li>使用有后门的不可信库</li>
+</ol>
+<p>第一类注入可以借助硬件防护解决；第二类注入可以引入基于密码的验证机制解决；第三类相对难以避免，开发嵌入式系统的低层次语言（如C/C++）常常导致内存管理错误可被攻击者利用，通常的解决方案是减少攻击面（固件中不可信/未验证的部分）；第四类往往通过网络共享的固件包添加木马实现，也需要尽可能的孤立进程执行，并保护关键代码和数据。</p>
+<h3 id="暴力攻击"><a href="#暴力攻击" class="headerlink" title="暴力攻击"></a>暴力攻击</h3><p>主要用于侵入密码保护的应用，如会话验证（session authentication）和人机接口（human-machine interface），通过自动穷尽的尝试破解密码</p>
+<p>防护：</p>
+<ul>
+<li>限制登入尝试次数（单调递增计数，可用 Timer 实现）</li>
+<li>增加两次登陆尝试的时间间隔</li>
+<li>增加 challenge-response 机制破坏自动尝试的条件</li>
+</ul>
+<h2 id="硬件攻击"><a href="#硬件攻击" class="headerlink" title="硬件攻击"></a>硬件攻击</h2><p>硬件攻击需要物理接触设备。非侵入式攻击仅仅需要板级访问，而侵入式攻击需要去除封装直接访问硅片。对于侵入式攻击需要更高层次的保护，符合最新安全标准的认证需要<a href="www.st.com/en/secure-mcus.html">专用硬件</a>。</p>
+<h3 id="非侵入式攻击"><a href="#非侵入式攻击" class="headerlink" title="非侵入式攻击"></a>非侵入式攻击</h3><p>非侵入式/板级攻击技术尝试在不物理破坏设备的前提下检索嵌入设备的信息(代码、密钥、可信信息…)，仅仅通过可访问的接口和设备环境。</p>
+<h4 id="调试接口"><a href="#调试接口" class="headerlink" title="调试接口"></a>调试接口</h4><p>通过调试接口的攻击是最基础的形式。关闭调试功能是首先被考量的保护级别。事实上，访问调试接口或JTAG/SWD的扫描链允许访问全部的设备内部资源：CPU寄存器，片上 Flash，RAM 和外设寄存器</p>
+<p>反制措施：</p>
+<ul>
+<li>关闭调试接口或通过Readout protection(RDP)熔断</li>
+</ul>
+<h4 id="串行接口"><a href="#串行接口" class="headerlink" title="串行接口"></a>串行接口</h4><p>I2C、SPI 等通信接口的访问能力也可能被利用。通信接口可以看作一个设备访问入口。攻击者可以访问的资源依赖于相关协议实现（存储地址访问范围，目标外设，读写操作等）。</p>
+<p>反制措施：</p>
+<ul>
+<li>软件：<ul>
+<li>相关协议操作应当被限制在固件级，不能读写敏感资源</li>
+<li>隔离通信栈和敏感数据</li>
+<li>数据传输长度需要被控制在不会造成缓存溢出的长度</li>
+<li>通信可以被本设备和目标设备的共享密钥加密 </li>
+</ul>
+</li>
+<li>硬件：<ul>
+<li>物理通信接口可以埋在多层板中，使攻击者难以访问</li>
+<li>关闭不使用的通信结偶</li>
+</ul>
+</li>
+</ul>
+<h4 id="错误注入：时钟-供电干扰毛刺攻击"><a href="#错误注入：时钟-供电干扰毛刺攻击" class="headerlink" title="错误注入：时钟/供电干扰毛刺攻击"></a>错误注入：时钟/供电干扰毛刺攻击</h4><p>错误注入，通过在异常条件下使用设备，使系统进入异常状态。成功的错误注入攻击会以不同的方式修改程序的行为导致严重的后果：</p>
+<ul>
+<li>破坏程序状态</li>
+<li>破坏内存内容</li>
+<li>停止进程执行（”stuck-at fault”）</li>
+<li>跳过指令</li>
+<li>修改条件跳转</li>
+<li>提供未授权的访问</li>
+</ul>
+<p>典型的攻击方式包括时钟（冻结、尖刺）和供电（欠压、过压、尖刺）。由于错误注入可能是无意为之，反制措施措施与安全措施相同：冗余，错误检测和监控。</p>
+<p>反制措施：</p>
+<ul>
+<li>软件：<ul>
+<li>冗余（或重计算）以加固敏感代码段条件跳转</li>
+</ul>
+</li>
+<li>硬件：<ul>
+<li>使用时钟安全系统（clock security system）</li>
+<li>使用内部时钟源</li>
+<li>使用内部稳压器</li>
+<li>使用存储错误检测（ECC/parity）</li>
+</ul>
+</li>
+</ul>
+<h4 id="边信道攻击"><a href="#边信道攻击" class="headerlink" title="边信道攻击"></a>边信道攻击</h4><p>当固件执行时，攻击者可以观察设备的模拟特性：功耗、电磁辐射、温度、活跃时间等。观测这些物理特性可以带来充分的信息来获得秘密资产如数据、算法实现等。边信道攻击对破解加密设备密钥而言非常有效。Simple Power Analysis 和 Differential Power Analysis 是典型的利用功耗进行边信道攻击的手段。</p>
+<p>反制措施：</p>
+<ul>
+<li>软件：<ul>
+<li>限制密钥使用：在可能时，使用会话随机密钥</li>
+<li>使用受保护的密码学库，包括随机行为（延迟、伪指令等）</li>
+</ul>
+</li>
+<li>硬件：<ul>
+<li>在安全组件中有反监测防护，在通用微控制器中没有这样高效的反制措施</li>
+</ul>
+</li>
+</ul>
+<h3 id="侵入式攻击"><a href="#侵入式攻击" class="headerlink" title="侵入式攻击"></a>侵入式攻击</h3><p>进行侵入式攻击成熟的成本高昂，同时也接受使用任何方法而不在意在过程中设备被摧毁。侵入式攻击首先需要起初设备封装。一些分析技术可以不去除表面钝化层，然而想通过探针与设备交互就必须去除钝化层了。去封装可以通过化学蚀刻、钻孔、激光切割实现。</p>
+<h4 id="逆向工程"><a href="#逆向工程" class="headerlink" title="逆向工程"></a>逆向工程</h4><p>目标是理解设备内部结构、学习其功能。第一步是建立一个微控制器映射，可以使用光学显微镜产生高分辨率设备表面图像，接下来需要进一步蚀刻，以对更深的层次拍照。</p>
+<h4 id="微探针和内部错误注入"><a href="#微探针和内部错误注入" class="headerlink" title="微探针和内部错误注入"></a>微探针和内部错误注入</h4><p>微探针与设备的金属层交互。一些薄电极用来和引脚连接，使得攻击者可以在设备运行时观察、操作、干涉它。</p>
+<h4 id="设备修改"><a href="#设备修改" class="headerlink" title="设备修改"></a>设备修改</h4><p>使用 Focused Ion Beam 工作站可以简化探针对深层金属和多晶硅的手动操作，甚至可以通过改变内部连接线来修改设备结构。</p>
+<h3 id="典型物联网系统威胁"><a href="#典型物联网系统威胁" class="headerlink" title="典型物联网系统威胁"></a>典型物联网系统威胁</h3><p><a href="/uploads/IoTSysArch.png">IoT System</a></p>
+<p>一个完整的物联网系统包括的所有软硬件组件，如上图所示。潜在的攻击目标包括：</p>
+<h4 id="1-初始准备-Initial-Provisioning"><a href="#1-初始准备-Initial-Provisioning" class="headerlink" title="1. 初始准备 Initial Provisioning"></a>1. 初始准备 Initial Provisioning</h4><p>一些系统依赖于基础的敏感数据来建立进一步的安全应用（安全启动，安全固件更新）。这些例如密钥（作为信任根基）的敏感数据，应该保持私密，例如以哈希值、证书的方式保存。敏感数据可以划分单独的安全存储区。初始准备应该在可信环境下完成，使用 STM32 安全服务，如 Security Firmware Install（SFI）。一旦设备内部被编程，数据保护机制应该被打开，且仅授权的进程能反问。</p>
+<ul>
+<li>风险：固件损坏，篡改</li>
+<li>反制措施：<ul>
+<li>受信任的制造商签名</li>
+<li>使用案前的数据准备服务（SFI）</li>
+<li>数据保护机制</li>
+<li>安全应用隔离</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-启动修改-Boot-Modification"><a href="#2-启动修改-Boot-Modification" class="headerlink" title="2. 启动修改 Boot Modification"></a>2. 启动修改 Boot Modification</h4><p>这种类型的攻击使用 bootloader 作为访问设备的入口。通过修改启动模式、地址，抢占CPU。抢占的手法有：调试接口和内存注入固件，启动模式和地址由设备配置项/输入管脚控制。</p>
+<ul>
+<li>风险：完全访问微控制器内容</li>
+<li>反制措施：<ul>
+<li>单独的启动入口</li>
+<li>关闭 bootloader 和 debug - Readout protection(RDP)</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-安全启动-Secure-Boot"><a href="#3-安全启动-Secure-Boot" class="headerlink" title="3. 安全启动 Secure Boot"></a>3. 安全启动 Secure Boot</h4><p>系统健壮性基于于启动主应用前对固件完整性和可靠性检查，安全启动应用在启动时执行，完成上述检查。安全启动作为设备级信任的基础，执行安全启动的这部分固件应该不可修改和绕过。</p>
+<p>成功的对安全启动的攻击可以通过错误注入直接跳转到恶意软件或在初始准备阶段通过替换目标hash值绕过验证，执行不受信任的应用。</p>
+<ul>
+<li>风险：设备欺骗，应用修改等</li>
+<li>反制措施：<ul>
+<li>单独的启动入口以避免验证绕过</li>
+<li>令安全启动代码不可修改</li>
+<li>对固件签名使用安全存储</li>
+<li>环境事件检测（glitch, temp, clock, …）</li>
+</ul>
+</li>
+</ul>
+<h4 id="4-固件更新-Firmware-Update"><a href="#4-固件更新-Firmware-Update" class="headerlink" title="4. 固件更新 Firmware Update"></a>4. 固件更新 Firmware Update</h4><p>固件更新（升级）过程允许设备所有者选择正确的固件版本以提供最好的用户体验。然而，固件更新是个脆弱的过程，会给攻击者将自己的固件或修改过的已有固件注入设备的机会。</p>
+<p>这一过程需要通过固件完整性和可靠性检验来保证安全。成功的攻击需要访问密钥和加密过程，主要的威胁在初始准备阶段。</p>
+<ul>
+<li>风险：设备固件篡改</li>
+<li>反制措施：具有完整性和可靠性检查的安全固件更新应用，进一步的安全性可以在签名之上进一步加密固件。</li>
+</ul>
+<h4 id="5-通信接口-Communication-Interfaces"><a href="#5-通信接口-Communication-Interfaces" class="headerlink" title="5. 通信接口 Communication Interfaces"></a>5. 通信接口 Communication Interfaces</h4><p>串行通信接口（SPI, I2C, USART…）常用于 bootloader、用户应用与设备交换数据和指令。物理访问通信接口使攻击者可以窃听并使用该接口作为设备入口。固件中通信协议也易于产生漏洞（溢出等）</p>
+<h4 id="6-调试接口-Debug-port"><a href="#6-调试接口-Debug-port" class="headerlink" title="6. 调试接口 Debug port"></a>6. 调试接口 Debug port</h4><p>调试接口提供访问设备的全部内容：核心、外设寄存器、Flash和SRAM。用于应用开发，</p>
+<ul>
+<li>风险：完全访问设备</li>
+<li>反制措施：关闭设备调试能力（Readout protection）</li>
+</ul>
+<h4 id="7-外设访问-External-peripheral-access"><a href="#7-外设访问-External-peripheral-access" class="headerlink" title="7. 外设访问 External peripheral access"></a>7. 外设访问 External peripheral access</h4><p>一个物联网设备控制传感器和执行器依赖于全局应用。一个攻击者通过修改或转移系统从传感器获得的数据以及分流输出给执行器的数据。</p>
+<ul>
+<li>风险：阻碍正确的系统行为</li>
+<li>反制措施：防篡改以在板级测系统侵入</li>
+</ul>
+<h4 id="8-敏感固件和数据-Sensitive-firmware-and-data"><a href="#8-敏感固件和数据-Sensitive-firmware-and-data" class="headerlink" title="8. 敏感固件和数据 Sensitive firmware and data"></a>8. 敏感固件和数据 Sensitive firmware and data</h4><p>固件中的一部分需要特殊保护：例如最敏感的算法或第三方库。此外，一些被考虑为资产的数据（如密钥）需要增强保护。内部存储内容应该避免外部访问（调试接口，通信接口等）和内部访问（其他软件进程）。存储特性和进程资源防火墙是主要的保护措施来进行数据和进程隔离。</p>
+<ul>
+<li>风险：敏感固件复制，数据盗窃</li>
+<li>反制措施：仅执行访问权（XO），防火墙，存储保护单元，安全区…</li>
+</ul>
+<h4 id="9-内存-SRAM"><a href="#9-内存-SRAM" class="headerlink" title="9. 内存 SRAM"></a>9. 内存 SRAM</h4><p>SRAM是设备的运行内存。它含有运行时缓冲区和变量（栈、堆…）、固件和密钥。SRAM的保护力度也许不如Flash那么完备，其内容为运行时产生，难以控制。这使得攻击者开发了三种主流攻击方式：代码（恶意软件）注入，内存篡改（通过缓存溢出）和检索资产（通过临时变量）</p>
+<ul>
+<li>风险：缓存溢出，数据偷取，设备控制</li>
+<li>反制措施：存储保护单元，保护RAM使用</li>
+</ul>
+<h4 id="10-随机数生成-Random-number-generation"><a href="#10-随机数生成-Random-number-generation" class="headerlink" title="10. 随机数生成 Random number generation"></a>10. 随机数生成 Random number generation</h4><p>随机数常常用于密码学生成会话密钥或初始向量。事实上，通信的保密性依赖于密钥的健壮性。脆弱的随机数生成器会使安全协议易于攻击。如利用某种隐藏的周期性或随机序列结构来猜测密钥，从而打破通信的保密性。健壮的随机数发生器依赖于熵源的质量（模拟电路）。</p>
+<ul>
+<li>风险：降低密码协议安全性</li>
+<li>反制措施：使用珍重的硬件熵发生器</li>
+</ul>
+<h4 id="11-通信栈-Communication-stack"><a href="#11-通信栈-Communication-stack" class="headerlink" title="11. 通信栈 Communication stack"></a>11. 通信栈 Communication stack</h4><p>连接协议（蓝牙，以太网，Wi-Fi，LoRa…）需要复杂的通信固件栈支持。这些协议栈通常是开源的，不应认为是可信且最优的。这些开源协议栈的弱点可以大规模的被利用。</p>
+<ul>
+<li>风险：网络访问设备（内容，控制）</li>
+<li>反制措施：通信进程隔离，服务器授权</li>
+</ul>
+<h4 id="12-窃听通信-Communication-eavesdrop"><a href="#12-窃听通信-Communication-eavesdrop" class="headerlink" title="12. 窃听通信 Communication eavesdrop"></a>12. 窃听通信 Communication eavesdrop</h4><p>设备和物联网服务间数据交换可以被直接通过适当的射频设备或者网络监听。一个黑客会在其中检索数据，得到设备ID，访问服务等。</p>
+<p>密码学被所有协议接受为防窃听手段。在不同层次（设备、网管、应用）保护通信</p>
+<ul>
+<li>风险：观察和嗅探网络流量</li>
+<li>反制措施：使用有密码的通信协议栈（TLS for Ethernet…）</li>
+</ul>
+<h1 id="硬件保护"><a href="#硬件保护" class="headerlink" title="硬件保护"></a>硬件保护</h1><p>这里提及的保护机制由硬件机制控制，由选项字节或硬件组件配置。</p>
+<ul>
+<li>存储保护：主要的安全特性以保护代码和数据免于内部软件和外部的攻击</li>
+<li>软件隔离：进程间保护以避免内部攻击</li>
+<li>接口保护：保护设备接入点（串口，调试口等）</li>
+<li>系统监控：检测设备外部篡改尝试或者异常行为</li>
+</ul>
+<h2 id="存储保护"><a href="#存储保护" class="headerlink" title="存储保护"></a>存储保护</h2><p>存储保护是系统安全是最重要的部分。当含有敏感代码和数据时，存储必须不能被意外的接口（如调试接口）或未授权的进程访问。使用的安全机制取决于保护的资产类型（代码/数据）、避免的访问源（外部接口/内部进程）以及存储类型（Flash、SRAM和外部存储）。部分访问过滤可以配置在存储接口（Flash控制器），总线控制IP（防火墙）或处理器内存保护单元。嵌入式 Flash、SRAM 和外存组成的存储结构如图：</p>
+<p><a href="/uploads/EmbedSysMemOverView.png">存储系统结构</a></p>
+<p><a href="/uploads/MemTypAndProt.png">Memory types and associated protection table</a></p>
+<h3 id="系统-Flash-存储"><a href="#系统-Flash-存储" class="headerlink" title="系统 Flash 存储"></a>系统 Flash 存储</h3><p>在 STM32 中，系统存储是嵌入式 Flash 的只读部分，由 ST Bootloader 使用。一些型号在这一存储域配有一些安全服务（RSS）。系统存储的不可篡改性，是保证设备固件可认证且完整的的基石。ST Bootloader，由于不包含任何敏感算法，是可读的。一些RSS保护的部分是对用户不可见也不可读的，系统 Flash 存储的保护参数也是不可修改的。</p>
+<h3 id="用户-Flash-存储"><a href="#用户-Flash-存储" class="headerlink" title="用户 Flash 存储"></a>用户 Flash 存储</h3><p>用户 Flash 存储主要用于存储固件和非易失性数据。作为嵌入式 Flash 的一部分，在全部 STM32 系列设备上，都具有一系列的对用户 Flash 存储的保护措施。</p>
+<h4 id="外部攻击"><a href="#外部攻击" class="headerlink" title="外部攻击"></a>外部攻击</h4><p>嵌入式 Flash 可以通过简单地通过提供避免调试接口访问和控制接口访问权限来隔离外部攻击。</p>
+<p>相关保护措施：RDP 使调试访问失效。</p>
+<h4 id="内部攻击"><a href="#内部攻击" class="headerlink" title="内部攻击"></a>内部攻击</h4><p>内部的读写访问可能来自注入于设备内存或已经在嵌入式芯片内部的不受信任的库中，所以关键的数据和代码应该仅仅被授权的进程访问。</p>
+<p>相关保护措施：PCROP，MPU，firewall，Secure User Area</p>
+<h4 id="保护未使用存储"><a href="#保护未使用存储" class="headerlink" title="保护未使用存储"></a>保护未使用存储</h4><p>写保护应当作为 Flash 存储的默认选项，即使在未使用的区域，以免被代码篡改和注入。一个最佳实践是填充未使用的存储为某个已知值（如软件中断操作码、不合法的操作码或者NOPs）</p>
+<h4 id="错误码纠正"><a href="#错误码纠正" class="headerlink" title="错误码纠正"></a>错误码纠正</h4><p>部分 Flash 存储具有错误码检测和纠正特性（1bit，或2bit），在可用的情况下，是一个值得开启的安全选项。</p>
+<h3 id="嵌入式-SRAM"><a href="#嵌入式-SRAM" class="headerlink" title="嵌入式 SRAM"></a>嵌入式 SRAM</h3><p>设备的工作内存，它包含了堆、栈、全局缓冲和运行时变量。SRAM 可以，以字节、半字、字为单位，用最大时钟频率访问而无需进入等待状态。</p>
+<h4 id="代码执行"><a href="#代码执行" class="headerlink" title="代码执行"></a>代码执行</h4><blockquote>
+<p>本文翻译自 ST AN5156 STM32 微控制器安全应用笔记</p>
+</blockquote>
+
+      
+    </div>
+
+    
+
+    
+      
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        
+          
+        
+        <div class="post-tags">
+          
+            <a href="/tags/ARM/" rel="tag"># ARM</a>
+          
+            <a href="/tags/开发/" rel="tag"># 开发</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/07/11/智能音响安全风险/" rel="next" title="智能音箱安全风险概览">
+                <i class="fa fa-chevron-left"></i> 智能音箱安全风险概览
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/09/24/QEMU 工作原理/" rel="prev" title="QEMU 是如何工作的？">
+                QEMU 是如何工作的？ <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">SwordFaith</p>
+              <div class="site-description motion-element" itemprop="description"></div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">1</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">6</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#安全目标"><span class="nav-number">1.</span> <span class="nav-text">安全目标</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#安全系统组成"><span class="nav-number">2.</span> <span class="nav-text">安全系统组成</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#攻击类型"><span class="nav-number">3.</span> <span class="nav-text">攻击类型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#软件攻击"><span class="nav-number">3.1.</span> <span class="nav-text">软件攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#恶意软件注入"><span class="nav-number">3.1.1.</span> <span class="nav-text">恶意软件注入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#暴力攻击"><span class="nav-number">3.1.2.</span> <span class="nav-text">暴力攻击</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#硬件攻击"><span class="nav-number">3.2.</span> <span class="nav-text">硬件攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#非侵入式攻击"><span class="nav-number">3.2.1.</span> <span class="nav-text">非侵入式攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#调试接口"><span class="nav-number">3.2.1.1.</span> <span class="nav-text">调试接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#串行接口"><span class="nav-number">3.2.1.2.</span> <span class="nav-text">串行接口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#错误注入：时钟-供电干扰毛刺攻击"><span class="nav-number">3.2.1.3.</span> <span class="nav-text">错误注入：时钟/供电干扰毛刺攻击</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#边信道攻击"><span class="nav-number">3.2.1.4.</span> <span class="nav-text">边信道攻击</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#侵入式攻击"><span class="nav-number">3.2.2.</span> <span class="nav-text">侵入式攻击</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#逆向工程"><span class="nav-number">3.2.2.1.</span> <span class="nav-text">逆向工程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#微探针和内部错误注入"><span class="nav-number">3.2.2.2.</span> <span class="nav-text">微探针和内部错误注入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#设备修改"><span class="nav-number">3.2.2.3.</span> <span class="nav-text">设备修改</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#典型物联网系统威胁"><span class="nav-number">3.2.3.</span> <span class="nav-text">典型物联网系统威胁</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-初始准备-Initial-Provisioning"><span class="nav-number">3.2.3.1.</span> <span class="nav-text">1. 初始准备 Initial Provisioning</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-启动修改-Boot-Modification"><span class="nav-number">3.2.3.2.</span> <span class="nav-text">2. 启动修改 Boot Modification</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-安全启动-Secure-Boot"><span class="nav-number">3.2.3.3.</span> <span class="nav-text">3. 安全启动 Secure Boot</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-固件更新-Firmware-Update"><span class="nav-number">3.2.3.4.</span> <span class="nav-text">4. 固件更新 Firmware Update</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-通信接口-Communication-Interfaces"><span class="nav-number">3.2.3.5.</span> <span class="nav-text">5. 通信接口 Communication Interfaces</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-调试接口-Debug-port"><span class="nav-number">3.2.3.6.</span> <span class="nav-text">6. 调试接口 Debug port</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-外设访问-External-peripheral-access"><span class="nav-number">3.2.3.7.</span> <span class="nav-text">7. 外设访问 External peripheral access</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8-敏感固件和数据-Sensitive-firmware-and-data"><span class="nav-number">3.2.3.8.</span> <span class="nav-text">8. 敏感固件和数据 Sensitive firmware and data</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#9-内存-SRAM"><span class="nav-number">3.2.3.9.</span> <span class="nav-text">9. 内存 SRAM</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#10-随机数生成-Random-number-generation"><span class="nav-number">3.2.3.10.</span> <span class="nav-text">10. 随机数生成 Random number generation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#11-通信栈-Communication-stack"><span class="nav-number">3.2.3.11.</span> <span class="nav-text">11. 通信栈 Communication stack</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#12-窃听通信-Communication-eavesdrop"><span class="nav-number">3.2.3.12.</span> <span class="nav-text">12. 窃听通信 Communication eavesdrop</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#硬件保护"><span class="nav-number">4.</span> <span class="nav-text">硬件保护</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#存储保护"><span class="nav-number">4.1.</span> <span class="nav-text">存储保护</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#系统-Flash-存储"><span class="nav-number">4.1.1.</span> <span class="nav-text">系统 Flash 存储</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#用户-Flash-存储"><span class="nav-number">4.1.2.</span> <span class="nav-text">用户 Flash 存储</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#外部攻击"><span class="nav-number">4.1.2.1.</span> <span class="nav-text">外部攻击</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内部攻击"><span class="nav-number">4.1.2.2.</span> <span class="nav-text">内部攻击</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#保护未使用存储"><span class="nav-number">4.1.2.3.</span> <span class="nav-text">保护未使用存储</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#错误码纠正"><span class="nav-number">4.1.2.4.</span> <span class="nav-text">错误码纠正</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#嵌入式-SRAM"><span class="nav-number">4.1.3.</span> <span class="nav-text">嵌入式 SRAM</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#代码执行"><span class="nav-number">4.1.3.1.</span> <span class="nav-text">代码执行</span></a></li></ol></li></ol></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SwordFaith</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.2.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=3.4.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+
+
+  <script src="/js/utils.js?v=7.2.0"></script>
+
+  <script src="/js/motion.js?v=7.2.0"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.2.0"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.2.0"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.2.0"></script>
+<script src="/js/post-details.js?v=7.2.0"></script>
+
+
+
+  <script src="/js/next-boot.js?v=7.2.0"></script>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
