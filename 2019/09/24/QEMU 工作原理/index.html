@@ -91,7 +91,7 @@
 
 
   <meta name="description" content="Quick EMUlator(QEMU)简介 仿真器和虚拟化器 模式： 用户模式仿真：允许一个（Linux）进程执行在不同架构的CPU上，该模式下，QEMU 可以作为进程级虚拟机。 系统模式仿真：允许仿真完整的系统，包括处理器和配套的外设，该模式下，QEMU 也可以作为系统虚拟机   主要用途 跨平台编译与开发环境 虚拟化，尤其是外设仿真，作为对 xen 和 kvm 的补充 安卓仿真器（作为 SD">
-<meta name="keywords" content="Toolchain,CPU">
+<meta name="keywords" content="CPU,Toolchain">
 <meta property="og:type" content="article">
 <meta property="og:title" content="QEMU 是如何工作的？">
 <meta property="og:url" content="http://yoursite.com/2019/09/24/QEMU 工作原理/index.html">
@@ -101,7 +101,7 @@
 <meta property="og:image" content="http://yoursite.com/uploads/qemuArch.png">
 <meta property="og:image" content="http://yoursite.com/uploads/qemuStorageStack.png">
 <meta property="og:image" content="http://yoursite.com/uploads/qemuIOCtrlFlow.png">
-<meta property="og:updated_time" content="2019-09-23T18:06:15.858Z">
+<meta property="og:updated_time" content="2019-09-23T18:20:37.317Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="QEMU 是如何工作的？">
 <meta name="twitter:description" content="Quick EMUlator(QEMU)简介 仿真器和虚拟化器 模式： 用户模式仿真：允许一个（Linux）进程执行在不同架构的CPU上，该模式下，QEMU 可以作为进程级虚拟机。 系统模式仿真：允许仿真完整的系统，包括处理器和配套的外设，该模式下，QEMU 也可以作为系统虚拟机   主要用途 跨平台编译与开发环境 虚拟化，尤其是外设仿真，作为对 xen 和 kvm 的补充 安卓仿真器（作为 SD">
@@ -400,7 +400,7 @@
                 
               
 
-              <time title="创建时间：2019-09-24 01:58:15 / 修改时间：02:06:15" itemprop="dateCreated datePublished" datetime="2019-09-24T01:58:15+08:00">2019-09-24</time>
+              <time title="创建时间：2019-09-24 01:58:15 / 修改时间：02:20:37" itemprop="dateCreated datePublished" datetime="2019-09-24T01:58:15+08:00">2019-09-24</time>
             </span>
           
 
@@ -633,6 +633,8 @@
 <ol>
 <li><a href="https://www.csd.uoc.gr/~hy428/reading/qemu-internals-slides-may6-2014.pdf" target="_blank" rel="noopener">QEMU Internals Slides</a></li>
 <li><a href="https://www.jianshu.com/p/db8c20aa6a69" target="_blank" rel="noopener">一文读懂QEMU模拟器</a></li>
+<li><a href="https://qemu.weilnetz.de/doc/2.7/qemu-tech.pdf" target="_blank" rel="noopener">QEMU Tech</a></li>
+<li><a href="https://stuff.mit.edu/afs/sipb/project/phone-project/share/doc/qemu/qemu-tech.html" target="_blank" rel="noopener">QEMU Internals</a></li>
 </ol>
 </blockquote>
 
@@ -665,9 +667,9 @@
         
         <div class="post-tags">
           
-            <a href="/tags/Toolchain/" rel="tag"># Toolchain</a>
-          
             <a href="/tags/CPU/" rel="tag"># CPU</a>
+          
+            <a href="/tags/Toolchain/" rel="tag"># Toolchain</a>
           
         </div>
       
@@ -689,6 +691,10 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/09/26/LeetCode 938 二叉搜索树的范围和/" rel="prev" title="LeetCode 938 C++非递归解">
+                LeetCode 938 C++非递归解 <i class="fa fa-chevron-right"></i>
+              </a>
             
           </div>
         </div>
@@ -757,7 +763,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">4</span>
+                    <span class="site-state-item-count">5</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -778,7 +784,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">1</span>
+                      
+                    
+                    <span class="site-state-item-count">2</span>
                     <span class="site-state-item-name">分类</span>
                   </a>
                 </div>
@@ -815,7 +823,11 @@
                     
                       
                     
-                    <span class="site-state-item-count">6</span>
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">8</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

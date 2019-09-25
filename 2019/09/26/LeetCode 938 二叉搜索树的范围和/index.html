@@ -90,17 +90,18 @@
 
 
 
-  <meta name="description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
+  <meta name="description" content="执行用时：112ms 击败 100% 的 C++ 提交 内存消耗：37.9mb 击败 100% 的 C++ 提交  题目给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。二叉搜索树保证具有唯一的值。 示例 1：  输入：root = [10,5,15,3,7,null,18], L = 7, R = 15输出：32  示例 2：  输入：root = [10,5,1">
+<meta name="keywords" content="LeetCode,树">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Hello World">
-<meta property="og:url" content="http://yoursite.com/2019/07/10/hello-world/index.html">
+<meta property="og:title" content="LeetCode 938 C++非递归解">
+<meta property="og:url" content="http://yoursite.com/2019/09/26/LeetCode 938 二叉搜索树的范围和/index.html">
 <meta property="og:site_name" content="SwordFaith&#39;s Blog">
-<meta property="og:description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
+<meta property="og:description" content="执行用时：112ms 击败 100% 的 C++ 提交 内存消耗：37.9mb 击败 100% 的 C++ 提交  题目给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。二叉搜索树保证具有唯一的值。 示例 1：  输入：root = [10,5,15,3,7,null,18], L = 7, R = 15输出：32  示例 2：  输入：root = [10,5,1">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-07-10T15:23:57.138Z">
+<meta property="og:updated_time" content="2019-09-25T16:21:13.474Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Hello World">
-<meta name="twitter:description" content="Welcome to Hexo! This is your very first post. Check documentation for more info. If you get any problems when using Hexo, you can find the answer in troubleshooting or you can ask me on GitHub. Quick">
+<meta name="twitter:title" content="LeetCode 938 C++非递归解">
+<meta name="twitter:description" content="执行用时：112ms 击败 100% 的 C++ 提交 内存消耗：37.9mb 击败 100% 的 C++ 提交  题目给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。二叉搜索树保证具有唯一的值。 示例 1：  输入：root = [10,5,15,3,7,null,18], L = 7, R = 15输出：32  示例 2：  输入：root = [10,5,1">
 
 
 
@@ -108,7 +109,7 @@
 
   
   
-  <link rel="canonical" href="http://yoursite.com/2019/07/10/hello-world/">
+  <link rel="canonical" href="http://yoursite.com/2019/09/26/LeetCode 938 二叉搜索树的范围和/">
 
 
 
@@ -118,7 +119,7 @@
   };
 </script>
 
-  <title>Hello World | SwordFaith's Blog</title>
+  <title>LeetCode 938 C++非递归解 | SwordFaith's Blog</title>
   
 
 
@@ -352,7 +353,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/07/10/hello-world/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/LeetCode 938 二叉搜索树的范围和/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="SwordFaith">
@@ -369,7 +370,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">Hello World
+          <h2 class="post-title" itemprop="name headline">LeetCode 938 C++非递归解
 
               
             
@@ -395,12 +396,31 @@
                 
               
 
-              <time title="创建时间：2019-07-10 23:23:57" itemprop="dateCreated datePublished" datetime="2019-07-10T23:23:57+08:00">2019-07-10</time>
+              <time title="创建时间：2019-09-26 00:20:15 / 修改时间：00:21:13" itemprop="dateCreated datePublished" datetime="2019-09-26T00:20:15+08:00">2019-09-26</time>
             </span>
           
 
           
+            
 
+            
+          
+
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/算法/" itemprop="url" rel="index"><span itemprop="name">算法</span></a></span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -435,20 +455,31 @@
       
 
       
-        <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-
+        <blockquote>
+<p>执行用时：112ms 击败 100% 的 C++ 提交</p>
+<p>内存消耗：37.9mb 击败 100% 的 C++ 提交</p>
+</blockquote>
+<h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><p>给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。<br>二叉搜索树保证具有唯一的值。</p>
+<p>示例 1：</p>
+<blockquote>
+<p>输入：root = [10,5,15,3,7,null,18], L = 7, R = 15<br>输出：32</p>
+</blockquote>
+<p>示例 2：</p>
+<blockquote>
+<p>输入：root = [10,5,15,3,7,13,18,1,null,6], L = 6, R = 10</p>
+<p>输出：23</p>
+</blockquote>
+<p>提示：</p>
+<ol>
+<li>树中的结点数量最多为 10000 个。</li>
+<li>最终的答案保证小于 2^31。</li>
+</ol>
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/range-sum-of-bst" target="_blank" rel="noopener">https://leetcode-cn.com/problems/range-sum-of-bst</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><p>因为输入为二叉搜索树，因此中序遍历即为有序数组，变成顺序加和问题。</p>
+<p>递归法可直接递归中序遍历，并返回加和值，能搜索到很多解。</p>
+<p>迭代法可以降低递归调用开销，但需要注意的是<strong>一定要破坏重入条件</strong>，以我的方法为例，如果不修改已经访问过的节点对应左子树，会在重新访问根节点时，重新进入左子树，形成死循环。</p>
+<p>还看到一种不推荐的暴力方法是层序遍历，并将符合条件的值加和，没有利用性质，应该会比较慢。</p>
+<h1 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for a binary tree node.</span></span><br><span class="line"><span class="comment"> * struct TreeNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     TreeNode *left;</span></span><br><span class="line"><span class="comment"> *     TreeNode *right;</span></span><br><span class="line"><span class="comment"> *     TreeNode(int x) : val(x), left(NULL), right(NULL) &#123;&#125;</span></span><br><span class="line"><span class="comment"> * &#125;;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">rangeSumBST</span><span class="params">(TreeNode* root, <span class="keyword">int</span> L, <span class="keyword">int</span> R)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (root == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">stack</span>&lt;TreeNode*&gt; pstack; <span class="comment">// 迭代栈</span></span><br><span class="line">        pstack.push(root);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">int</span> ans = <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span>( !pstack.empty() ) &#123;</span><br><span class="line">            TreeNode* pa=pstack.top();</span><br><span class="line">            <span class="keyword">if</span> (pa-&gt;left != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                pstack.push(pa-&gt;left);</span><br><span class="line">                pa-&gt;left = <span class="literal">NULL</span>; <span class="comment">// 防止退回后重入</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">//ordered_tree.push_back(pa-&gt;val);</span></span><br><span class="line">                <span class="keyword">if</span>(pa-&gt;val &gt;= L) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (pa-&gt;val &gt; R) <span class="keyword">break</span>;</span><br><span class="line">                    <span class="keyword">else</span> ans += pa-&gt;val;</span><br><span class="line">                &#125;</span><br><span class="line">                pstack.pop();</span><br><span class="line">                <span class="keyword">if</span> (pa-&gt;right != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                    pstack.push(pa-&gt;right);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
       
     </div>
 
@@ -473,6 +504,17 @@
 
     <footer class="post-footer">
       
+        
+          
+        
+        <div class="post-tags">
+          
+            <a href="/tags/LeetCode/" rel="tag"># LeetCode</a>
+          
+            <a href="/tags/树/" rel="tag"># 树</a>
+          
+        </div>
+      
 
       
       
@@ -482,15 +524,15 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2019/09/24/QEMU 工作原理/" rel="next" title="QEMU 是如何工作的？">
+                <i class="fa fa-chevron-left"></i> QEMU 是如何工作的？
+              </a>
+            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/07/11/智能音响安全风险/" rel="prev" title="智能音箱安全风险概览">
-                智能音箱安全风险概览 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -657,7 +699,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Quick-Start"><span class="nav-number">1.</span> <span class="nav-text">Quick Start</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Create-a-new-post"><span class="nav-number">1.1.</span> <span class="nav-text">Create a new post</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Run-server"><span class="nav-number">1.2.</span> <span class="nav-text">Run server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Generate-static-files"><span class="nav-number">1.3.</span> <span class="nav-text">Generate static files</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Deploy-to-remote-sites"><span class="nav-number">1.4.</span> <span class="nav-text">Deploy to remote sites</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#题目"><span class="nav-number">1.</span> <span class="nav-text">题目</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分析"><span class="nav-number">2.</span> <span class="nav-text">分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#代码"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a></li></ol></div>
             
 
           </div>
