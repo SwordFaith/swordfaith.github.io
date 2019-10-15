@@ -90,18 +90,18 @@
 
 
 
-  <meta name="description" content="执行用时：112ms 击败 100% 的 C++ 提交 内存消耗：37.9mb 击败 100% 的 C++ 提交  题目给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。二叉搜索树保证具有唯一的值。 示例 1：  输入：root = [10,5,15,3,7,null,18], L = 7, R = 15输出：32  示例 2：  输入：root = [10,5,1">
-<meta name="keywords" content="LeetCode,树">
+  <meta name="description" content="上电前：BIOS chip / boot ROMBIOS  chip 是主板的芯片组的一块芯片，主要有两个值得关注的性质：首先，它（或其中一部分）内存映射到处理器的地址空间，使得处理器可以用和访问内存同样的方式访问 BIOS chip。CPU通过将指令指针指向 BIOS chip 中的代码，执行。其次，BIOS chip 存储了 CPU 上电后最先执行的指令。一个典型的 BIOS 包含 flash">
+<meta name="keywords" content="CPU,Firmware">
 <meta property="og:type" content="article">
-<meta property="og:title" content="LeetCode 938 C++非递归解">
-<meta property="og:url" content="http://yoursite.com/2019/09/26/LeetCode 938 二叉搜索树的范围和/index.html">
+<meta property="og:title" content="x86 处理器第一阶段 Bootloader 启动过程详解">
+<meta property="og:url" content="http://yoursite.com/2019/10/15/x86 处理器第一阶段 Bootloader 启动过程详解/index.html">
 <meta property="og:site_name" content="SwordFaith&#39;s Blog">
-<meta property="og:description" content="执行用时：112ms 击败 100% 的 C++ 提交 内存消耗：37.9mb 击败 100% 的 C++ 提交  题目给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。二叉搜索树保证具有唯一的值。 示例 1：  输入：root = [10,5,15,3,7,null,18], L = 7, R = 15输出：32  示例 2：  输入：root = [10,5,1">
+<meta property="og:description" content="上电前：BIOS chip / boot ROMBIOS  chip 是主板的芯片组的一块芯片，主要有两个值得关注的性质：首先，它（或其中一部分）内存映射到处理器的地址空间，使得处理器可以用和访问内存同样的方式访问 BIOS chip。CPU通过将指令指针指向 BIOS chip 中的代码，执行。其次，BIOS chip 存储了 CPU 上电后最先执行的指令。一个典型的 BIOS 包含 flash">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-09-25T16:21:13.474Z">
+<meta property="og:updated_time" content="2019-10-15T15:10:14.581Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="LeetCode 938 C++非递归解">
-<meta name="twitter:description" content="执行用时：112ms 击败 100% 的 C++ 提交 内存消耗：37.9mb 击败 100% 的 C++ 提交  题目给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。二叉搜索树保证具有唯一的值。 示例 1：  输入：root = [10,5,15,3,7,null,18], L = 7, R = 15输出：32  示例 2：  输入：root = [10,5,1">
+<meta name="twitter:title" content="x86 处理器第一阶段 Bootloader 启动过程详解">
+<meta name="twitter:description" content="上电前：BIOS chip / boot ROMBIOS  chip 是主板的芯片组的一块芯片，主要有两个值得关注的性质：首先，它（或其中一部分）内存映射到处理器的地址空间，使得处理器可以用和访问内存同样的方式访问 BIOS chip。CPU通过将指令指针指向 BIOS chip 中的代码，执行。其次，BIOS chip 存储了 CPU 上电后最先执行的指令。一个典型的 BIOS 包含 flash">
 
 
 
@@ -109,7 +109,7 @@
 
   
   
-  <link rel="canonical" href="http://yoursite.com/2019/09/26/LeetCode 938 二叉搜索树的范围和/">
+  <link rel="canonical" href="http://yoursite.com/2019/10/15/x86 处理器第一阶段 Bootloader 启动过程详解/">
 
 
 
@@ -119,7 +119,7 @@
   };
 </script>
 
-  <title>LeetCode 938 C++非递归解 | SwordFaith's Blog</title>
+  <title>x86 处理器第一阶段 Bootloader 启动过程详解 | SwordFaith's Blog</title>
   
 
 
@@ -353,7 +353,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/LeetCode 938 二叉搜索树的范围和/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/10/15/x86 处理器第一阶段 Bootloader 启动过程详解/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="SwordFaith">
@@ -370,7 +370,7 @@
 
         
         
-          <h2 class="post-title" itemprop="name headline">LeetCode 938 C++非递归解
+          <h2 class="post-title" itemprop="name headline">x86 处理器第一阶段 Bootloader 启动过程详解
 
               
             
@@ -396,7 +396,7 @@
                 
               
 
-              <time title="创建时间：2019-09-26 00:20:15 / 修改时间：00:21:13" itemprop="dateCreated datePublished" datetime="2019-09-26T00:20:15+08:00">2019-09-26</time>
+              <time title="创建时间：2019-10-15 23:07:15 / 修改时间：23:10:14" itemprop="dateCreated datePublished" datetime="2019-10-15T23:07:15+08:00">2019-10-15</time>
             </span>
           
 
@@ -415,7 +415,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/算法/" itemprop="url" rel="index"><span itemprop="name">算法</span></a></span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/硬件/" itemprop="url" rel="index"><span itemprop="name">硬件</span></a></span>
 
                 
                 
@@ -455,31 +455,39 @@
       
 
       
-        <blockquote>
-<p>执行用时：112ms 击败 100% 的 C++ 提交</p>
-<p>内存消耗：37.9mb 击败 100% 的 C++ 提交</p>
-</blockquote>
-<h1 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h1><p>给定二叉搜索树的根结点 root，返回 L 和 R（含）之间的所有结点的值的和。<br>二叉搜索树保证具有唯一的值。</p>
-<p>示例 1：</p>
-<blockquote>
-<p>输入：root = [10,5,15,3,7,null,18], L = 7, R = 15<br>输出：32</p>
-</blockquote>
-<p>示例 2：</p>
-<blockquote>
-<p>输入：root = [10,5,15,3,7,13,18,1,null,6], L = 6, R = 10</p>
-<p>输出：23</p>
-</blockquote>
-<p>提示：</p>
+        <h2 id="上电前：BIOS-chip-boot-ROM"><a href="#上电前：BIOS-chip-boot-ROM" class="headerlink" title="上电前：BIOS chip / boot ROM"></a>上电前：BIOS chip / boot ROM</h2><p>BIOS  chip 是主板的芯片组的一块芯片，主要有两个值得关注的性质：首先，它（或其中一部分）内存映射到处理器的地址空间，使得处理器可以用和访问内存同样的方式访问 BIOS chip。CPU通过将指令指针指向 BIOS chip 中的代码，执行。其次，BIOS chip 存储了 CPU 上电后最先执行的指令。一个典型的 BIOS 包含 flash 描述符（BIOS chip 的内容表）、BIOS 区（被执行的第一条指令）、Intel ME（Management Engine）和以太网口。BIOS chip 在系统的多个部分间共享，而非在为 CPU 独占。</p>
+<h2 id="上电后"><a href="#上电后" class="headerlink" title="上电后"></a>上电后</h2><p>现代 Intel 芯片含有 Intel Management Engine。一旦上电，先启动 Intel ME。它执行自身的初始化：</p>
 <ol>
-<li>树中的结点数量最多为 10000 个。</li>
-<li>最终的答案保证小于 2^31。</li>
+<li>读取 BIOS 的 flash 描述符，找到 Intel ME 区</li>
+<li>读取代码并设置数据</li>
 </ol>
-<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/range-sum-of-bst" target="_blank" rel="noopener">https://leetcode-cn.com/problems/range-sum-of-bst</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
-<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><p>因为输入为二叉搜索树，因此中序遍历即为有序数组，变成顺序加和问题。</p>
-<p>递归法可直接递归中序遍历，并返回加和值，能搜索到很多解。</p>
-<p>迭代法可以降低递归调用开销，但需要注意的是<strong>一定要破坏重入条件</strong>，以我的方法为例，如果不修改已经访问过的节点对应左子树，会在重新访问根节点时，重新进入左子树，形成死循环。</p>
-<p>还看到一种不推荐的暴力方法是层序遍历，并将符合条件的值加和，没有利用性质，应该会比较慢。</p>
-<h1 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for a binary tree node.</span></span><br><span class="line"><span class="comment"> * struct TreeNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     TreeNode *left;</span></span><br><span class="line"><span class="comment"> *     TreeNode *right;</span></span><br><span class="line"><span class="comment"> *     TreeNode(int x) : val(x), left(NULL), right(NULL) &#123;&#125;</span></span><br><span class="line"><span class="comment"> * &#125;;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">rangeSumBST</span><span class="params">(TreeNode* root, <span class="keyword">int</span> L, <span class="keyword">int</span> R)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (root == <span class="literal">NULL</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="built_in">stack</span>&lt;TreeNode*&gt; pstack; <span class="comment">// 迭代栈</span></span><br><span class="line">        pstack.push(root);</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">int</span> ans = <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">while</span>( !pstack.empty() ) &#123;</span><br><span class="line">            TreeNode* pa=pstack.top();</span><br><span class="line">            <span class="keyword">if</span> (pa-&gt;left != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                pstack.push(pa-&gt;left);</span><br><span class="line">                pa-&gt;left = <span class="literal">NULL</span>; <span class="comment">// 防止退回后重入</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">//ordered_tree.push_back(pa-&gt;val);</span></span><br><span class="line">                <span class="keyword">if</span>(pa-&gt;val &gt;= L) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (pa-&gt;val &gt; R) <span class="keyword">break</span>;</span><br><span class="line">                    <span class="keyword">else</span> ans += pa-&gt;val;</span><br><span class="line">                &#125;</span><br><span class="line">                pstack.pop();</span><br><span class="line">                <span class="keyword">if</span> (pa-&gt;right != <span class="literal">NULL</span>) &#123;</span><br><span class="line">                    pstack.push(pa-&gt;right);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>按下电源键后，CPU 启动。在多核系统中，往往先启动一个 CPU（Bootstrap Processor a.k.a BSP）。刚启动时，CPU 进入 16-bit 实模式，指令指针指向 0xffff:0000（CS:IP的复位向量）。</p>
+<p>0xf_fff0 作为 CPU 复位地址，指向 boot ROM 的 BIOS 区。BIOS 区中的固件被称为启动固件，例如 UEFI 实现，legacy 实现。</p>
+<p>启动固件要做的第一件事是切换到保护模式，，开启分段并区分分段权限。然而启动固件仅包含一个段，被称为 flat mode。</p>
+<h2 id="早期初始化"><a href="#早期初始化" class="headerlink" title="早期初始化"></a>早期初始化</h2><p>在开始时，DRAM 还不可用。DRAM 初始化是启动固件的一个主要目标。但是在初始化 DRAM 前需要做些准备。</p>
+<p>打微代码（Intel CPU 转译为内部 RISC 的转译表）补丁使 CPU  功能正确。Intel 为不同型号的 CPU 持续发布微代码补丁。启动固件在启动过程的最开始打补丁，接下来初始化南桥（I/O Controller Hub / Peripheral Controller Hub）部分。例如 ICH 包含看门狗定时器的话，在初始化过程中需要关闭。</p>
+<p>当然这些初始化都由启动固件中的代码完成。大多数我们熟悉的代码需要依赖于栈，但当 DRAM 没有初始化，内存尚且不可用。因此，此时的代码不能用到栈，不管是直接写 x86 汇编（如 coreboot 那样）还是写 C 并使用专用的 ROMCC 编译器生成无堆栈代码。这种限制使得 ROMCC 不能编译出我们想执行的所有代码，我们需要这些代码尽快建立栈。</p>
+<p>因此下一步是设置 cache as RAM。启动固件通过配置 CPU cache 使得它可以暂时用作内存，使得固件可以运行需要堆栈支持的程序，但是仍受限于栈空间大小和可用内存大小。</p>
+<h2 id="内存初始化和-Intel-FSP（Firmware-Support-Package）"><a href="#内存初始化和-Intel-FSP（Firmware-Support-Package）" class="headerlink" title="内存初始化和 Intel FSP（Firmware Support Package）"></a>内存初始化和 Intel FSP（Firmware Support Package）</h2><p>Intel 平台上，内存初始化由 Intel FSP 完成。Intel FSP 由 Intel 以二进制形式提供，完成了许多配置 Intel 处理器启动的复杂工作，包括内存初始化。基本上，它具备一组三级 API。启动固件与 FSP 的交互通过配置好参数和返回地址并跳转到 FSP 对应段。 FSP 段根据传递的参数执行后返回到启动固件。</p>
+<ol>
+<li><strong>TempRamInit()：</strong> 在这一阶段，对 RAM 做部分初始化并手动控制返回到启动固件。启动固件发起一些动作后再进入下一阶段。这是因为下一阶段进行芯片组和内存初始化比较耗时。启动固件可以同时进行启动硬盘等耗时操作。</li>
+<li><strong>FspInitEntry()：</strong> 这一阶段后 DRAM 才真正被设置好，同时 FSP 也会初始化芯片组的其它部分，如 PCH 和 CPU。初始化完成后，重新返回到启动固件。在初始化完成的内存支持下，进入 FSP 下一阶段前，启动固件完成接下来的其它初始化，被称为“有内存后的初始化”。</li>
+<li><strong>NotifyPhase()：</strong> 这一阶段执行的操作与平台有关，但常常包含 PCI 设备枚举。</li>
+</ol>
+<h2 id="后内存初始化-After-Memory-Init"><a href="#后内存初始化-After-Memory-Init" class="headerlink" title="后内存初始化 After Memory Init"></a>后内存初始化 After Memory Init</h2><p>一旦 DRAM 配置好，启动固件会通过内存别名（“memory aliasing”）将自己复制到 DRAM 中，1MB 以内的读写访问被重定向到 DRAM 内。</p>
+<p>其后，一些平台特定的初始化，如 GPIO 配置，重新打开（在前内存初始化关闭的）南桥看门狗定时器，配置本地先进可编程中断控制器（Local Advanced Programmable Interrupt Controller，LAPIC）作为启动中断的基础。LAPIC 存在于每个处理器中（而非处理器核中），它决定了每个中断如何分配给特定处理器核。I/O APIC（IOxAPIC）在南桥中，所有处理器共享一个IOxAPIC。功能上，一个可编程中断控制器在实模式作为一个包含 256 个中断向量（中断处理函数入口地址）的中断向量表使用。在保护模式时，则作为中断描述符表。</p>
+<p>接下来，启动固件根据平台和固件差异设置不同的定时器。Programmable Interrupt Timer（PIT）是系统定时器，位于南桥的 IRQ0。High Precision Event Timer（HPET）也在南桥，往往由操作系统初始化，作为精度更高的时钟。南桥中的 Real Time Clock（RTC）是记录真实世界时间的定时器。在配置好所有定时器后，启动固件进一步初始化高速缓存，对不同地址段配置不同的缓存特性。</p>
+<h2 id="其它处理器配置，I-O-设备-和-PCI"><a href="#其它处理器配置，I-O-设备-和-PCI" class="headerlink" title="其它处理器配置，I/O 设备 和 PCI"></a>其它处理器配置，I/O 设备 和 PCI</h2><p>最后，BSP 运行 CPUID 指令，找到同一封装中的其它处理器核（Application Processors，AP）。然后用它的 LAPIC 向它发送SIPI 中断请求。每个 SIPI 指向收到中断请求的 AP 应该开始执行的物理地址，在开始执行时，每个 AP 都是从实模式开始，因此 SIPI 地址须小于实模式最大可寻址范围 1 MB。完成初始化后，每个 AP 很快执行 HLT 指令进入停止（halt）状态，等待 BSP 中接下来的指令实行。然而，在 OS 得到控制权前，AP 应该处于”waiting-for-SIPI“态。BSP 通过发送一组处理器间中断来保证该状态。</p>
+<p>接下来配置 I/O 设备，如 Embedded COntroller 和 Super I/O 以及 PCI。PCI 初始化一般分为两步：</p>
+<ol>
+<li>枚举所有 PCI 设备</li>
+<li>为每个 PCI 设备分配相关资源</li>
+</ol>
+<p>PCI 是一个层次化总线协议，每一层的叶节点为 PCI 设备或连接下层 PCI 总线的 PCI 总线桥。CPU 通过读写 PCI 寄存器组与 PCI 通信。PCI 需要的资源是内存地址段、I/O 地址段和 IRQ 分配。CPU 通过读写 PCI 设备的基地址找出地址范围和类型（Memory-mapped 或 I/O）。IRQ 则由主板设计决定。</p>
+<p>在 PCI 枚举期间，启动固件也读取 Option ROM 寄存器。如果该寄存器不空，则内容为 Option ROM 的地址。Option ROM 一般物理上在 PCI 设备中。例如，网卡可能包含 Option ROM 保存 iPXE 固件。Option ROM 读取完成后，它被加载到内存中执行。</p>
+<h2 id="将控制权转给操作系统加载器"><a href="#将控制权转给操作系统加载器" class="headerlink" title="将控制权转给操作系统加载器"></a>将控制权转给操作系统加载器</h2><p>在交出控制权给下一阶段加载器（OS loader 如 GRUB2 / LILO），启动固件在内存中设置一些操作系统的信息。该信息包含 Advanced Configuration and Power Interface（ACPI）表和内存映射表（memory map）。内存映射表高速操作系统不同的地址范围和目的。这些区域包括 OS 可用的地址空间，ACPI 相关的地址范围，保留（不能被操作系统使用），IOAPIC（由IOAPIC使用），LAPIC（由LAPIC使用）。启动固件也配置 System Management Mode（SMM）中断的响应程序，SMM 是 Intel CPU 的工作模式，如 实模式、保护模式，以及长模式（64位）。SMM 中断有多种触发源，如 CPU 达到特定的温度水平。此外，启动固件锁定部分寄存器和 CPU 功能以免被操作系统改变。</p>
+<p>实际的控制转换一般是到 jmp 到特定的内存地址。操作系统加载器会基于自身配置执行，并将控制转交给操作系统。以 Linux 为例，系统通常在被加载前被打包为一个大的 zImage 文件。</p>
+
       
     </div>
 
@@ -509,9 +517,9 @@
         
         <div class="post-tags">
           
-            <a href="/tags/LeetCode/" rel="tag"># LeetCode</a>
+            <a href="/tags/CPU/" rel="tag"># CPU</a>
           
-            <a href="/tags/树/" rel="tag"># 树</a>
+            <a href="/tags/Firmware/" rel="tag"># Firmware</a>
           
         </div>
       
@@ -524,8 +532,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/09/24/QEMU 工作原理/" rel="next" title="QEMU 是如何工作的？">
-                <i class="fa fa-chevron-left"></i> QEMU 是如何工作的？
+              <a href="/2019/10/02/LeetCode 189 旋转数组/" rel="next" title="LeetCode 189 旋转数组">
+                <i class="fa fa-chevron-left"></i> LeetCode 189 旋转数组
               </a>
             
           </div>
@@ -533,10 +541,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/10/02/LeetCode 189 旋转数组/" rel="prev" title="LeetCode 189 旋转数组">
-                LeetCode 189 旋转数组 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -733,7 +737,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#题目"><span class="nav-number">1.</span> <span class="nav-text">题目</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#分析"><span class="nav-number">2.</span> <span class="nav-text">分析</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#代码"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#上电前：BIOS-chip-boot-ROM"><span class="nav-number">1.</span> <span class="nav-text">上电前：BIOS chip / boot ROM</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#上电后"><span class="nav-number">2.</span> <span class="nav-text">上电后</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#早期初始化"><span class="nav-number">3.</span> <span class="nav-text">早期初始化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#内存初始化和-Intel-FSP（Firmware-Support-Package）"><span class="nav-number">4.</span> <span class="nav-text">内存初始化和 Intel FSP（Firmware Support Package）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#后内存初始化-After-Memory-Init"><span class="nav-number">5.</span> <span class="nav-text">后内存初始化 After Memory Init</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#其它处理器配置，I-O-设备-和-PCI"><span class="nav-number">6.</span> <span class="nav-text">其它处理器配置，I/O 设备 和 PCI</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#将控制权转给操作系统加载器"><span class="nav-number">7.</span> <span class="nav-text">将控制权转给操作系统加载器</span></a></li></ol></div>
             
 
           </div>
