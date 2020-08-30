@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yoursite.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Quick EMUlator(QEMU)简介 仿真器和虚拟化器 模式： 用户模式仿真：允许一个（Linux）进程执行在不同架构的CPU上，该模式下，QEMU 可以作为进程级虚拟机。 系统模式仿真：允许仿真完整的系统，包括处理器和配套的外设，该模式下，QEMU 也可以作为系统虚拟机   主要用途 跨平台编译与开发环境 虚拟化，尤其是外设仿真，作为对 xen 和 kvm 的补充 安卓仿真器（作为 SD">
+<meta property="og:type" content="article">
+<meta property="og:title" content="QEMU 是如何工作的？">
+<meta property="og:url" content="http://yoursite.com/2019/09/24/QEMU%20%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="SwordFaith&#39;s Blog">
+<meta property="og:description" content="Quick EMUlator(QEMU)简介 仿真器和虚拟化器 模式： 用户模式仿真：允许一个（Linux）进程执行在不同架构的CPU上，该模式下，QEMU 可以作为进程级虚拟机。 系统模式仿真：允许仿真完整的系统，包括处理器和配套的外设，该模式下，QEMU 也可以作为系统虚拟机   主要用途 跨平台编译与开发环境 虚拟化，尤其是外设仿真，作为对 xen 和 kvm 的补充 安卓仿真器（作为 SD">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/uploads/qemuArch.png">
+<meta property="og:image" content="http://yoursite.com/uploads/qemuStorageStack.png">
+<meta property="og:image" content="http://yoursite.com/uploads/qemuIOCtrlFlow.png">
+<meta property="article:published_time" content="2019-09-23T17:58:15.000Z">
+<meta property="article:modified_time" content="2019-09-23T18:20:37.317Z">
+<meta property="article:author" content="SwordFaith">
+<meta property="article:tag" content="Toolchain">
+<meta property="article:tag" content="CPU">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/uploads/qemuArch.png">
+
+<link rel="canonical" href="http://yoursite.com/2019/09/24/QEMU%20%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>QEMU 是如何工作的？ | SwordFaith's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">SwordFaith's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">Enlighten our memory</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/swordfaith" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/24/QEMU%20%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="SwordFaith">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SwordFaith's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          QEMU 是如何工作的？
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2019-09-24 01:58:15 / 修改时间：02:20:37" itemprop="dateCreated datePublished" datetime="2019-09-24T01:58:15+08:00">2019-09-24</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">安全</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="Quick-EMUlator-QEMU"><a href="#Quick-EMUlator-QEMU" class="headerlink" title="Quick EMUlator(QEMU)"></a>Quick EMUlator(QEMU)</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ul>
+<li>仿真器和虚拟化器</li>
+<li>模式：<ul>
+<li>用户模式仿真：允许一个（Linux）进程执行在不同架构的CPU上，该模式下，QEMU 可以作为进程级虚拟机。</li>
+<li>系统模式仿真：允许仿真完整的系统，包括处理器和配套的外设，该模式下，QEMU 也可以作为系统虚拟机</li>
+</ul>
+</li>
+<li>主要用途<ul>
+<li>跨平台编译与开发环境</li>
+<li>虚拟化，尤其是外设仿真，作为对 xen 和 kvm 的补充</li>
+<li>安卓仿真器（作为 SDK 的一部分）</li>
+</ul>
+</li>
+</ul>
+<h2 id="动态二进制翻译"><a href="#动态二进制翻译" class="headerlink" title="动态二进制翻译"></a>动态二进制翻译</h2><p>动态转译过程：</p>
+<ol>
+<li>读取源指令流（二进制）-&gt; gen_intermediate_code()</li>
+<li>解释为微操作（TCG 微操作）-&gt; tcg_gen_code()</li>
+<li>编译为目标文件（二进制）</li>
+<li>动态产生目标指令流</li>
+</ol>
+<ul>
+<li>功能转译：模仿源处理器完成的功能而非执行过程</li>
+<li>动态二进制翻译：像一个不含解释器的 JIT 编译器<ul>
+<li>解释器逐一执行指令，使得执行速度因为固定的额外开销显著变慢</li>
+<li>作为替代，QEMU 用自己需要的方式转换代码<ul>
+<li>翻译基本块 -&gt; 生成主机目标代码</li>
+<li>在翻译缓存中存储翻译块</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Tiny Code Generator (TCG)<ul>
+<li>将源二进制流转换为微操作</li>
+<li>（固定的）寄存器映射来减少产生的 load/store 指令</li>
+<li>翻译块：不包含跳转指令，以分支指令为分隔，翻译块被转换为主机指令的一个单一序列，并放入翻译缓存<ul>
+<li>缓存中的翻译块用它们的客户机虚拟地址（如PC值）索引，因此可以快速查得</li>
+<li>翻译缓存的大小默认为 32MB，但是可以自行配置</li>
+<li>一旦缓存运行超出空间，全部缓存被清理</li>
+</ul>
+</li>
+<li>块链接</li>
+</ul>
+</li>
+<li>在主循环中，通过 cpu_exec() 进入下一代码块</li>
+<li>程序执行至无后续链接的代码块，则通过后置代码返回 cpu_exec()</li>
+</ul>
+<h3 id="块链接"><a href="#块链接" class="headerlink" title="块链接"></a>块链接</h3><ul>
+<li>正常情况下，每个转译块的执行，被特殊代码块的执行环绕<ul>
+<li><em>前置代码</em>初始化处理器以生成跳转并执行到指定代码块的主机代码</li>
+<li><em>后置代码</em>恢复处理器至正常状态并返回到主循环</li>
+</ul>
+</li>
+<li>在每个代码块后返回主循环显著增加了额外开销<ul>
+<li>因此在下一个代码块已经翻译好的情况下，QEMU会patch原始块，以跳过后置代码而直接执行下一代码块。</li>
+</ul>
+</li>
+<li>在代码块间直接跳转：<ul>
+<li>在存放返回至后置代码的指令和代码块返回间，留出跳转空间</li>
+<li>每当一个块返回时，尝试链接至下一代码块</li>
+</ul>
+</li>
+<li>当链接在数个连续块间完成后，代码块间将形成链和环<ul>
+<li>这允许 QEMU 仿真内循环时，无需运行额外的代码</li>
+<li>这也意味着，在循环过程中，只有在遇到未链接或未翻译的块需要被执行时，才将控制权还给 QEMU</li>
+</ul>
+</li>
+<li>异步中断<ul>
+<li>QEMU 不主动检查每个基础块中是否有硬件中断在等待，而是由用户异步的调用特定函数 cpu_interrupt() 来告知 QEMU 中断正在等待</li>
+<li>该函数的功能是重置当前正在执行的块链，返回至 CPU 仿真器的主循环</li>
+<li>异步中断常常来自其它线程</li>
+</ul>
+</li>
+</ul>
+<h3 id="寄存器映射"><a href="#寄存器映射" class="headerlink" title="寄存器映射"></a>寄存器映射</h3><ul>
+<li>当目标架构寄存器个数多于源架构寄存器个数</li>
+<li>如果目标架构寄存器不够，则采用每个代码块/每个trace/每个循环为单位进行寄存器映射</li>
+<li>最差情况，放弃映射不常用的源架构寄存器</li>
+<li>处理 PC 寄存器<ul>
+<li>TPC（目标） 和 SPC（源）不同</li>
+<li>对间接跳转指令，保存 SPC 的寄存器必须提供将 SPC 映射至 TPC 的方式，即仿真器在任何时刻都需要跟踪 SPC</li>
+</ul>
+</li>
+</ul>
+<h2 id="其它主要-QEMU-组件"><a href="#其它主要-QEMU-组件" class="headerlink" title="其它主要 QEMU 组件"></a>其它主要 QEMU 组件</h2><ul>
+<li>内存地址转译<ul>
+<li>软件控制内存管理单元（模型）来翻译目标虚拟地址为主机虚拟地址：两级客户机物理页描述符表</li>
+<li>映射客户机虚拟地址和主机虚拟地址：定位翻译缓存（tlb_table），直接将客户机虚拟地址转换为主机虚拟地址</li>
+<li>映射客户机虚拟地址和寄存器输入输出功能：缓存被使用的内存映射 I/O 访问（iotlb）</li>
+</ul>
+</li>
+<li>设备仿真<ul>
+<li>i440FX host PCI bridge, Cirrus CLGD 5446 PCI VGA card, PS/2 mouse &amp; keyboard, PCI IDE interfaces (HDD, CDROM), PCI &amp; ISA network adapters, Serial ports, PCI UHCI USB controller &amp; virtual USB hub, …</li>
+</ul>
+</li>
+</ul>
+<h3 id="SoftMMU"><a href="#SoftMMU" class="headerlink" title="SoftMMU"></a>SoftMMU</h3><ul>
+<li>MMU 虚拟-&gt;物理地址转换在每个访存操作中都要完成<ul>
+<li>通过地址转换缓存加速转换</li>
+<li>为了避免每次 MMU 映射改变造成翻译块缓存清空，QEMU 采用物理方式索引转译缓存<ul>
+<li>每个基础块由其物理地址索引</li>
+<li>当 MMU 映射改变时，仅仅基础块的链需要改变（一个基础块可能不再能直接跳转到下一个）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="补充"><a href="#补充" class="headerlink" title="补充"></a>补充</h2><ul>
+<li><p>QEMU 架构<br><img src="/uploads/qemuArch.png" alt="QEMU 架构"></p>
+</li>
+<li><p>QEMU 存储栈<br><img src="/uploads/qemuStorageStack.png" alt="QEMU 存储栈"></p>
+</li>
+<li><p>QEMU I/O 控制流<br><img src="/uploads/qemuIOCtrlFlow.png" alt="QEMU I/O 控制流"></p>
+</li>
+</ul>
+<h3 id="QEMU-与-KVM-交互"><a href="#QEMU-与-KVM-交互" class="headerlink" title="QEMU 与 KVM 交互"></a>QEMU 与 KVM 交互</h3><p>QEMU 纯软件虚拟化模拟器，几乎可以模拟任何硬件设备。通常用来模拟一台能够独立运行操作系统的虚拟机.QEMU 模拟硬件将指令转译给真正的硬件。</p>
+<p>纯软件实现仿真器性能较低，往往需要 KVM （硬件虚拟化加速）帮助完成高频的 CPU 和内存虚拟化，QEMU 则负责 I/O 虚拟化。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 第一步，获取到 KVM 句柄</span></span><br><span class="line">kvmfd = <span class="built_in">open</span>(<span class="string">&quot;/dev/kvm&quot;</span>, O_RDWR);</span><br><span class="line"><span class="comment">// 第二步，创建虚拟机，获取到虚拟机句柄。</span></span><br><span class="line">vmfd = ioctl(kvmfd, KVM_CREATE_VM, <span class="number">0</span>);</span><br><span class="line"><span class="comment">// 第三步，为虚拟机映射内存，还有其他的 PCI，信号处理的初始化。ioctl(kvmfd, KVM_SET_USER_MEMORY_REGION, &amp;mem);</span></span><br><span class="line"><span class="comment">// 第四步，将虚拟机镜像映射到内存，相当于物理机的 boot 过程，把镜像映射到内存。</span></span><br><span class="line"><span class="comment">// 第五步，创建 vCPU，并为 vCPU 分配内存空间。</span></span><br><span class="line">ioctl(kvmfd, KVM_CREATE_VCPU, vcpuid);</span><br><span class="line">vcpu-&gt;kvm_run_mmap_size = ioctl(kvm-&gt;dev_fd, KVM_GET_VCPU_MMAP_SIZE, <span class="number">0</span>);</span><br><span class="line"><span class="comment">// 第五步，创建 vCPU 个数的线程并运行虚拟机。ioctl(kvm-&gt;vcpus-&gt;vcpu_fd, KVM_RUN, 0);</span></span><br><span class="line"><span class="comment">// 第六步，线程进入循环，并捕获虚拟机退出原因，做相应的处理。</span></span><br><span class="line"><span class="keyword">for</span> (;;) &#123;  </span><br><span class="line">  ioctl(KVM_RUN)  </span><br><span class="line">  <span class="keyword">switch</span> (exit_reason) &#123;      </span><br><span class="line">    <span class="keyword">case</span> KVM_EXIT_IO:  <span class="comment">/* ... */</span>      </span><br><span class="line">    <span class="keyword">case</span> KVM_EXIT_HLT: <span class="comment">/* ... */</span>  </span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 这里的退出并不一定是虚拟机关机，</span></span><br><span class="line"><span class="comment">// 虚拟机如果遇到 I/O 操作，访问硬件设备，缺页中断等都会退出执行，</span></span><br><span class="line"><span class="comment">// 退出执行可以理解为将 CPU 执行上下文返回到 Qemu。</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="QEMU-源码结构"><a href="#QEMU-源码结构" class="headerlink" title="QEMU 源码结构"></a>QEMU 源码结构</h3><ul>
+<li>/vl.c: 最主要的模拟循环，虚拟机环境初始化，和 CPU 的执行。</li>
+<li>/target-arch/translate.c: 将 guest 代码翻译成不同架构的 TCG 操作码。</li>
+<li>/tcg/tcg.c: 主要的 TCG 代码。</li>
+<li>/tcg/arch/tcg-target.c: 将 TCG 代码转化生成主机代码。</li>
+<li>/cpu-exec.c: 主要寻找下一个二进制翻译代码块，如果没有找到就请求得到下一个代码块，并且操作生成的代码块。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="left">函数</th>
+<th align="left">路径</th>
+<th align="left">注释</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">main_loop</td>
+<td align="left">/vl.c</td>
+<td align="left">判断运行状态</td>
+</tr>
+<tr>
+<td align="left">qemu_main_loop_start</td>
+<td align="left">/cpus.c</td>
+<td align="left">分时运行 CPU 核</td>
+</tr>
+<tr>
+<td align="left">struct CPUState</td>
+<td align="left">/target-xyz/cpu.h</td>
+<td align="left">CPU 状态结构体</td>
+</tr>
+<tr>
+<td align="left">cpu_exec</td>
+<td align="left">/cpu_exec.c</td>
+<td align="left">主要执行循环</td>
+</tr>
+<tr>
+<td align="left">struct TranslationBlock</td>
+<td align="left">/exec-all.h</td>
+<td align="left">TB（二进制翻译代码块）结构体</td>
+</tr>
+<tr>
+<td align="left">cpu_gen_code</td>
+<td align="left">translate-all.c</td>
+<td align="left">初始化真正的代码生成</td>
+</tr>
+<tr>
+<td align="left">tcg_gen_code</td>
+<td align="left">/tcg/tcg.c</td>
+<td align="left">tcg 代码翻译成 host 代码</td>
+</tr>
+</tbody></table>
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><blockquote>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://www.csd.uoc.gr/~hy428/reading/qemu-internals-slides-may6-2014.pdf">QEMU Internals Slides</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/db8c20aa6a69">一文读懂QEMU模拟器</a></li>
+<li><a target="_blank" rel="noopener" href="https://qemu.weilnetz.de/doc/2.7/qemu-tech.pdf">QEMU Tech</a></li>
+<li><a target="_blank" rel="noopener" href="https://stuff.mit.edu/afs/sipb/project/phone-project/share/doc/qemu/qemu-tech.html">QEMU Internals</a></li>
+</ol>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Toolchain/" rel="tag"># Toolchain</a>
+              <a href="/tags/CPU/" rel="tag"># CPU</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/07/11/%E6%99%BA%E8%83%BD%E9%9F%B3%E5%93%8D%E5%AE%89%E5%85%A8%E9%A3%8E%E9%99%A9/" rel="prev" title="智能音箱安全风险概览">
+      <i class="fa fa-chevron-left"></i> 智能音箱安全风险概览
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/09/26/LeetCode%20938%20%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E7%9A%84%E8%8C%83%E5%9B%B4%E5%92%8C/" rel="next" title="LeetCode 938 C++非递归解">
+      LeetCode 938 C++非递归解 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Quick-EMUlator-QEMU"><span class="nav-number">1.</span> <span class="nav-text">Quick EMUlator(QEMU)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%BF%BB%E8%AF%91"><span class="nav-number">1.2.</span> <span class="nav-text">动态二进制翻译</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9D%97%E9%93%BE%E6%8E%A5"><span class="nav-number">1.2.1.</span> <span class="nav-text">块链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8%E6%98%A0%E5%B0%84"><span class="nav-number">1.2.2.</span> <span class="nav-text">寄存器映射</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E4%B8%BB%E8%A6%81-QEMU-%E7%BB%84%E4%BB%B6"><span class="nav-number">1.3.</span> <span class="nav-text">其它主要 QEMU 组件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SoftMMU"><span class="nav-number">1.3.1.</span> <span class="nav-text">SoftMMU</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%A5%E5%85%85"><span class="nav-number">1.4.</span> <span class="nav-text">补充</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#QEMU-%E4%B8%8E-KVM-%E4%BA%A4%E4%BA%92"><span class="nav-number">1.4.1.</span> <span class="nav-text">QEMU 与 KVM 交互</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#QEMU-%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84"><span class="nav-number">1.4.2.</span> <span class="nav-text">QEMU 源码结构</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">SwordFaith</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">12</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://sunichi.github.io/" title="https:&#x2F;&#x2F;sunichi.github.io" rel="noopener" target="_blank">Sunichi</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://v1ckydxp.github.io/" title="https:&#x2F;&#x2F;v1ckydxp.github.io&#x2F;" rel="noopener" target="_blank">V1cky</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://ama2in9.top/" title="https:&#x2F;&#x2F;ama2in9.top&#x2F;" rel="noopener" target="_blank">Ama2in9</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://harmoc.com/" title="https:&#x2F;&#x2F;harmoc.com&#x2F;" rel="noopener" target="_blank">Harmoc</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://zhe6652.github.io/" title="https:&#x2F;&#x2F;zhe6652.github.io&#x2F;" rel="noopener" target="_blank">Red</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">SwordFaith</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
