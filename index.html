@@ -163,6 +163,72 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://swordfaith.github.io/2020/11/14/UEFI-Intro/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="SwordFaith">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SwordFaith's Blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/11/14/UEFI-Intro/" class="post-title-link" itemprop="url">UEFI_Intro.md</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-11-14 18:24:48 / 修改时间：18:26:54" itemprop="dateCreated datePublished" datetime="2020-11-14T18:24:48+08:00">2020-11-14</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>UEFI 组成与概念解释</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/11/14/UEFI-Intro/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://swordfaith.github.io/2020/09/21/AFL%20README(CN)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -916,155 +982,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://swordfaith.github.io/2019/09/24/QEMU%20%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="SwordFaith">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SwordFaith's Blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/09/24/QEMU%20%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/" class="post-title-link" itemprop="url">QEMU 是如何工作的？</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2019-09-24 01:58:15 / 修改时间：02:20:37" itemprop="dateCreated datePublished" datetime="2019-09-24T01:58:15+08:00">2019-09-24</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">安全</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="Quick-EMUlator-QEMU"><a href="#Quick-EMUlator-QEMU" class="headerlink" title="Quick EMUlator(QEMU)"></a>Quick EMUlator(QEMU)</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><ul>
-<li>仿真器和虚拟化器</li>
-<li>模式：<ul>
-<li>用户模式仿真：允许一个（Linux）进程执行在不同架构的CPU上，该模式下，QEMU 可以作为进程级虚拟机。</li>
-<li>系统模式仿真：允许仿真完整的系统，包括处理器和配套的外设，该模式下，QEMU 也可以作为系统虚拟机</li>
-</ul>
-</li>
-<li>主要用途<ul>
-<li>跨平台编译与开发环境</li>
-<li>虚拟化，尤其是外设仿真，作为对 xen 和 kvm 的补充</li>
-<li>安卓仿真器（作为 SDK 的一部分）</li>
-</ul>
-</li>
-</ul>
-<h2 id="动态二进制翻译"><a href="#动态二进制翻译" class="headerlink" title="动态二进制翻译"></a>动态二进制翻译</h2><p>动态转译过程：</p>
-<ol>
-<li>读取源指令流（二进制）-&gt; gen_intermediate_code()</li>
-<li>解释为微操作（TCG 微操作）-&gt; tcg_gen_code()</li>
-<li>编译为目标文件（二进制）</li>
-<li>动态产生目标指令流</li>
-</ol>
-<ul>
-<li>功能转译：模仿源处理器完成的功能而非执行过程</li>
-<li>动态二进制翻译：像一个不含解释器的 JIT 编译器<ul>
-<li>解释器逐一执行指令，使得执行速度因为固定的额外开销显著变慢</li>
-<li>作为替代，QEMU 用自己需要的方式转换代码<ul>
-<li>翻译基本块 -&gt; 生成主机目标代码</li>
-<li>在翻译缓存中存储翻译块</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>Tiny Code Generator (TCG)<ul>
-<li>将源二进制流转换为微操作</li>
-<li>（固定的）寄存器映射来减少产生的 load/store 指令</li>
-<li>翻译块：不包含跳转指令，以分支指令为分隔，翻译块被转换为主机指令的一个单一序列，并放入翻译缓存<ul>
-<li>缓存中的翻译块用它们的客户机虚拟地址（如PC值）索引，因此可以快速查得</li>
-<li>翻译缓存的大小默认为 32MB，但是可以自行配置</li>
-<li>一旦缓存运行超出空间，全部缓存被清理</li>
-</ul>
-</li>
-<li>块链接</li>
-</ul>
-</li>
-<li>在主循环中，通过 cpu_exec() 进入下一代码块</li>
-<li>程序执行至无后续链接的代码块，则通过后置代码返回 cpu_exec()</li>
-</ul>
-<h3 id="块链接"><a href="#块链接" class="headerlink" title="块链接"></a>块链接</h3><ul>
-<li>正常情况下，每个转译块的执行，被特殊代码块的执行环绕<ul>
-<li><em>前置代码</em>初始化处理器以生成跳转并执行到指定代码块的主机代码</li>
-<li><em>后置代码</em>恢复处理器至正常状态并返回到主循环</li>
-</ul>
-</li>
-<li>在每个代码块后返回主循环显著增加了额外开销<ul>
-<li>因此在下一个代码块已经翻译好的情况下，QEMU会patch原始块，以跳过后置代码而直接执行下一代码块。</li>
-</ul>
-</li>
-<li>在代码块间直接跳转：<ul>
-<li>在存放返回至后置代码的指令和代码块返回间，留出跳转空间</li>
-<li>每当一个块返回时，尝试链接至下一代码块</li>
-</ul>
-</li>
-<li>当链接在数个连续块间完成后，代码块间将形成链和环<ul>
-<li>这允许 QEMU 仿真内循环时，无需运行额外的代码</li>
-<li>这也意味着，在循环过程中，只有在遇到未链接或未翻译的块需要被执行时，才将控制权还给 QEMU</li>
-</ul>
-</li>
-<li>异步中断<ul>
-<li>QEMU 不主动检查每个基础块中是否有硬件中断在等待，而是由用户异步的调用特定函数 cpu_interrupt() 来告知 QEMU 中断正在等待</li>
-<li>该函数的功能是重置当前正在执行的块链，返回至 CPU 仿真器的主循环</li>
-<li>异步中断常常来自其它线程</li>
-</ul>
-</li>
-</ul>
-<h3 id="寄存器映射"><a href="#寄存器映射" class="headerlink" title="寄存器映射"></a>寄存器映射</h3>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/09/24/QEMU%20%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1134,7 +1051,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">12</span>
+          <span class="site-state-item-count">13</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1147,7 +1064,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">15</span>
+        <span class="site-state-item-count">16</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

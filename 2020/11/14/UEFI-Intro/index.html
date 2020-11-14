@@ -20,15 +20,24 @@
     var CONFIG = {"hostname":"swordfaith.github.io","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta property="og:type" content="website">
-<meta property="og:title" content="SwordFaith&#39;s Blog">
-<meta property="og:url" content="https://swordfaith.github.io/tags/%E6%A8%A1%E7%B3%8A%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/index.html">
+  <meta name="description" content="UEFI 组成与概念解释">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UEFI_Intro.md">
+<meta property="og:url" content="https://swordfaith.github.io/2020/11/14/UEFI-Intro/index.html">
 <meta property="og:site_name" content="SwordFaith&#39;s Blog">
+<meta property="og:description" content="UEFI 组成与概念解释">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/11/14/eEWGLm9opvkUz8i.png">
+<meta property="og:image" content="https://i.loli.net/2020/11/14/b5MzC1pnQPJorlk.png">
+<meta property="article:published_time" content="2020-11-14T10:24:48.000Z">
+<meta property="article:modified_time" content="2020-11-14T10:26:54.062Z">
 <meta property="article:author" content="SwordFaith">
+<meta property="article:tag" content="Firmware">
+<meta property="article:tag" content="UEFI">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/11/14/eEWGLm9opvkUz8i.png">
 
-<link rel="canonical" href="https://swordfaith.github.io/tags/%E6%A8%A1%E7%B3%8A%E6%B5%8B%E8%AF%95%E5%B7%A5%E5%85%B7/">
+<link rel="canonical" href="https://swordfaith.github.io/2020/11/14/UEFI-Intro/">
 
 
 <script id="page-configurations">
@@ -36,12 +45,12 @@
   CONFIG.page = {
     sidebar: "",
     isHome : false,
-    isPost : false,
+    isPost : true,
     lang   : 'zh-CN'
   };
 </script>
 
-  <title>标签: 模糊测试工具 | SwordFaith's Blog</title>
+  <title>UEFI_Intro.md | SwordFaith's Blog</title>
   
 
 
@@ -157,74 +166,118 @@
         <div class="content-wrap">
           
 
-          <div class="content tag">
+          <div class="content post posts-expand">
             
 
+    
   
   
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <h2 class="collection-header">模糊测试工具
-          <small>标签</small>
-        </h2>
-      </div>
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://swordfaith.github.io/2020/11/14/UEFI-Intro/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="SwordFaith">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SwordFaith's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          UEFI_Intro.md
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-11-14 18:24:48 / 修改时间：18:26:54" itemprop="dateCreated datePublished" datetime="2020-11-14T18:24:48+08:00">2020-11-14</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2020</span>
+        <p>UEFI 组成与概念解释</p>
+<a id="more"></a>
+
+<h1 id="UEFI-简介"><a href="#UEFI-简介" class="headerlink" title="UEFI 简介"></a>UEFI 简介</h1><p>UEFI（Unified Extensible Firmware Interface），由最初的 EFI（Extensible Firmware Interface）发展而来。<br>EFI 在 2000 年由 Intel 公开了 1.0 版本，后来经过 EFI 2.0 规范演进，2005 年成立了 UEFI 国际联盟，完善并制定了<br>UEFI 标准。</p>
+<p><img src="https://i.loli.net/2020/11/14/eEWGLm9opvkUz8i.png" alt="UEFIConcepts.png"></p>
+<p>UEFI 定义了操作系统与硬件之间的接口规范，即 UEFI 固件的接口规范。当 UEFI 固件启动至一定阶段时，可以选择进入 UEFI<br>命令行模式。此时 UEFI 环境可以视为一个卫星操作系统，有其自己的文件系统、内存管理、网络通信服务。在该模式下，可以装载<br>驱动程序、运行 UEFI 应用程序，bootloader 是一种 UEFI 应用程序。</p>
+<p><img src="https://i.loli.net/2020/11/14/b5MzC1pnQPJorlk.png" alt="PlatFormInitPhases.png"></p>
+<p>UEFI 驱动程序和应用程序：</p>
+<ul>
+<li>UEFI 驱动程序：封装具体硬件的功能并提供接口给外部使用的程序</li>
+<li>UEFI 应用程序：没有提供接口的程序</li>
+</ul>
+<h1 id="UEFI-协议"><a href="#UEFI-协议" class="headerlink" title="UEFI 协议"></a>UEFI 协议</h1><p>UEFI 以协议（Protocol）的形式规定了封装硬件的接口，每个协议由三部分组成：协议的 GUID（Global Unique ID），<br>协议的接口结构体、协议的接口结构体、协议的服务。其中，GUID 是长度 128 位的固定值，用于唯一标识该接口。协议的接口<br>结构体是 C 语言中的结构体，其域大部分是指针，小部分是关键变量。UEFI 规定了每个域的类型，指针的参数类型域返回值、<br>变量类型与意义。结构体中的每个函数指针是用于访问硬件的、封装了具体功能的接口。协议的服务则规定了每个接口的功能。<br>每个实现了 UEFI 协议的程序称之为 UEFI 驱动程序。</p>
+<h1 id="UEFI-系统调用"><a href="#UEFI-系统调用" class="headerlink" title="UEFI 系统调用"></a>UEFI 系统调用</h1><p>UEFI 系统调用是 UEFI 系统服务表（UEFI System Table）所提供的接口。系统调用提供的服务氛围多种，例如运行时服务、<br>启动服务等。协议句柄服务，驱动程序使用该服务向外部提供协议，应用程序使用该服务检索可用的协议。在加载驱动程序或者<br>执行应用程序时，系统服务表会作为入口函数的指针传递给程序，通过该指针可使用其提供的接口。</p>
+<p>UEFI 以句柄（Handle）的形式将硬件与协议相绑定，并维持了全局的句柄双向连标，每个句柄上绑定了硬件的设备路径、访问<br>硬件的协议等内容。UEFI 驱动程序主要使用协议句柄服务进行协议的安装，如使用 InstallProtocolInterface。安装后，<br>其他应用程序可检索该协议，从而访问与其相绑定过得硬件，如使用 LocateProtocol 接口。由于驱动程序使用固定的接口<br>绑定协议，因此可以静态分析提取接口较为方便。</p>
+<h1 id="有源码情况下-UEFI-驱动程序自动化测试的基本思路"><a href="#有源码情况下-UEFI-驱动程序自动化测试的基本思路" class="headerlink" title="有源码情况下 UEFI 驱动程序自动化测试的基本思路"></a>有源码情况下 UEFI 驱动程序自动化测试的基本思路</h1><ol>
+<li>驱动程序接口提取<ol>
+<li>过滤冗余函数，避免对不必要的函数进行静态分析</li>
+<li>在每个函数体的实现中匹配特定的抽象语法树结构，即调用 UEFI 系统调用进行协议绑定的代码段</li>
+<li>从该函数调用中提取该协议的 GUID 标识符和具体类型</li>
+</ol>
+</li>
+<li>数据类型提取<ol>
+<li>静态数据类型提取<ol>
+<li>静态类型提取 <code>void*</code> 以外的数据类型：以协议的类型作为入口，提取协议中每个函数指针的类型以及其参数类型，</li>
+<li>数据类型存在依赖关系还需要提取每个类型依赖的类型，需要递归地处理所有的参数类型直至基本数据类型。</li>
+</ol>
+</li>
+<li>动态数据类型提取<ol>
+<li>处理 <code>void*</code> 类型：在使用时转化为具体的数据类型，因此需要在函数实现中寻找类型的转换，从而提取 <code>void*</code> 可能的类型</li>
+<li>函数实现中往往存在函数调用，将具有动态数据类型的参数传递给其它函数，因此需要对函数调用关系进行追踪，在自函数中提取动态数据类型，即控制流分析</li>
+<li>UEFI 驱动程序中存在多种函数指针调用，目前解决了调用其它协议接口的函数指针</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>参数构造</li>
+</ol>
+
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+    
+    
+    
 
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2020-09-21T11:00:00+08:00"
-              content="2020-09-21">
-          09-21
-        </time>
-      </div>
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Firmware/" rel="tag"># Firmware</a>
+              <a href="/tags/UEFI/" rel="tag"># UEFI</a>
+          </div>
 
-      <div class="post-title">
-          <a class="post-title-link" href="/2020/09/21/AFL%20README(CN)/" itemprop="url">
-            <span itemprop="name">AFL README(CN)</span>
-          </a>
-      </div>
+        
 
-    </header>
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/09/21/AFL%20README(CN)/" rel="prev" title="AFL README(CN)">
+      <i class="fa fa-chevron-left"></i> AFL README(CN)
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
   </article>
-    <div class="collection-year">
-      <span class="collection-header">2019</span>
-    </div>
-
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2019-11-21T22:10:00+08:00"
-              content="2019-11-21">
-          11-21
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2019/11/21/Angora/" itemprop="url">
-            <span itemprop="name">Angora 基于规则搜索的高效模糊测试</span>
-          </a>
-      </div>
-
-    </header>
-  </article>
-
-    </div>
-  </div>
   
   
-  
-
   
 
 
@@ -277,6 +330,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#UEFI-%E7%AE%80%E4%BB%8B"><span class="nav-number">1.</span> <span class="nav-text">UEFI 简介</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#UEFI-%E5%8D%8F%E8%AE%AE"><span class="nav-number">2.</span> <span class="nav-text">UEFI 协议</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#UEFI-%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">UEFI 系统调用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9C%89%E6%BA%90%E7%A0%81%E6%83%85%E5%86%B5%E4%B8%8B-UEFI-%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%80%9D%E8%B7%AF"><span class="nav-number">4.</span> <span class="nav-text">有源码情况下 UEFI 驱动程序自动化测试的基本思路</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
