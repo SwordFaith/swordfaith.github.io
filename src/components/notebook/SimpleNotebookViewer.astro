@@ -1,0 +1,163 @@
+---
+export interface NotebookCell {
+  type: 'code' | 'markdown' | 'raw';
+  source: string;
+  outputs?: string[];
+  executionCount?: number | null;
+}
+
+export interface Props {
+  cells: NotebookCell[];
+  title?: string;
+  kernelName?: string;
+}
+
+const { cells, title = "Jupyter Notebook", kernelName = "Python 3" } = Astro.props;
+---
+
+<div class="notebook-viewer max-w-4xl mx-auto">
+  <!-- Notebook Header -->
+  <div class="notebook-header mb-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">{title}</h1>
+    <div class="flex items-center space-x-4 text-sm text-gray-600">
+      <span class="flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0h8v12H6V4z"></path>
+        </svg>
+        Jupyter Notebook
+      </span>
+      <span class="flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        {cells.length} cells
+      </span>
+      <span class="flex items-center">
+        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+        </svg>
+        {kernelName}
+      </span>
+    </div>
+  </div>
+
+  <!-- Notebook Cells -->
+  <div class="notebook-cells space-y-4">
+    {cells.map((cell, index) => (
+      <div class={`notebook-cell cell-${cell.type} border rounded-lg overflow-hidden shadow-sm bg-white`}>
+        
+        {/* Code Cell */}
+        {cell.type === 'code' && (
+          <div class="code-cell">
+            <!-- Input -->
+            <div class="code-input border-l-4 border-blue-500">
+              <div class="input-prompt bg-blue-50 px-4 py-2 text-sm font-mono text-blue-700 border-b border-gray-200">
+                In [{cell.executionCount || ' '}]:
+                <button class="copy-btn float-right text-gray-500 hover:text-gray-700" data-code={cell.source}>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="code-content p-4 bg-gray-50">
+                <pre><code class="language-python text-sm leading-relaxed">{cell.source}</code></pre>
+              </div>
+            </div>
+            
+            <!-- Output -->
+            {cell.outputs && cell.outputs.length > 0 && (
+              <div class="code-output border-l-4 border-red-500">
+                <div class="output-prompt bg-red-50 px-4 py-2 text-sm font-mono text-red-700 border-b border-gray-200">
+                  Out[{cell.executionCount || ' '}]:
+                </div>
+                <div class="output-content p-4">
+                  {cell.outputs.map((output, outputIndex) => (
+                    <div class="output-item mb-2 last:mb-0" key={outputIndex}>
+                      <pre class="text-sm bg-white border rounded p-3 whitespace-pre-wrap overflow-x-auto">{output}</pre>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Markdown Cell */}
+        {cell.type === 'markdown' && (
+          <div class="markdown-cell border-l-4 border-green-500">
+            <div class="markdown-content p-6 prose prose-lg max-w-none">
+              <div set:html={cell.source} />
+            </div>
+          </div>
+        )}
+
+        {/* Raw Cell */}
+        {cell.type === 'raw' && (
+          <div class="raw-cell border-l-4 border-gray-500">
+            <div class="raw-content p-4 bg-gray-100">
+              <pre class="text-sm font-mono whitespace-pre-wrap">{cell.source}</pre>
+            </div>
+          </div>
+        )}
+
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  /* Syntax highlighting for code */
+  .language-python {
+    color: #333;
+  }
+  
+  .copy-btn:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .notebook-viewer {
+      margin: 0 1rem;
+    }
+    
+    .code-content,
+    .output-content {
+      padding: 1rem;
+    }
+    
+    .code-content pre {
+      font-size: 0.75rem;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Copy functionality
+    const copyButtons = document.querySelectorAll('.copy-btn');
+    
+    copyButtons.forEach(button => {
+      button.addEventListener('click', async function() {
+        const code = this.dataset.code;
+        
+        try {
+          await navigator.clipboard.writeText(code);
+          
+          // Visual feedback
+          const svg = this.querySelector('svg');
+          const originalHTML = svg.innerHTML;
+          svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+          this.classList.add('text-green-600');
+          
+          setTimeout(() => {
+            svg.innerHTML = originalHTML;
+            this.classList.remove('text-green-600');
+          }, 2000);
+        } catch (err) {
+          console.error('Copy failed:', err);
+        }
+      });
+    });
+  });
+</script>

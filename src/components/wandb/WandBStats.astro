@@ -1,0 +1,200 @@
+---
+import { wandbClient, type WandBProject, type WandBRun } from '../../utils/wandb-client';
+
+export interface Props {
+  entity: string;
+  projects?: string[];
+  limit?: number;
+  showProjects?: boolean;
+  showRecentRuns?: boolean;
+  className?: string;
+}
+
+const {
+  entity,
+  projects = [],
+  limit = 5,
+  showProjects = true,
+  showRecentRuns = true,
+  className = ''
+} = Astro.props;
+
+let wandbProjects: WandBProject[] = [];
+let recentRuns: WandBRun[] = [];
+let error: string | null = null;
+
+try {
+  // 获取项目数据
+  if (showProjects) {
+    wandbProjects = await wandbClient.getProjects(entity);
+    
+    // 如果指定了项目列表，则过滤
+    if (projects.length > 0) {
+      wandbProjects = wandbProjects.filter(p => projects.includes(p.name));
+    }
+    
+    // 限制显示数量
+    wandbProjects = wandbProjects.slice(0, limit);
+  }
+  
+  // 获取最近的实验运行
+  if (showRecentRuns && wandbProjects.length > 0) {
+    const allRuns: WandBRun[] = [];
+    
+    for (const project of wandbProjects.slice(0, 3)) { // 只从前3个项目获取运行数据
+      try {
+        const runs = await wandbClient.getRuns(project.name, entity, 10);
+        allRuns.push(...runs);
+      } catch (err) {
+        console.warn(`Failed to fetch runs for project ${project.name}:`, err);
+      }
+    }
+    
+    // 按时间排序并限制数量
+    recentRuns = allRuns
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      .slice(0, limit);
+  }
+} catch (err) {
+  console.error('Failed to fetch WandB data:', err);
+  error = 'Failed to load WandB data';
+}
+
+// 计算总统计
+const totalProjects = wandbProjects.length;
+const totalRuns = wandbProjects.reduce((sum, p) => sum + p.run_count, 0);
+const finishedRuns = recentRuns.filter(r => r.state === 'finished').length;
+---
+
+<div class={`wandb-stats ${className}`}>
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+        </svg>
+        WandB 实验统计
+      </h3>
+      <a 
+        href={`https://wandb.ai/${entity}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+      >
+        查看完整数据 ↗
+      </a>
+    </div>
+
+    {error ? (
+      <div class="text-center py-8">
+        <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="text-gray-600">{error}</p>
+      </div>
+    ) : (
+      <>
+        <!-- 统计概览 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="text-center p-4 bg-blue-50 rounded-lg">
+            <div class="text-2xl font-bold text-blue-600">{totalProjects}</div>
+            <div class="text-sm text-gray-600">项目</div>
+          </div>
+          <div class="text-center p-4 bg-green-50 rounded-lg">
+            <div class="text-2xl font-bold text-green-600">{totalRuns}</div>
+            <div class="text-sm text-gray-600">总实验</div>
+          </div>
+          <div class="text-center p-4 bg-purple-50 rounded-lg">
+            <div class="text-2xl font-bold text-purple-600">{finishedRuns}</div>
+            <div class="text-sm text-gray-600">已完成</div>
+          </div>
+          <div class="text-center p-4 bg-orange-50 rounded-lg">
+            <div class="text-2xl font-bold text-orange-600">{recentRuns.filter(r => r.state === 'running').length}</div>
+            <div class="text-sm text-gray-600">运行中</div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- 项目列表 -->
+          {showProjects && wandbProjects.length > 0 && (
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-3">活跃项目</h4>
+              <div class="space-y-3">
+                {wandbProjects.map((project) => (
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex-1">
+                      <div class="font-medium text-gray-900">{project.name}</div>
+                      {project.description && (
+                        <div class="text-sm text-gray-600 truncate">{project.description}</div>
+                      )}
+                    </div>
+                    <div class="text-right">
+                      <div class="text-sm font-medium text-gray-900">{project.run_count}</div>
+                      <div class="text-xs text-gray-500">runs</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- 最近运行 -->
+          {showRecentRuns && recentRuns.length > 0 && (
+            <div>
+              <h4 class="font-semibold text-gray-800 mb-3">最近实验</h4>
+              <div class="space-y-3">
+                {recentRuns.map((run) => (
+                  <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex-1 min-w-0">
+                      <div class="font-medium text-gray-900 truncate">
+                        {run.display_name || run.name}
+                      </div>
+                      <div class="text-sm text-gray-600">{run.project.name}</div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <span class={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        run.state === 'finished' ? 'bg-green-100 text-green-800' :
+                        run.state === 'running' ? 'bg-blue-100 text-blue-800' :
+                        run.state === 'crashed' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {run.state === 'finished' ? '完成' :
+                         run.state === 'running' ? '运行中' :
+                         run.state === 'crashed' ? '失败' : run.state}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {wandbProjects.length === 0 && recentRuns.length === 0 && (
+          <div class="text-center py-8">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-1.414 1.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293L13.586 13H11v4a1 1 0 01-1 1H6v-4h2.414a1 1 0 00.707-.293L10.586 13H16"></path>
+            </svg>
+            <p class="text-gray-600">暂无 WandB 数据</p>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+</div>
+
+<style>
+  .wandb-stats {
+    @apply w-full;
+  }
+  
+  @media (max-width: 768px) {
+    .wandb-stats .grid-cols-4 {
+      @apply grid-cols-2;
+    }
+    
+    .wandb-stats .md\:grid-cols-2 {
+      @apply grid-cols-1;
+    }
+  }
+</style>

@@ -1,0 +1,333 @@
+---
+import type { ParsedNotebook, ParsedCell, ParsedOutput } from '@/utils/notebook-parser';
+
+export interface Props {
+  notebook: ParsedNotebook;
+  showExecutionCount?: boolean;
+  showMetadata?: boolean;
+}
+
+const { 
+  notebook, 
+  showExecutionCount = true, 
+  showMetadata = false 
+} = Astro.props;
+---
+
+<div class="notebook-viewer">
+  <!-- Notebook Header -->
+  <div class="notebook-header mb-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">{notebook.title}</h1>
+    <div class="flex items-center space-x-4 text-sm text-gray-600">
+      <span>📓 Jupyter Notebook</span>
+      <span>🔢 {notebook.cells.length} cells</span>
+      {notebook.executionCount > 0 && (
+        <span>▶️ {notebook.executionCount} executed</span>
+      )}
+      {notebook.metadata.kernelspec && (
+        <span>🐍 {notebook.metadata.kernelspec.display_name}</span>
+      )}
+    </div>
+  </div>
+
+  <!-- Notebook Cells -->
+  <div class="notebook-cells space-y-4">
+    {notebook.cells.map((cell, index) => (
+      <div class={`notebook-cell cell-${cell.type}`} id={cell.id}>
+        {cell.type === 'code' && (
+          <div class="code-cell">
+            {/* Code Input */}
+            <div class="code-input">
+              <div class="input-header">
+                {showExecutionCount && (
+                  <div class="execution-count">
+                    In [{cell.executionCount || ' '}]:
+                  </div>
+                )}
+                <div class="cell-actions">
+                  <button class="copy-button" data-code={cell.source}>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <pre class="code-content"><code class="language-python">{cell.source}</code></pre>
+            </div>
+
+            {/* Code Output */}
+            {cell.outputs.length > 0 && (
+              <div class="code-output">
+                <div class="output-header">
+                  {showExecutionCount && (
+                    <div class="execution-count">
+                      Out[{cell.executionCount || ' '}]:
+                    </div>
+                  )}
+                </div>
+                <div class="output-content">
+                  {cell.outputs.map((output, outputIndex) => (
+                    <div class={`output-item output-${output.type}`} key={outputIndex}>
+                      <OutputRenderer output={output} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {cell.type === 'markdown' && (
+          <div class="markdown-cell">
+            <div class="markdown-content prose prose-lg max-w-none" set:html={await renderMarkdown(cell.source)} />
+          </div>
+        )}
+
+        {cell.type === 'raw' && (
+          <div class="raw-cell">
+            <pre class="raw-content">{cell.source}</pre>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+
+  <!-- Notebook Metadata -->
+  {showMetadata && (
+    <div class="notebook-metadata mt-8 p-4 bg-gray-50 rounded-lg">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">Notebook Metadata</h3>
+      <pre class="text-sm text-gray-700 overflow-x-auto">
+        {JSON.stringify(notebook.metadata, null, 2)}
+      </pre>
+    </div>
+  )}
+</div>
+
+---
+
+{/* Output Renderer Component */}
+---
+interface OutputRendererProps {
+  output: ParsedOutput;
+}
+
+const OutputRenderer = ({ output }: OutputRendererProps) => {
+  switch (output.type) {
+    case 'text':
+      return <pre class="output-text">{output.content}</pre>;
+    
+    case 'html':
+      return <div class="output-html" set:html={output.content} />;
+    
+    case 'image':
+      return (
+        <div class="output-image">
+          <img 
+            src={`data:${output.mimeType};base64,${output.content}`} 
+            alt="Notebook output" 
+            class="max-w-full h-auto rounded border"
+          />
+        </div>
+      );
+    
+    case 'json':
+      return (
+        <div class="output-json">
+          <pre class="json-content">{output.content}</pre>
+        </div>
+      );
+    
+    case 'error':
+      return (
+        <div class="output-error">
+          <pre class="error-content">{output.content}</pre>
+        </div>
+      );
+    
+    default:
+      return <div class="output-unknown">Unknown output type: {output.type}</div>;
+  }
+};
+---
+
+{/* Markdown Renderer */}
+---
+import { marked } from 'marked';
+import { markedHighlight } from "marked-highlight";
+import hljs from 'highlight.js';
+
+// Configure marked with syntax highlighting
+marked.use(markedHighlight({
+  langPrefix: 'hljs language-',
+  highlight(code, lang) {
+    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+    return hljs.highlight(code, { language }).value;
+  }
+}));
+
+async function renderMarkdown(source: string): Promise<string> {
+  return marked(source);
+}
+---
+
+<style>
+  .notebook-viewer {
+    @apply max-w-4xl mx-auto;
+  }
+  
+  .notebook-cell {
+    @apply border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm;
+  }
+  
+  /* Code Cell Styles */
+  .code-cell {
+    @apply flex flex-col;
+  }
+  
+  .code-input {
+    @apply border-b border-gray-200;
+  }
+  
+  .input-header {
+    @apply flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200;
+  }
+  
+  .execution-count {
+    @apply text-sm font-mono text-blue-600;
+  }
+  
+  .cell-actions {
+    @apply flex space-x-2;
+  }
+  
+  .copy-button {
+    @apply p-1 text-gray-500 hover:text-gray-700 transition-colors;
+  }
+  
+  .code-content {
+    @apply p-4 bg-gray-50 text-sm font-mono leading-relaxed overflow-x-auto;
+  }
+  
+  .code-output {
+    @apply bg-white;
+  }
+  
+  .output-header {
+    @apply px-4 py-2 bg-gray-50 border-b border-gray-200;
+  }
+  
+  .output-content {
+    @apply p-4;
+  }
+  
+  /* Output Type Styles */
+  .output-text {
+    @apply text-sm font-mono bg-gray-100 p-3 rounded whitespace-pre-wrap;
+  }
+  
+  .output-html {
+    @apply prose prose-sm max-w-none;
+  }
+  
+  .output-image {
+    @apply text-center;
+  }
+  
+  .output-json {
+    @apply bg-gray-100 rounded p-3;
+  }
+  
+  .json-content {
+    @apply text-sm font-mono text-gray-800;
+  }
+  
+  .output-error {
+    @apply bg-red-50 border border-red-200 rounded p-3;
+  }
+  
+  .error-content {
+    @apply text-sm font-mono text-red-800 whitespace-pre-wrap;
+  }
+  
+  /* Markdown Cell Styles */
+  .markdown-cell {
+    @apply p-6;
+  }
+  
+  .markdown-content {
+    @apply text-gray-800;
+  }
+  
+  /* Raw Cell Styles */
+  .raw-cell {
+    @apply p-4 bg-gray-50;
+  }
+  
+  .raw-content {
+    @apply text-sm font-mono text-gray-700 whitespace-pre-wrap;
+  }
+  
+  /* Cell Type Indicators */
+  .cell-code {
+    @apply border-l-4 border-blue-500;
+  }
+  
+  .cell-markdown {
+    @apply border-l-4 border-green-500;
+  }
+  
+  .cell-raw {
+    @apply border-l-4 border-gray-500;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .notebook-viewer {
+      @apply px-2;
+    }
+    
+    .code-content,
+    .output-text {
+      @apply text-xs;
+    }
+    
+    .input-header,
+    .output-header {
+      @apply px-2 py-1;
+    }
+    
+    .markdown-cell {
+      @apply p-3;
+    }
+  }
+</style>
+
+<script>
+  // Copy code functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const copyButtons = document.querySelectorAll('.copy-button');
+    
+    copyButtons.forEach(button => {
+      button.addEventListener('click', async function() {
+        const code = this.dataset.code;
+        
+        try {
+          await navigator.clipboard.writeText(code);
+          
+          // Show success feedback
+          const svg = this.querySelector('svg');
+          const originalHTML = svg.innerHTML;
+          svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+          this.classList.add('text-green-600');
+          
+          setTimeout(() => {
+            svg.innerHTML = originalHTML;
+            this.classList.remove('text-green-600');
+          }, 2000);
+        } catch (err) {
+          console.error('Failed to copy code:', err);
+        }
+      });
+    });
+  });
+</script>

@@ -1,0 +1,84 @@
+---
+export interface Props {
+  title: string;
+  description?: string;
+  keywords?: string[];
+  image?: string;
+}
+
+const { 
+  title, 
+  description = "LLM算法工程师的技术博客，专注于后训练、强化学习算法、框架和数据研发", 
+  keywords = ["LLM", "算法工程师", "强化学习", "后训练", "技术博客"],
+  image = "/og-image.jpg"
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="keywords" content={keywords.join(", ")} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalURL} />
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.url)} />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={Astro.url} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(image, Astro.url)} />
+    
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
+    
+    <title>{title}</title>
+  </head>
+  <body class="bg-gray-50 text-gray-900 min-h-screen">
+    <nav class="bg-white shadow-lg border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <a href="/" class="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
+              LLM Engineer Blog
+            </a>
+          </div>
+          <div class="flex items-center space-x-6">
+            <!-- Navigation Links -->
+            <a href="/" class="text-gray-600 hover:text-gray-900 transition-colors">首页</a>
+            <a href="/blog" class="text-gray-600 hover:text-gray-900 transition-colors">博客</a>
+            <a href="/notebooks" class="text-gray-600 hover:text-gray-900 transition-colors">Notebooks</a>
+            <a href="/about" class="text-gray-600 hover:text-gray-900 transition-colors">关于</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <main class="flex-1">
+      <slot />
+    </main>
+    
+    <footer class="bg-white border-t border-gray-200">
+      <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-gray-600">
+          <p>&copy; 2024 LLM Engineer Blog. Built with Astro.</p>
+        </div>
+      </div>
+    </footer>
+    
+  </body>
+</html>

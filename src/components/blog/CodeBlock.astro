@@ -1,0 +1,109 @@
+---
+export interface Props {
+  code: string;
+  language?: string;
+  title?: string;
+  showLineNumbers?: boolean;
+  highlightLines?: number[];
+}
+
+const { 
+  code, 
+  language = "text", 
+  title, 
+  showLineNumbers = true,
+  highlightLines = []
+} = Astro.props;
+---
+
+<div class="code-block-container my-6">
+  {title && (
+    <div class="bg-gray-100 px-4 py-2 border-b border-gray-200 text-sm font-medium text-gray-700 rounded-t-lg">
+      <span class="flex items-center">
+        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
+        </svg>
+        {title}
+      </span>
+    </div>
+  )}
+  <div class="relative">
+    <pre class={`language-${language} ${showLineNumbers ? 'line-numbers' : ''} ${title ? 'rounded-t-none' : ''} rounded-lg overflow-x-auto`}>
+      <code class={`language-${language}`} set:html={code}></code>
+    </pre>
+    <button 
+      class="absolute top-2 right-2 p-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors copy-button"
+      title="复制代码"
+      data-code={code}
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<style>
+  .code-block-container pre {
+    @apply bg-gray-900 text-gray-100 p-4 text-sm leading-relaxed;
+  }
+  
+  .code-block-container pre.line-numbers {
+    padding-left: 3.5rem;
+    position: relative;
+  }
+  
+  .code-block-container pre.line-numbers::before {
+    content: counter(line-number);
+    counter-increment: line-number;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: pre-line;
+  }
+  
+  .copy-button:hover svg {
+    transform: scale(1.1);
+  }
+  
+  .copy-button.copied {
+    @apply bg-green-600;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const copyButtons = document.querySelectorAll('.copy-button');
+    
+    copyButtons.forEach(button => {
+      button.addEventListener('click', async function() {
+        const code = this.dataset.code;
+        
+        try {
+          await navigator.clipboard.writeText(code);
+          
+          // 显示复制成功状态
+          this.classList.add('copied');
+          const svg = this.querySelector('svg');
+          svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+          
+          setTimeout(() => {
+            this.classList.remove('copied');
+            svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>';
+          }, 2000);
+        } catch (err) {
+          console.error('复制失败:', err);
+        }
+      });
+    });
+  });
+</script>

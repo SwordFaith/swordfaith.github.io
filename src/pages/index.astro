@@ -1,0 +1,98 @@
+---
+import BaseLayout from '@/components/layout/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const blogPosts = await getCollection('blog', ({ data }) => !data.draft);
+const recentPosts = blogPosts
+  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
+  .slice(0, 3);
+---
+
+<BaseLayout title="LLM算法工程师技术博客">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Hero Section -->
+    <section class="text-center mb-16">
+      <h1 class="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+        LLM 算法工程师
+      </h1>
+      <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        专注于后训练、强化学习算法、框架和数据研发的技术分享
+      </p>
+      <div class="flex justify-center space-x-4">
+        <a href="/blog" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+          阅读博客
+        </a>
+        <a href="/about" class="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+          了解我
+        </a>
+      </div>
+    </section>
+
+    <!-- Research Areas -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">研究领域</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold text-gray-900 mb-3">后训练技术</h3>
+          <p class="text-gray-600">
+            RLHF、DPO、SFT 等后训练方法的研究与实现，提升模型对话能力和安全性
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold text-gray-900 mb-3">强化学习算法</h3>
+          <p class="text-gray-600">
+            PPO、SAC、DQN 等强化学习算法在大语言模型训练中的应用与优化
+          </p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold text-gray-900 mb-3">框架与数据</h3>
+          <p class="text-gray-600">
+            分布式训练框架开发，高质量训练数据构建与处理流程设计
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recent Posts -->
+    {recentPosts.length > 0 && (
+      <section>
+        <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">最新文章</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {recentPosts.map((post) => (
+            <article class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div class="p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">
+                  <a href={`/blog/${post.slug}`} class="hover:text-blue-600 transition-colors">
+                    {post.data.title}
+                  </a>
+                </h3>
+                {post.data.description && (
+                  <p class="text-gray-600 mb-4">{post.data.description}</p>
+                )}
+                <div class="flex items-center text-sm text-gray-500">
+                  <time datetime={post.data.publishDate.toISOString()}>
+                    {post.data.publishDate.toLocaleDateString('zh-CN')}
+                  </time>
+                  {post.data.tags.length > 0 && (
+                    <div class="ml-4 flex flex-wrap gap-2">
+                      {post.data.tags.slice(0, 2).map((tag) => (
+                        <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div class="text-center mt-8">
+          <a href="/blog" class="text-blue-600 hover:text-blue-700 font-medium">
+            查看所有文章 →
+          </a>
+        </div>
+      </section>
+    )}
+  </div>
+</BaseLayout>

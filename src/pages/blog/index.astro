@@ -1,0 +1,97 @@
+---
+import BaseLayout from '@/components/layout/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+
+// 获取所有标签
+const allTags = [...new Set(allPosts.flatMap(post => post.data.tags))];
+---
+
+<BaseLayout 
+  title="技术博客 - LLM算法工程师"
+  description="LLM算法工程师的技术博客，分享后训练、强化学习算法、框架和数据研发的深度见解"
+>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <header class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">技术博客</h1>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        深度分享LLM后训练、强化学习算法、框架开发和数据工程的实践经验
+      </p>
+    </header>
+
+    <!-- Tags Filter -->
+    <section class="mb-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">热门标签</h2>
+      <div class="flex flex-wrap gap-2">
+        {allTags.map((tag) => (
+          <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors cursor-pointer">
+            {tag}
+          </span>
+        ))}
+      </div>
+    </section>
+
+    <!-- Posts Grid -->
+    <section class="grid gap-8">
+      {sortedPosts.map((post) => (
+        <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
+          <div class="p-6">
+            <header class="mb-4">
+              <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                <a href={`/blog/${post.slug}`} class="hover:text-blue-600 transition-colors">
+                  {post.data.title}
+                </a>
+              </h2>
+              {post.data.description && (
+                <p class="text-gray-600 text-lg leading-relaxed">
+                  {post.data.description}
+                </p>
+              )}
+            </header>
+
+            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+              <div class="flex items-center space-x-4">
+                <time datetime={post.data.publishDate.toISOString()}>
+                  {post.data.publishDate.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </time>
+                <span>•</span>
+                <span>{post.data.author}</span>
+                {post.data.katex && (
+                  <>
+                    <span>•</span>
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                      包含公式
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {post.data.tags.length > 0 && (
+              <div class="flex flex-wrap gap-2">
+                {post.data.tags.map((tag) => (
+                  <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </article>
+      ))}
+    </section>
+
+    {sortedPosts.length === 0 && (
+      <div class="text-center py-12">
+        <p class="text-gray-500 text-lg">暂无博客文章，敬请期待...</p>
+      </div>
+    )}
+  </div>
+</BaseLayout>

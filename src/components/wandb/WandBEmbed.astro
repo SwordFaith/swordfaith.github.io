@@ -1,0 +1,182 @@
+---
+export interface Props {
+  entity: string;
+  project: string;
+  runId?: string;
+  type?: 'project' | 'run' | 'charts' | 'overview';
+  height?: string;
+  width?: string;
+  title?: string;
+  className?: string;
+}
+
+const {
+  entity,
+  project,
+  runId,
+  type = 'project',
+  height = '600px',
+  width = '100%',
+  title,
+  className = ''
+} = Astro.props;
+
+// 构建 WandB 嵌入 URL
+let embedUrl: string;
+const baseUrl = 'https://wandb.ai';
+
+switch (type) {
+  case 'run':
+    if (!runId) throw new Error('runId is required for run type embed');
+    embedUrl = `${baseUrl}/${entity}/${project}/runs/${runId}`;
+    break;
+  case 'charts':
+    embedUrl = `${baseUrl}/${entity}/${project}/workspace`;
+    break;
+  case 'overview':
+    embedUrl = `${baseUrl}/${entity}/${project}/overview`;
+    break;
+  case 'project':
+  default:
+    embedUrl = `${baseUrl}/${entity}/${project}`;
+    break;
+}
+
+// 添加嵌入参数
+embedUrl += '?jupyter=true';
+
+const displayTitle = title || `${entity}/${project}${runId ? `/${runId}` : ''}`;
+---
+
+<div class={`wandb-embed-container ${className}`}>
+  {title && (
+    <div class="wandb-embed-header mb-4">
+      <h3 class="text-lg font-semibold text-gray-800">{displayTitle}</h3>
+      <div class="flex items-center mt-2 text-sm text-gray-600">
+        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+        </svg>
+        <span>WandB 实验数据</span>
+        <a 
+          href={embedUrl.replace('?jupyter=true', '')} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="ml-2 text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          在 WandB 中查看 ↗
+        </a>
+      </div>
+    </div>
+  )}
+  
+  <div class="wandb-embed-wrapper">
+    <iframe
+      src={embedUrl}
+      width={width}
+      height={height}
+      frameborder="0"
+      allowfullscreen
+      class="wandb-embed-iframe border border-gray-200 rounded-lg shadow-sm"
+      loading="lazy"
+      title={displayTitle}
+    ></iframe>
+  </div>
+  
+  <!-- 加载失败时的备用内容 -->
+  <div class="wandb-embed-fallback hidden">
+    <div class="border border-gray-200 rounded-lg p-8 text-center bg-gray-50">
+      <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg>
+      <h4 class="text-lg font-semibold text-gray-700 mb-2">WandB 内容暂时无法加载</h4>
+      <p class="text-gray-600 mb-4">请尝试直接访问 WandB 查看实验数据</p>
+      <a 
+        href={embedUrl.replace('?jupyter=true', '')} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
+          <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"></path>
+        </svg>
+        在 WandB 中打开
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .wandb-embed-container {
+    @apply relative;
+  }
+  
+  .wandb-embed-wrapper {
+    @apply relative overflow-hidden;
+  }
+  
+  .wandb-embed-iframe {
+    @apply transition-opacity duration-300;
+  }
+  
+  .wandb-embed-iframe.loading {
+    @apply opacity-50;
+  }
+  
+  .wandb-embed-iframe.error {
+    @apply hidden;
+  }
+  
+  .wandb-embed-fallback.show {
+    @apply block;
+  }
+  
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .wandb-embed-iframe {
+      height: 400px;
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const iframes = document.querySelectorAll('.wandb-embed-iframe');
+    
+    iframes.forEach((iframe) => {
+      const container = iframe.closest('.wandb-embed-container');
+      const fallback = container?.querySelector('.wandb-embed-fallback');
+      
+      // 处理加载失败
+      iframe.addEventListener('error', function() {
+        this.classList.add('error');
+        if (fallback) {
+          fallback.classList.remove('hidden');
+          fallback.classList.add('show');
+        }
+      });
+      
+      // 处理加载完成
+      iframe.addEventListener('load', function() {
+        this.classList.remove('loading');
+        
+        // 检查是否真的加载成功
+        try {
+          // 如果可以访问 iframe 的内容，说明加载成功
+          // 注意：由于跨域限制，这里可能会抛出异常
+          setTimeout(() => {
+            if (this.contentWindow) {
+              this.classList.remove('loading');
+            }
+          }, 1000);
+        } catch (e) {
+          // 跨域访问被阻止是正常的，说明 iframe 加载成功
+          this.classList.remove('loading');
+        }
+      });
+      
+      // 初始状态
+      iframe.classList.add('loading');
+    });
+  });
+</script>

@@ -1,0 +1,337 @@
+---
+import { type CollectionEntry, getCollection } from 'astro:content';
+import BaseLayout from '@/components/layout/BaseLayout.astro';
+import SimpleNotebookViewer from '@/components/notebook/SimpleNotebookViewer.astro';
+
+export async function getStaticPaths() {
+  const notebooks = await getCollection('notebooks');
+  return notebooks.map((notebook) => ({
+    params: { slug: notebook.slug },
+    props: notebook,
+  }));
+}
+
+type Props = CollectionEntry<'notebooks'>;
+
+const notebook = Astro.props;
+
+// 示例 notebook 数据 - 在实际应用中会从 notebook 文件解析
+const sampleNotebookCells = [
+  {
+    type: 'markdown' as const,
+    source: `# ${notebook.data.title}
+
+本笔记展示了 RLHF (Reinforcement Learning from Human Feedback) 训练过程的详细分析，包括数据预处理、模型训练和结果评估。
+
+## 实验概述
+
+- **模型**: GPT-2 (124M 参数)
+- **数据集**: Anthropic HH-RLHF 数据集
+- **训练步数**: 1000 steps
+- **学习率**: 3e-5`,
+    executionCount: null
+  },
+  {
+    type: 'code' as const,
+    source: `import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+import torch
+import wandb
+
+# 设置随机种子
+np.random.seed(42)
+torch.manual_seed(42)
+
+print("环境设置完成")
+print(f"PyTorch 版本: {torch.__version__}")
+print(f"CUDA 可用: {torch.cuda.is_available()}")`,
+    outputs: [
+      `环境设置完成
+PyTorch 版本: 2.1.0
+CUDA 可用: True`
+    ],
+    executionCount: 1
+  },
+  {
+    type: 'code' as const,
+    source: `# 加载训练日志数据
+training_logs = pd.read_csv('rlhf_training_logs.csv')
+
+print(f"训练日志形状: {training_logs.shape}")
+print("\\n前5行数据:")
+print(training_logs.head())
+
+print("\\n数据列信息:")
+print(training_logs.info())`,
+    outputs: [
+      `训练日志形状: (1000, 8)
+
+前5行数据:
+   step  policy_loss  value_loss  kl_divergence  reward_score  learning_rate  batch_size        timestamp
+0     1      2.45123     1.82345       0.123456      -0.234567         3e-05          16  2024-01-15 10:00:01
+1     2      2.43876     1.80123       0.125789      -0.221345         3e-05          16  2024-01-15 10:00:32
+2     3      2.42654     1.79001       0.127234      -0.208902         3e-05          16  2024-01-15 10:01:03
+3     4      2.41432     1.77889       0.128567      -0.196734         3e-05          16  2024-01-15 10:01:34
+4     5      2.40213     1.76778       0.129890      -0.184567         3e-05          16  2024-01-15 10:02:05
+
+数据列信息:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1000 entries, 0 to 999
+Data columns (total 8 columns):
+ #   Column         Non-Null Count  Dtype  
+---  ------         --------------  -----  
+ 0   step           1000 non-null   int64  
+ 1   policy_loss    1000 non-null   float64
+ 2   value_loss     1000 non-null   float64
+ 3   kl_divergence  1000 non-null   float64
+ 4   reward_score   1000 non-null   float64
+ 5   learning_rate  1000 non-null   object 
+ 6   batch_size     1000 non-null   int64  
+ 7   timestamp      1000 non-null   object 
+dtypes: float64(4), int64(2), object(2)
+memory usage: 62.6+ KB`
+    ],
+    executionCount: 2
+  },
+  {
+    type: 'code' as const,
+    source: `# 绘制训练损失曲线
+plt.figure(figsize=(15, 10))
+
+# 创建子图
+fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+fig.suptitle('RLHF 训练监控面板', fontsize=16, fontweight='bold')
+
+# 策略损失
+axes[0, 0].plot(training_logs['step'], training_logs['policy_loss'], 
+               color='blue', linewidth=2, alpha=0.8)
+axes[0, 0].set_title('策略损失 (Policy Loss)')
+axes[0, 0].set_xlabel('训练步数')
+axes[0, 0].set_ylabel('损失值')
+axes[0, 0].grid(True, alpha=0.3)
+
+# 价值损失
+axes[0, 1].plot(training_logs['step'], training_logs['value_loss'], 
+               color='red', linewidth=2, alpha=0.8)
+axes[0, 1].set_title('价值损失 (Value Loss)')
+axes[0, 1].set_xlabel('训练步数')
+axes[0, 1].set_ylabel('损失值')
+axes[0, 1].grid(True, alpha=0.3)
+
+# KL散度
+axes[1, 0].plot(training_logs['step'], training_logs['kl_divergence'], 
+               color='green', linewidth=2, alpha=0.8)
+axes[1, 0].set_title('KL散度 (KL Divergence)')
+axes[1, 0].set_xlabel('训练步数')
+axes[1, 0].set_ylabel('KL散度值')
+axes[1, 0].grid(True, alpha=0.3)
+
+# 奖励分数
+axes[1, 1].plot(training_logs['step'], training_logs['reward_score'], 
+               color='purple', linewidth=2, alpha=0.8)
+axes[1, 1].set_title('奖励分数 (Reward Score)')
+axes[1, 1].set_xlabel('训练步数')
+axes[1, 1].set_ylabel('奖励值')
+axes[1, 1].grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
+
+# 打印训练统计
+print("\\n训练统计信息:")
+print(f"最终策略损失: {training_logs['policy_loss'].iloc[-1]:.4f}")
+print(f"最终价值损失: {training_logs['value_loss'].iloc[-1]:.4f}")
+print(f"最终KL散度: {training_logs['kl_divergence'].iloc[-1]:.6f}")
+print(f"最终奖励分数: {training_logs['reward_score'].iloc[-1]:.4f}")`,
+    outputs: [
+      `训练统计信息:
+最终策略损失: 1.2345
+最终价值损失: 0.8901
+最终KL散度: 0.234567
+最终奖励分数: 0.567891`
+    ],
+    executionCount: 3
+  },
+  {
+    type: 'markdown' as const,
+    source: `## 实验结果分析
+
+从上面的训练曲线可以看出：
+
+1. **策略损失**：从初始的 2.45 逐渐下降到 1.23，显示模型在学习过程中逐步优化
+2. **价值损失**：呈现稳定的下降趋势，从 1.82 降至 0.89
+3. **KL散度**：保持在合理范围内（< 0.3），说明模型没有偏离初始策略太远
+4. **奖励分数**：从负值逐渐上升到正值，表明模型输出质量在提升
+
+### 关键观察
+- 训练过程稳定，没有出现崩溃现象
+- KL散度控制良好，避免了过度优化
+- 奖励分数的提升验证了 RLHF 的有效性`,
+    executionCount: null
+  },
+  {
+    type: 'code' as const,
+    source: `# 计算训练效率指标
+def calculate_training_metrics(logs):
+    """计算训练效率相关指标"""
+    
+    # 损失下降率
+    initial_policy_loss = logs['policy_loss'].iloc[0]
+    final_policy_loss = logs['policy_loss'].iloc[-1]
+    policy_loss_reduction = (initial_policy_loss - final_policy_loss) / initial_policy_loss * 100
+    
+    # 奖励改进幅度
+    initial_reward = logs['reward_score'].iloc[0]
+    final_reward = logs['reward_score'].iloc[-1]
+    reward_improvement = final_reward - initial_reward
+    
+    # 训练稳定性（损失方差）
+    policy_loss_variance = logs['policy_loss'].var()
+    
+    return {
+        'policy_loss_reduction_pct': policy_loss_reduction,
+        'reward_improvement': reward_improvement,
+        'training_stability': 1.0 / (1.0 + policy_loss_variance)  # 越大越稳定
+    }
+
+metrics = calculate_training_metrics(training_logs)
+
+print("📊 训练效率指标:")
+print("=" * 40)
+print(f"策略损失下降: {metrics['policy_loss_reduction_pct']:.2f}%")
+print(f"奖励改进幅度: {metrics['reward_improvement']:.4f}")
+print(f"训练稳定性: {metrics['training_stability']:.4f}")
+
+# 绘制移动平均图
+window_size = 50
+training_logs['policy_loss_ma'] = training_logs['policy_loss'].rolling(window=window_size).mean()
+training_logs['reward_score_ma'] = training_logs['reward_score'].rolling(window=window_size).mean()
+
+plt.figure(figsize=(12, 5))
+
+plt.subplot(1, 2, 1)
+plt.plot(training_logs['step'], training_logs['policy_loss'], alpha=0.3, color='blue', label='原始数据')
+plt.plot(training_logs['step'], training_logs['policy_loss_ma'], color='blue', linewidth=2, label=f'{window_size}步移动平均')
+plt.title('策略损失趋势')
+plt.xlabel('训练步数')
+plt.ylabel('损失值')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.subplot(1, 2, 2)
+plt.plot(training_logs['step'], training_logs['reward_score'], alpha=0.3, color='purple', label='原始数据')
+plt.plot(training_logs['step'], training_logs['reward_score_ma'], color='purple', linewidth=2, label=f'{window_size}步移动平均')
+plt.title('奖励分数趋势')
+plt.xlabel('训练步数')
+plt.ylabel('奖励值')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()`,
+    outputs: [
+      `📊 训练效率指标:
+========================================
+策略损失下降: 49.67%
+奖励改进幅度: 0.8024
+训练稳定性: 0.8756`
+    ],
+    executionCount: 4
+  },
+  {
+    type: 'markdown' as const,
+    source: `## 总结与后续工作
+
+本次 RLHF 实验取得了良好的效果：
+
+### 成功指标
+- ✅ 策略损失下降近 50%
+- ✅ 奖励分数显著提升
+- ✅ 训练过程稳定，无崩溃现象
+- ✅ KL散度控制在合理范围
+
+### 下一步优化方向
+1. **超参数调优**: 尝试不同的学习率和 KL 系数
+2. **数据增强**: 增加更多高质量的偏好数据
+3. **模型规模**: 测试更大规模的模型（如 GPT-2 Medium）
+4. **评估优化**: 添加更多维度的评估指标
+
+### 代码和数据
+- 完整实验代码已上传到 GitHub
+- 训练日志和检查点已保存到 WandB
+- 可复现的实验环境配置在 Docker 镜像中`,
+    executionCount: null
+  }
+];
+---
+
+<BaseLayout 
+  title={notebook.data.title}
+  description={notebook.data.description}
+  keywords={notebook.data.tags}
+>
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Notebook Meta Info -->
+    <div class="mb-8 text-center">
+      <div class="flex items-center justify-center space-x-4 text-sm text-gray-600 mb-4">
+        <time datetime={notebook.data.publishDate.toISOString()}>
+          {notebook.data.publishDate.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </time>
+        <span>•</span>
+        <span>{notebook.data.author}</span>
+        {notebook.data.tags.length > 0 && (
+          <>
+            <span>•</span>
+            <div class="flex flex-wrap gap-2">
+              {notebook.data.tags.slice(0, 3).map((tag) => (
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+
+    <!-- Notebook Viewer -->
+    <SimpleNotebookViewer 
+      cells={sampleNotebookCells}
+      title={notebook.data.title}
+      kernelName="Python 3 (RLHF Environment)"
+    />
+
+    <!-- Navigation -->
+    <nav class="mt-12 pt-8 border-t border-gray-200">
+      <div class="flex justify-between items-center">
+        <a href="/notebooks" class="text-blue-600 hover:text-blue-700 font-medium flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          返回 Notebooks 列表
+        </a>
+        <div class="flex space-x-4">
+          <button class="text-gray-600 hover:text-gray-900 flex items-center" onclick="window.print()">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            打印
+          </button>
+          <a href="#" class="text-gray-600 hover:text-gray-900 flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+            </svg>
+            分享
+          </a>
+        </div>
+      </div>
+    </nav>
+  </div>
+</BaseLayout>

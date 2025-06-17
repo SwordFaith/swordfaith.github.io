@@ -1,0 +1,199 @@
+---
+import BaseLayout from '@/components/layout/BaseLayout.astro';
+import GitHubStats from '@/components/about/GitHubStats.astro';
+import WandBStats from '@/components/wandb/WandBStats.astro';
+---
+
+<BaseLayout 
+  title="关于我 - LLM算法工程师技术博客"
+  description="了解LLM算法工程师的研究背景、发表工作和技术观察"
+>
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Profile Section -->
+    <section class="text-center mb-16">
+      <div class="w-32 h-32 bg-gray-300 rounded-full mx-auto mb-6"></div>
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">LLM 算法工程师</h1>
+      <p class="text-xl text-gray-600 mb-6">
+        专注于大语言模型后训练技术的研究与实现
+      </p>
+      <div class="flex justify-center space-x-4">
+        <a href="#" class="text-gray-600 hover:text-gray-900">
+          <span class="sr-only">GitHub</span>
+          <!-- GitHub icon would go here -->
+          GitHub
+        </a>
+        <a href="#" class="text-gray-600 hover:text-gray-900">
+          <span class="sr-only">Twitter</span>
+          <!-- Twitter icon would go here -->
+          Twitter
+        </a>
+        <a href="#" class="text-gray-600 hover:text-gray-900">
+          <span class="sr-only">知乎</span>
+          知乎
+        </a>
+      </div>
+    </section>
+
+    <!-- Bio Section -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">个人简介</h2>
+      <div class="prose prose-lg max-w-none">
+        <p class="text-gray-700 leading-relaxed">
+          我是一位专注于大语言模型后训练技术的算法工程师和研究员，主要研究方向包括强化学习从人类反馈（RLHF）、
+          直接偏好优化（DPO）、监督式微调（SFT）等后训练方法。在分布式训练框架开发和高质量数据构建方面有丰富经验。
+        </p>
+        <p class="text-gray-700 leading-relaxed">
+          致力于通过技术创新推动AI系统的对齐和安全性，让大语言模型更好地服务于人类社会。
+        </p>
+      </div>
+    </section>
+
+    <!-- Research Interests -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">研究方向</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold text-gray-900 mb-3">后训练技术</h3>
+          <ul class="text-gray-700 space-y-2">
+            <li>• RLHF (Reinforcement Learning from Human Feedback)</li>
+            <li>• DPO (Direct Preference Optimization)</li>
+            <li>• SFT (Supervised Fine-Tuning)</li>
+            <li>• Constitutional AI</li>
+          </ul>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold text-gray-900 mb-3">强化学习算法</h3>
+          <ul class="text-gray-700 space-y-2">
+            <li>• PPO (Proximal Policy Optimization)</li>
+            <li>• SAC (Soft Actor-Critic)</li>
+            <li>• DQN (Deep Q-Network)</li>
+            <li>• Multi-agent RL</li>
+          </ul>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold text-gray-900 mb-3">分布式系统</h3>
+          <ul class="text-gray-700 space-y-2">
+            <li>• 大规模模型训练框架</li>
+            <li>• 分布式推理系统</li>
+            <li>• 模型并行与数据并行</li>
+            <li>• 混合精度训练</li>
+          </ul>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-xl font-semibold text-gray-900 mb-3">数据工程</h3>
+          <ul class="text-gray-700 space-y-2">
+            <li>• 高质量训练数据构建</li>
+            <li>• 数据清洗与预处理</li>
+            <li>• 偏好数据标注</li>
+            <li>• 数据增强技术</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Publications/Work -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">发表工作</h2>
+      <div class="space-y-6">
+        <!-- Placeholder for publications -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">
+            论文标题示例
+          </h3>
+          <p class="text-gray-600 mb-2">
+            Conference/Journal Name 2024
+          </p>
+          <p class="text-gray-700">
+            论文摘要或简要描述...
+          </p>
+        </div>
+        <!-- More publications would be added here -->
+      </div>
+    </section>
+
+    <!-- Skills -->
+    <section class="mb-16">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">技能矩阵</h2>
+      <div class="grid md:grid-cols-2 gap-8">
+        <div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-4">编程语言</h3>
+          <div class="space-y-3">
+            <div class="flex items-center">
+              <span class="w-20 text-gray-700">Python</span>
+              <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                <div class="bg-blue-600 h-2 rounded-full w-11/12"></div>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <span class="w-20 text-gray-700">C++</span>
+              <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                <div class="bg-blue-600 h-2 rounded-full w-4/5"></div>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <span class="w-20 text-gray-700">CUDA</span>
+              <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                <div class="bg-blue-600 h-2 rounded-full w-3/4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-4">框架工具</h3>
+          <div class="space-y-3">
+            <div class="flex items-center">
+              <span class="w-20 text-gray-700">PyTorch</span>
+              <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                <div class="bg-green-600 h-2 rounded-full w-11/12"></div>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <span class="w-20 text-gray-700">DeepSpeed</span>
+              <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                <div class="bg-green-600 h-2 rounded-full w-5/6"></div>
+              </div>
+            </div>
+            <div class="flex items-center">
+              <span class="w-20 text-gray-700">Transformers</span>
+              <div class="flex-1 bg-gray-200 rounded-full h-2 mx-3">
+                <div class="bg-green-600 h-2 rounded-full w-5/6"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GitHub Statistics -->
+    <section class="mb-16">
+      <GitHubStats 
+        username="your-github-username"
+        showContributions={true}
+        showLanguages={true}
+        showRepositories={true}
+        maxRepos={6}
+      />
+    </section>
+
+    <!-- WandB Statistics -->
+    <section class="mb-16">
+      <WandBStats 
+        entity="your-wandb-entity"
+        showProjects={true}
+        showRecentRuns={true}
+        limit={5}
+      />
+    </section>
+
+    <!-- Contact -->
+    <section class="text-center">
+      <h2 class="text-3xl font-bold text-gray-900 mb-6">联系方式</h2>
+      <p class="text-gray-700 mb-6">
+        如果您对我的研究工作感兴趣，或者想要合作交流，欢迎联系我。
+      </p>
+      <a href="mailto:contact@example.com" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+        发送邮件
+      </a>
+    </section>
+  </div>
+</BaseLayout>
