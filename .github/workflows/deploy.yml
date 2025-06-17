@@ -1,15 +1,19 @@
 name: Deploy to GitHub Pages
 
 on:
+  # 当推送到 main 分支时触发部署
   push:
     branches: [ main ]
+  # 允许手动触发工作流
   workflow_dispatch:
 
+# 设置 GITHUB_TOKEN 权限以允许部署到 GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# 只允许一个并发部署，跳过运行中的部署队列中的运行
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -21,31 +25,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: npm
-      
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v4
+          node-version: '18'
+          cache: 'npm'
       
       - name: Install dependencies
         run: npm ci
       
       - name: Build with Astro
-        run: |
-          npm run build
+        run: npm run build
         env:
-          # Tell Astro where the site will be deployed
-          ASTRO_SITE: ${{ steps.pages.outputs.origin }}
-          ASTRO_BASE: ${{ steps.pages.outputs.base_path }}
+          # 构建时不使用外部 API，避免网络错误
+          NODE_ENV: production
+      
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: './dist'
 
   deploy:
     environment:
