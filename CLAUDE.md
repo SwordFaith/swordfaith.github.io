@@ -224,6 +224,17 @@ src/
   - 集成 Pagefind 搜索索引生成到构建流程
   - 新增数据同步命令和类型检查
 
+#### Astro v5 升级（2025-06-17）
+- **成功升级到 Astro 5.9.4**：从 v4.16.18 无缝升级
+  - 完整兼容性测试通过，无破坏性变更
+  - 构建时间保持稳定（~12秒）
+  - 开发体验提升，性能优化
+- **依赖同步更新**：
+  - @astrojs/mdx: 3.1.8 → 4.3.0
+  - esbuild: 0.21.5 → 0.25.5
+  - 解决了所有 Dependabot 安全警告
+- **GitHub Pages 部署验证**：升级后部署流程正常
+
 ### 📊 构建统计
 - **页面数量**：9 个静态页面
 - **文章数量**：4 篇博客文章 + 1 个 Notebook
@@ -232,7 +243,7 @@ src/
 - **搜索索引**：自动生成 Pagefind 全文搜索
 
 ## 技术栈总结
-- **前端框架**：Astro 4.x + TypeScript
+- **前端框架**：Astro 5.x + TypeScript
 - **样式系统**：Tailwind CSS + @tailwindcss/typography
 - **内容管理**：Astro Content Collections (Markdown + MDX)
 - **公式渲染**：KaTeX + remark-math + rehype-katex
