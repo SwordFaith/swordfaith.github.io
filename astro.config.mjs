@@ -7,8 +7,8 @@ import rehypeKatex from 'rehype-katex';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://username.github.io', // Replace with your GitHub Pages URL
-  base: '/self_blog', // Replace with your repository name
+  site: 'https://swordfaith.github.io',
+  base: '/', // 根站点不需要子路径
   integrations: [
     tailwind(),
     mdx(),
