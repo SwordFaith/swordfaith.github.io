@@ -1,0 +1,60 @@
+---
+export interface Props {
+  id?: string;
+  containerClass?: string;
+  class?: string;
+  bg?: 'page' | 'transparent' | 'primary' | 'secondary';
+  padding?: 'none' | 'sm' | 'md' | 'lg' | 'xl';
+  noContainer?: boolean;
+}
+
+const {
+  id,
+  containerClass = '',
+  class: className = '',
+  bg = 'page',
+  padding = 'lg',
+  noContainer = false,
+  ...rest
+} = Astro.props;
+
+const bgClasses = {
+  page: 'section-bg',
+  transparent: 'widget-bg',
+  primary: 'bg-primary-50 dark:bg-primary-900/20',
+  secondary: 'bg-secondary-50 dark:bg-secondary-900/20'
+};
+
+const paddingClasses = {
+  none: '',
+  sm: 'py-8 md:py-12',
+  md: 'py-12 md:py-16',
+  lg: 'py-12 md:py-16 lg:py-20',
+  xl: 'py-16 md:py-20 lg:py-24'
+};
+
+const sectionClasses = [
+  bgClasses[bg],
+  paddingClasses[padding],
+  className
+].filter(Boolean).join(' ');
+
+const containerClasses = [
+  'max-w-7xl mx-auto px-4 sm:px-6',
+  containerClass
+].filter(Boolean).join(' ');
+---
+
+<section 
+  id={id}
+  class={sectionClasses}
+  {...rest}
+>
+  {noContainer ? (
+    <slot />
+  ) : (
+    <div class={containerClasses}>
+      <slot />
+    </div>
+  )}
+</section>

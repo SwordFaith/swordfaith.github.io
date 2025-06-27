@@ -1,0 +1,210 @@
+/* AstroWind Theme Custom Properties */
+:root {
+  /* Primary Colors */
+  --aw-color-primary: rgb(1 97 239);
+  --aw-color-secondary: rgb(1 84 207);
+  --aw-color-accent: rgb(109 40 217);
+  
+  /* Text Colors */
+  --aw-color-text-default: rgb(16 16 16);
+  --aw-color-text-muted: rgba(16 16 16 / 0.66);
+  --aw-color-text-page: rgb(16 16 16);
+  
+  /* Background Colors */
+  --aw-color-bg-page: rgb(255 255 255);
+  
+  /* Border Colors */
+  --aw-color-border: rgb(229 231 235);
+  
+  /* Link Colors */
+  --aw-color-link: var(--aw-color-primary);
+  --aw-color-link-hover: var(--aw-color-secondary);
+}
+
+.dark {
+  /* Text Colors - Dark Mode */
+  --aw-color-text-default: rgb(229 236 246);
+  --aw-color-text-muted: rgba(229 236 246 / 0.66);
+  --aw-color-text-page: rgb(229 236 246);
+  
+  /* Background Colors - Dark Mode */
+  --aw-color-bg-page: rgb(3 6 32);
+  
+  /* Border Colors - Dark Mode */
+  --aw-color-border: rgb(55 65 81);
+  
+  /* Link Colors - Dark Mode */
+  --aw-color-link: rgb(96 165 250);
+  --aw-color-link-hover: rgb(147 197 253);
+}
+
+/* AstroWind Button Styles */
+.btn {
+  @apply inline-flex items-center justify-center rounded-full border border-gray-400 bg-transparent font-medium text-center text-base leading-snug transition py-3.5 px-6 md:px-8 ease-in duration-200 focus:ring-primary-500 focus:ring-2 hover:bg-gray-100 hover:border-gray-600 dark:text-slate-300 dark:border-slate-500 dark:hover:bg-slate-800 dark:hover:border-slate-800 cursor-pointer;
+  color: var(--aw-color-text-page);
+  border-color: var(--aw-color-border);
+}
+
+.btn:hover {
+  background-color: rgba(156 163 175 / 0.1);
+  border-color: var(--aw-color-text-muted);
+}
+
+.btn-primary {
+  @apply bg-primary-500 text-white border-primary-500 hover:bg-primary-600 hover:border-primary-600 dark:bg-primary-500 dark:border-primary-500 dark:hover:bg-primary-600 dark:hover:border-primary-600;
+}
+
+.btn-secondary {
+  @apply bg-transparent text-gray-700 border-gray-400 hover:bg-gray-100 hover:border-gray-600 dark:text-slate-300 dark:border-slate-500 dark:hover:bg-slate-800 dark:hover:border-slate-800;
+}
+
+.btn-tertiary {
+  @apply border-none shadow-none bg-transparent hover:bg-gray-100 dark:hover:bg-slate-800;
+}
+
+.btn-link {
+  @apply border-none shadow-none bg-transparent p-0 hover:bg-transparent;
+  color: var(--aw-color-link);
+}
+
+.btn-link:hover {
+  color: var(--aw-color-link-hover);
+  background-color: transparent;
+}
+
+/* AstroWind Typography Utilities */
+.text-page {
+  color: var(--aw-color-text-page);
+}
+
+.text-muted {
+  color: var(--aw-color-text-muted);
+}
+
+.text-primary {
+  color: var(--aw-color-primary);
+}
+
+.text-secondary {
+  color: var(--aw-color-secondary);
+}
+
+.text-accent {
+  color: var(--aw-color-accent);
+}
+
+.bg-page {
+  background-color: var(--aw-color-bg-page);
+}
+
+/* AstroWind Animation Utilities */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(2rem);
+  transition: all 0.6s ease-out;
+}
+
+.fade-in-up.intersect {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.animate-fade-in {
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+
+.animate-slide-left {
+  opacity: 0;
+  transform: translateX(-2rem);
+  transition: all 0.6s ease-out;
+}
+
+.animate-slide-right {
+  opacity: 0;
+  transform: translateX(2rem);
+  transition: all 0.6s ease-out;
+}
+
+/* Motion safe preferences */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up,
+  .animate-fade-in,
+  .animate-slide-left,
+  .animate-slide-right {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Animation on medium+ screens only */
+@media (max-width: 768px) {
+  .md\\:fade-in-up,
+  .md\\:animate-fade-in,
+  .md\\:animate-slide-left,
+  .md\\:animate-slide-right {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* AstroWind Layout Utilities */
+.widget-bg {
+  @apply bg-transparent dark:bg-transparent;
+}
+
+.section-bg {
+  @apply bg-white dark:bg-dark-900;
+}
+
+/* Enhanced Glass Effect */
+.glass-effect {
+  @apply bg-white/90 dark:bg-dark-900/90 backdrop-blur-md;
+}
+
+/* AstroWind Headings */
+.heading-tighter {
+  @apply font-bold leading-tighter tracking-tighter;
+}
+
+.heading-primary {
+  @apply text-5xl md:text-6xl font-bold leading-tighter tracking-tighter;
+  color: var(--aw-color-text-default);
+}
+
+.heading-section {
+  @apply text-3xl md:text-4xl font-bold leading-tighter tracking-tighter;
+  color: var(--aw-color-text-default);
+}
+
+.heading-card {
+  @apply text-xl md:text-2xl font-bold leading-tight;
+  color: var(--aw-color-text-default);
+}
+
+/* AstroWind Tagline */
+.tagline {
+  @apply text-base font-bold tracking-wide uppercase;
+  color: var(--aw-color-primary);
+}
+
+/* AstroWind Link Styles */
+.link-primary {
+  color: var(--aw-color-link);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out;
+}
+
+.link-primary:hover {
+  color: var(--aw-color-link-hover);
+  text-decoration: underline;
+}
+
+/* Smooth Transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}

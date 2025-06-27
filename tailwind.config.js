@@ -11,8 +11,8 @@ export default {
           200: '#bfdbfe',
           300: '#93c5fd',
           400: '#60a5fa',
-          500: '#3b82f6', // AstroWind 主蓝色
-          600: '#2563eb',
+          500: 'rgb(1 97 239)', // AstroWind exact primary blue
+          600: 'rgb(1 84 207)', // AstroWind darker blue
           700: '#1d4ed8',
           800: '#1e40af',
           900: '#1e3a8a',
@@ -25,7 +25,7 @@ export default {
           300: '#c4b5fd',
           400: '#a78bfa',
           500: '#8b5cf6',
-          600: '#7c3aed', // AstroWind 强调紫色
+          600: 'rgb(109 40 217)', // AstroWind exact accent purple
           700: '#6d28d9',
           800: '#5b21b6',
           900: '#4c1d95',
@@ -41,8 +41,17 @@ export default {
           600: '#475569',
           700: '#334155',
           800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617'
+          900: 'rgb(3 6 32)', // AstroWind exact dark background
+          950: 'rgb(3 6 32)'
+        },
+        // AstroWind color system
+        page: {
+          DEFAULT: 'rgb(255 255 255)',
+          dark: 'rgb(3 6 32)'
+        },
+        muted: {
+          DEFAULT: 'rgba(16 16 16 / 0.66)',
+          dark: 'rgba(229 236 246 / 0.66)'
         }
       },
       fontFamily: {
@@ -50,11 +59,51 @@ export default {
         serif: ['Inter Variable', 'Inter', 'ui-serif', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace']
       },
+      fontSize: {
+        xs: ['0.75rem', { lineHeight: '1rem' }],
+        sm: ['0.875rem', { lineHeight: '1.25rem' }],
+        base: ['1rem', { lineHeight: '1.5rem' }],
+        lg: ['1.125rem', { lineHeight: '1.75rem' }],
+        xl: ['1.25rem', { lineHeight: '1.75rem' }],
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],
+        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],
+        '5xl': ['3rem', { lineHeight: '1' }],
+        '6xl': ['3.75rem', { lineHeight: '1' }],
+        '7xl': ['4.5rem', { lineHeight: '1' }],
+        '8xl': ['6rem', { lineHeight: '1' }],
+        '9xl': ['8rem', { lineHeight: '1' }],
+      },
+      letterSpacing: {
+        tighter: '-0.05em',
+        tight: '-0.025em',
+        normal: '0em',
+        wide: '0.025em',
+        wider: '0.05em',
+        widest: '0.1em',
+      },
+      lineHeight: {
+        3: '.75rem',
+        4: '1rem',
+        5: '1.25rem',
+        6: '1.5rem',
+        7: '1.75rem',
+        8: '2rem',
+        9: '2.25rem',
+        10: '2.5rem',
+        none: '1',
+        tight: '1.25',
+        snug: '1.375',
+        normal: '1.5',
+        relaxed: '1.625',
+        loose: '2',
+        tighter: '1.125',
+      },
       typography: (theme) => ({
         DEFAULT: {
           css: {
             maxWidth: 'none',
-            color: theme('colors.gray.700'),
+            color: 'rgb(16 16 16)', // AstroWind default text
             fontSize: '1rem',
             lineHeight: '1.75',
             fontFamily: theme('fontFamily.sans'),
@@ -157,7 +206,7 @@ export default {
         },
         dark: {
           css: {
-            color: theme('colors.gray.300'),
+            color: 'rgb(229 236 246)', // AstroWind dark text
             '[class~="lead"]': {
               color: theme('colors.gray.400')
             },

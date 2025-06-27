@@ -28,8 +28,8 @@
 ## 技术方案
 
 ### 1. 核心架构
-- **框架**：Astro 4.x + TypeScript
-- **样式**：Tailwind CSS + 自定义组件库
+- **框架**：Astro 5.x + TypeScript
+- **样式**：Tailwind CSS + AstroWind设计主题 + 自定义组件库
 - **部署**：GitHub Pages（主）+ Vercel（预留）
 - **CI/CD**：GitHub Actions 自动部署
 
@@ -71,6 +71,10 @@ src/
 ├── components/
 │   ├── layout/
 │   │   └── BaseLayout.astro     # 基础布局（已实现）
+│   ├── ui/                      # AstroWind 风格UI组件
+│   │   ├── Button.astro         # 通用按钮组件（已实现）
+│   │   ├── Headline.astro       # 标题组件（已实现）
+│   │   └── WidgetWrapper.astro  # 包装器组件（已实现）
 │   ├── blog/
 │   │   └── CodeBlock.astro      # 代码高亮组件（已实现）
 │   ├── notebook/
@@ -86,6 +90,9 @@ src/
 │       ├── Timeline.astro       # 时间轴组件（待实现）
 │       ├── PublicationCard.astro # 论文卡片（待实现）
 │       └── SkillRadar.astro     # 技能雷达图（待实现）
+├── assets/
+│   └── styles/
+│       └── astrowind.css        # AstroWind 主题样式（已实现）
 ├── content/
 │   ├── blog/                    # 博客文章 Markdown
 │   ├── notebooks/               # Jupyter Notebook 文件
@@ -154,12 +161,13 @@ src/
 ## 当前实现状态
 
 ### ✅ 已完成功能
-- **基础架构**：Astro 4.x + TypeScript + Tailwind CSS
+- **基础架构**：Astro 5.x + TypeScript + Tailwind CSS
+- **设计系统**：AstroWind 设计主题集成，统一的色彩和字体系统
 - **内容系统**：Markdown 博客 + Jupyter Notebook 支持
 - **数学公式**：KaTeX 完整集成，支持行内和块级公式
 - **代码高亮**：Shiki 语法高亮 + 自定义复制功能
 - **页面结构**：首页、博客列表/详情、Notebook 列表/详情、关于页面
-- **响应式设计**：移动端适配和交互优化
+- **响应式设计**：移动端适配和交互优化，支持暗色主题
 - **SEO 基础**：Meta 标签、Open Graph、站点地图
 - **部署配置**：GitHub Actions + GitHub Pages
 - **WandB 集成**：API 客户端、数据同步脚本、可视化组件
@@ -235,16 +243,32 @@ src/
   - 解决了所有 Dependabot 安全警告
 - **GitHub Pages 部署验证**：升级后部署流程正常
 
+#### AstroWind 设计主题集成（2025-06-26）
+- **设计系统升级**：从基础 Tailwind 升级到 AstroWind 风格
+  - 统一的颜色系统：主色调（蓝色）、辅助色（紫色）、暗色主题
+  - Inter Variable 字体集成，提升视觉层次和可读性
+  - 完整的暗色模式支持，CSS 变量驱动的主题切换
+- **UI 组件库扩展**：
+  - Button.astro：多变体按钮组件（primary, secondary, tertiary, link）
+  - Headline.astro：标题组件，支持多级标题和副标题
+  - WidgetWrapper.astro：通用包装器组件，统一间距和布局
+- **样式系统优化**：
+  - 自定义 CSS 变量系统（astrowind.css）
+  - 增强的 Typography 插件配置，支持暗色模式
+  - 响应式设计改进，smooth scroll 和字体优化
+
 ### 📊 构建统计
 - **页面数量**：9 个静态页面
 - **文章数量**：4 篇博客文章 + 1 个 Notebook
-- **组件数量**：20+ 个自定义组件
+- **组件数量**：23+ 个自定义组件（新增 3 个 UI 组件）
 - **构建时间**：~12 秒（静态生成 + 搜索索引）
 - **搜索索引**：自动生成 Pagefind 全文搜索
+- **设计系统**：AstroWind 主题，支持亮色/暗色模式切换
 
 ## 技术栈总结
 - **前端框架**：Astro 5.x + TypeScript
-- **样式系统**：Tailwind CSS + @tailwindcss/typography
+- **设计系统**：AstroWind 主题 + Tailwind CSS + @tailwindcss/typography
+- **字体系统**：Inter Variable + JetBrains Mono
 - **内容管理**：Astro Content Collections (Markdown + MDX)
 - **公式渲染**：KaTeX + remark-math + rehype-katex
 - **代码高亮**：Shiki (支持多主题)
@@ -252,7 +276,7 @@ src/
 - **数据集成**：WandB API + GitHub API + 缓存机制
 - **部署平台**：GitHub Pages + GitHub Actions
 - **开发工具**：ESLint + TypeScript 严格模式
-- **性能优化**：静态生成 + 组件懒加载
+- **性能优化**：静态生成 + 组件懒加载 + 响应式设计
 
 ## 下一步开发重点
 
@@ -275,10 +299,10 @@ src/
    - 简化 GitHubStats 和 WandBStats 组件的复杂逻辑
    - 提取共通的数据加载和错误处理逻辑
    - 统一组件 Props 接口设计
-2. **样式系统改进**：
-   - 创建统一的设计令牌（颜色、间距、字体）
-   - 提取可复用的 CSS 类和组件样式
-   - 改进响应式设计的断点管理
+2. **UI 组件库完善**：
+   - 扩展 AstroWind UI 组件库（Card、Modal、Dropdown 等）
+   - 创建组件文档和使用示例
+   - 实现组件主题定制能力
 3. **缓存策略优化**：
    - 实现更智能的缓存失效机制
    - 添加缓存大小限制和清理策略

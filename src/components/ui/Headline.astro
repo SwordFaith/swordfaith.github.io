@@ -1,0 +1,48 @@
+---
+export interface Props {
+  title?: string;
+  subtitle?: string;
+  tagline?: string;
+  align?: 'left' | 'center' | 'right';
+  class?: string;
+}
+
+const {
+  title,
+  subtitle,
+  tagline,
+  align = 'center',
+  class: className = ''
+} = Astro.props;
+
+const alignClasses = {
+  left: 'text-left',
+  center: 'text-center',
+  right: 'text-right'
+};
+
+const containerClasses = [
+  alignClasses[align],
+  className
+].filter(Boolean).join(' ');
+---
+
+{(title || subtitle || tagline) && (
+  <div class={containerClasses}>
+    {tagline && (
+      <p class="tagline mb-2">
+        {tagline}
+      </p>
+    )}
+    {title && (
+      <h2 class="heading-section mb-4">
+        <Fragment set:html={title} />
+      </h2>
+    )}
+    {subtitle && (
+      <p class="text-xl text-muted max-w-3xl mx-auto">
+        <Fragment set:html={subtitle} />
+      </p>
+    )}
+  </div>
+)}
