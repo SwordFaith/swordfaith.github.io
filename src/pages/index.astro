@@ -17,10 +17,10 @@ const recentPosts = blogPosts
   <WidgetWrapper bg="page" padding="xl">
     <div class="text-center fade-in-up">
       <p class="tagline mb-4">
-        专业技术分享
+        学海无涯，进一寸有一寸的欢喜
       </p>
       <h1 class="heading-primary mb-6">
-        LLM 算法工程师
+        {SITE_TITLE}
       </h1>
       <p class="text-xl text-muted mb-8 max-w-2xl mx-auto">
         {SITE_DESCRIPTION}
@@ -45,7 +45,7 @@ const recentPosts = blogPosts
       class="mb-12"
     />
     <div class="grid md:grid-cols-3 gap-8">
-      <div class="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 fade-in-up">
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 fade-in-up">
         <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center mb-4">
           <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
@@ -56,7 +56,7 @@ const recentPosts = blogPosts
           RLHF、DPO、SFT 等后训练方法的研究与实现，提升模型对话能力和安全性
         </p>
       </div>
-      <div class="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 fade-in-up">
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 fade-in-up">
         <div class="w-12 h-12 bg-secondary-100 dark:bg-secondary-900/20 rounded-lg flex items-center justify-center mb-4">
           <svg class="w-6 h-6 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -67,7 +67,7 @@ const recentPosts = blogPosts
           PPO、SAC、DQN 等强化学习算法在大语言模型训练中的应用与优化
         </p>
       </div>
-      <div class="bg-white dark:bg-dark-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 fade-in-up">
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 fade-in-up">
         <div class="w-12 h-12 bg-accent-100 dark:bg-accent-900/20 rounded-lg flex items-center justify-center mb-4">
           <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
@@ -92,7 +92,7 @@ const recentPosts = blogPosts
       />
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
         {recentPosts.map((post, index) => (
-          <article class={`bg-white dark:bg-dark-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-all duration-300 animate-slide-${index % 2 === 0 ? 'left' : 'right'}`}>
+          <article class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-all duration-300">
             <div class="p-6">
               <h3 class="heading-card mb-2">
                 <a href={`/blog/${post.slug}`} class="link-primary">
