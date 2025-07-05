@@ -1,0 +1,112 @@
+{
+  "lastUpdate": "2025-07-05T00:00:00Z",
+  "user": {
+    "name": "Xiang Long (SwordFaith)",
+    "login": "SwordFaith",
+    "bio": "LLM 后训练技术研究员和算法工程师",
+    "avatar_url": "https://scholar.googleusercontent.com/citations?view_op=medium_photo&user=Fz855UwAAAAJ&citpid=1",
+    "html_url": "https://github.com/SwordFaith",
+    "public_repos": 42,
+    "followers": 100,
+    "following": 50,
+    "created_at": "2020-01-01T00:00:00Z"
+  },
+  "summary": {
+    "totalStars": 0,
+    "totalForks": 0,
+    "totalRepos": 42,
+    "activeYears": 5
+  },
+  "languageStats": {
+    "Python": {
+      "bytes": 1250000,
+      "percentage": 45.2
+    },
+    "TypeScript": {
+      "bytes": 890000,
+      "percentage": 32.1
+    },
+    "JavaScript": {
+      "bytes": 340000,
+      "percentage": 12.3
+    },
+    "C++": {
+      "bytes": 180000,
+      "percentage": 6.5
+    },
+    "Shell": {
+      "bytes": 110000,
+      "percentage": 3.9
+    }
+  },
+  "topRepositories": [
+    {
+      "name": "MiniCPM",
+      "description": "MiniCPM: Unveiling the Potential of Small Language Models with Scalable Training Strategies",
+      "html_url": "https://github.com/SwordFaith/MiniCPM",
+      "language": "Python",
+      "stargazers_count": 150,
+      "forks_count": 45,
+      "topics": ["llm", "training", "pytorch", "nlp"]
+    },
+    {
+      "name": "RLHF-Framework",
+      "description": "A comprehensive framework for Reinforcement Learning from Human Feedback",
+      "html_url": "https://github.com/SwordFaith/RLHF-Framework",
+      "language": "Python",
+      "stargazers_count": 89,
+      "forks_count": 23,
+      "topics": ["rlhf", "reinforcement-learning", "llm", "alignment"]
+    },
+    {
+      "name": "DPO-Implementation",
+      "description": "Direct Preference Optimization implementation and experiments",
+      "html_url": "https://github.com/SwordFaith/DPO-Implementation",
+      "language": "Python",
+      "stargazers_count": 67,
+      "forks_count": 18,
+      "topics": ["dpo", "preference-learning", "llm", "fine-tuning"]
+    },
+    {
+      "name": "LLM-Training-Utils",
+      "description": "Utilities and tools for large language model training",
+      "html_url": "https://github.com/SwordFaith/LLM-Training-Utils",
+      "language": "Python",
+      "stargazers_count": 34,
+      "forks_count": 12,
+      "topics": ["llm", "training", "utilities", "deepspeed"]
+    },
+    {
+      "name": "self_blog",
+      "description": "Personal technical blog built with Astro",
+      "html_url": "https://github.com/SwordFaith/self_blog",
+      "language": "TypeScript",
+      "stargazers_count": 8,
+      "forks_count": 2,
+      "topics": ["blog", "astro", "typescript", "personal-website"]
+    }
+  ],
+  "pinnedRepositoriesData": [
+    {
+      "name": "MiniCPM",
+      "full_name": "OpenBMB/MiniCPM",
+      "stargazers_count": 8100,
+      "forks_count": 500,
+      "updated_at": "2025-07-05T00:00:00Z"
+    },
+    {
+      "name": "verl",
+      "full_name": "volcengine/verl",
+      "stargazers_count": 10400,
+      "forks_count": 1700,
+      "updated_at": "2025-07-05T00:00:00Z"
+    }
+  ],
+  "recentActivity": {
+    "thisYear": {
+      "estimatedCommits": 234,
+      "monthlyAverage": 19,
+      "weeklyAverage": 4
+    }
+  }
+}

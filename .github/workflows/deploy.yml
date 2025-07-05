@@ -33,6 +33,26 @@ jobs:
       
       - name: Install dependencies
         run: npm ci
+        
+      - name: Check GitHub stats data
+        run: |
+          if [ -f "src/data/github-stats.json" ]; then
+            echo "✅ GitHub stats data found"
+            LAST_UPDATE=$(node -e "
+              try {
+                const data = JSON.parse(require('fs').readFileSync('src/data/github-stats.json', 'utf8'));
+                console.log(data.lastUpdate || 'Unknown');
+              } catch (e) {
+                console.log('Unknown (parse error)');
+              }
+            ")
+            echo "📊 Data last updated: $LAST_UPDATE"
+          else
+            echo "⚠️ GitHub stats data not found, using default data"
+          fi
+      
+      - name: Run type check
+        run: npm run typecheck
       
       - name: Build with Astro
         run: npm run build
@@ -42,9 +62,7 @@ jobs:
           SITE_URL: ${{ vars.SITE_URL }}
           SITE_TITLE: ${{ vars.SITE_TITLE }}
           SITE_DESCRIPTION: ${{ vars.SITE_DESCRIPTION }}
-          # GitHub API 配置（如果需要构建时获取数据，取消注释下面两行）
-          GITHUB_USERNAME: ${{ vars._GITHUB_USERNAME }}
-          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          # 注意：构建时不再调用 GitHub API，直接使用预同步的数据
       
       - name: Setup Pages
         uses: actions/configure-pages@v4

@@ -13,6 +13,7 @@
     "typecheck": "astro check",
     "sync:wandb": "node --loader ts-node/esm src/scripts/sync-wandb.ts",
     "sync:wandb:incremental": "node --loader ts-node/esm src/scripts/sync-wandb.ts incremental",
+    "sync:github:daily": "node --loader ts-node/esm src/scripts/sync-github-daily.ts",
     "test:api": "node --loader ts-node/esm src/scripts/test-api-config.ts"
   },
   "dependencies": {

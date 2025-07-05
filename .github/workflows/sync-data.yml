@@ -1,0 +1,110 @@
+name: Sync GitHub Stats Data
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+    inputs:
+      force_sync:
+        description: 'Force sync even if data is recent'
+        required: false
+        default: 'false'
+
+jobs:
+  sync-github-stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Setup environment variables
+        run: |
+          echo "GITHUB_USERNAME=${{ vars._GITHUB_USERNAME || 'SwordFaith' }}" >> $GITHUB_ENV
+          echo "GITHUB_TOKEN=${{ secrets._GITHUB_TOKEN }}" >> $GITHUB_ENV
+          echo "NODE_ENV=production" >> $GITHUB_ENV
+          
+      - name: Check if sync is needed
+        id: check-sync
+        run: |
+          if [ -f "src/data/github-stats.json" ] && [ "${{ github.event.inputs.force_sync }}" != "true" ]; then
+            LAST_UPDATE=$(node -e "
+              const fs = require('fs');
+              try {
+                const data = JSON.parse(fs.readFileSync('src/data/github-stats.json', 'utf8'));
+                console.log(data.lastUpdate || '1970-01-01T00:00:00Z');
+              } catch (e) {
+                console.log('1970-01-01T00:00:00Z');
+              }
+            ")
+            
+            # Check if last update was less than 20 hours ago
+            CURRENT_TIME=$(date -u +%s)
+            LAST_UPDATE_TIME=$(date -d "$LAST_UPDATE" +%s)
+            TIME_DIFF=$((CURRENT_TIME - LAST_UPDATE_TIME))
+            
+            if [ $TIME_DIFF -lt 72000 ]; then
+              echo "sync_needed=false" >> $GITHUB_OUTPUT
+              echo "Data is recent (last updated: $LAST_UPDATE), skipping sync"
+            else
+              echo "sync_needed=true" >> $GITHUB_OUTPUT
+              echo "Data needs update (last updated: $LAST_UPDATE)"
+            fi
+          else
+            echo "sync_needed=true" >> $GITHUB_OUTPUT
+            echo "Force sync or no existing data found"
+          fi
+          
+      - name: Sync GitHub stats data
+        if: steps.check-sync.outputs.sync_needed == 'true'
+        run: npm run sync:github:daily
+        
+      - name: Verify data file
+        if: steps.check-sync.outputs.sync_needed == 'true'
+        run: |
+          if [ -f "src/data/github-stats.json" ]; then
+            echo "✅ Data file created successfully"
+            echo "File size: $(wc -c < src/data/github-stats.json) bytes"
+            echo "Last update: $(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/github-stats.json', 'utf8')).lastUpdate)")"
+          else
+            echo "❌ Data file not found"
+            exit 1
+          fi
+          
+      - name: Commit and push data updates
+        if: steps.check-sync.outputs.sync_needed == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Add data files
+          git add src/data/github-stats.json
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "📊 Update GitHub stats data - $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+            echo "✅ Data updated and pushed to repository"
+          fi
+          
+      - name: Output sync status
+        run: |
+          if [ "${{ steps.check-sync.outputs.sync_needed }}" == "true" ]; then
+            echo "🔄 GitHub stats data sync completed"
+          else
+            echo "⏭️ GitHub stats data sync skipped (data is recent)"
+          fi
