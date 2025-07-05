@@ -37,8 +37,14 @@ jobs:
       - name: Build with Astro
         run: npm run build
         env:
-          # 构建时不使用外部 API，避免网络错误
           NODE_ENV: production
+          # 站点配置（使用 Variables）
+          SITE_URL: ${{ vars.SITE_URL }}
+          SITE_TITLE: ${{ vars.SITE_TITLE }}
+          SITE_DESCRIPTION: ${{ vars.SITE_DESCRIPTION }}
+          # GitHub API 配置（如果需要构建时获取数据，取消注释下面两行）
+          GITHUB_USERNAME: ${{ vars._GITHUB_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
       
       - name: Setup Pages
         uses: actions/configure-pages@v4

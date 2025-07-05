@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@/components/layout/BaseLayout.astro';
-import GitHubStats from '@/components/about/GitHubStats.astro';
+import GitHubStatsClient from '@/components/about/GitHubStatsClient.astro';
 ---
 
 <BaseLayout 
@@ -165,7 +165,8 @@ import GitHubStats from '@/components/about/GitHubStats.astro';
 
     <!-- GitHub Statistics -->
     <section class="mb-16">
-      <GitHubStats 
+      <GitHubStatsClient 
+        username="SwordFaith"
         showContributions={true}
         showLanguages={true}
         showRepositories={false}
