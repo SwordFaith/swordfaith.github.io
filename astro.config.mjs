@@ -7,7 +7,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 // Load environment variables
-const env = loadEnv("", process.cwd(), '');
+const env = loadEnv(process.env.NODE_ENV || "development", process.cwd(), '');
 
 // https://astro.build/config
 export default defineConfig({

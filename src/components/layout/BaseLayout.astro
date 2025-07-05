@@ -1,4 +1,6 @@
 ---
+import { SITE_DESCRIPTION, SITE_LOGO } from '@/utils/site-config';
+
 export interface Props {
   title: string;
   description?: string;
@@ -8,7 +10,7 @@ export interface Props {
 
 const { 
   title, 
-  description = "LLM算法工程师的技术博客，专注于后训练、强化学习算法、框架和数据研发", 
+  description = SITE_DESCRIPTION, 
   keywords = ["LLM", "算法工程师", "强化学习", "后训练", "技术博客"],
   image = "/og-image.jpg"
 } = Astro.props;
@@ -69,7 +71,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
           <!-- Logo -->
           <div class="flex items-center">
             <a href="/" class="text-xl font-bold link-primary">
-              LLM Engineer Blog
+              {SITE_LOGO}
             </a>
           </div>
           <!-- Navigation Links -->
@@ -113,7 +115,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
           <!-- Copyright -->
           <div class="col-span-12 md:col-span-4 md:text-right">
             <p class="text-muted text-sm">
-              &copy; 2025 LLM Engineer Blog. Built with <a href="https://astro.build" class="link-primary">Astro</a>.
+              &copy; 2025 {SITE_LOGO}. Built with <a href="https://astro.build" class="link-primary">Astro</a>.
             </p>
           </div>
         </div>
