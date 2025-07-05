@@ -174,6 +174,11 @@ export class WandBClient {
    * 带认证的请求
    */
   private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    // 检查配置是否完整
+    if (!this.config.apiKey || !this.config.entity) {
+      throw new Error('WandB API key and entity are required. Please check your environment configuration.');
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...options.headers as Record<string, string>
@@ -183,16 +188,34 @@ export class WandBClient {
       headers['Authorization'] = `Bearer ${this.config.apiKey}`;
     }
 
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
+    try {
+      // 使用代理感知的安全 fetch
+      const response = await safeFetch(url, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      throw new Error(`WandB API request failed: ${response.status} ${response.statusText}`);
+      if (response.status === 401) {
+        throw new Error('WandB API authentication failed. Please check your API key.');
+      }
+      if (response.status === 403) {
+        throw new Error('WandB API access forbidden. Please check your permissions.');
+      }
+      if (response.status === 429) {
+        throw new Error('WandB API rate limit exceeded. Please try again later.');
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const proxyStatus = getProxyStatus();
+        const proxyInfo = proxyStatus.enabled 
+          ? `Proxy enabled: ${JSON.stringify(proxyStatus.urls)}` 
+          : 'No proxy configured';
+        throw new Error(`Network error: Unable to connect to WandB API. ${proxyInfo}. Please check your internet connection and proxy settings.`);
+      }
+      throw error;
     }
-
-    return response;
   }
 
   /**
@@ -240,8 +263,37 @@ export class WandBClient {
   }
 }
 
-// 默认实例
-export const wandbClient = new WandBClient({
-  entity: process.env.WANDB_ENTITY,
-  apiKey: process.env.WANDB_API_KEY
-});
+import { getServerEnv } from '../config/env';
+import { safeFetch, getProxyStatus } from './proxy';
+
+// 默认实例 - 延迟初始化以避免构建时 API 调用
+let _wandbClient: WandBClient | null = null;
+
+export function getWandBClient(): WandBClient {
+  if (!_wandbClient) {
+    try {
+      const env = getServerEnv();
+      _wandbClient = new WandBClient({
+        entity: env.WANDB_ENTITY,
+        apiKey: env.WANDB_API_KEY
+      });
+    } catch (error) {
+      // 如果不在服务端，创建无配置的客户端（API 调用会失败但不会崩溃）
+      console.warn('WandB client initialized without credentials (client-side)');
+      _wandbClient = new WandBClient({});
+    }
+  }
+  return _wandbClient;
+}
+
+// 服务端专用客户端创建函数
+export function createServerWandBClient(): WandBClient {
+  const env = getServerEnv();
+  return new WandBClient({
+    entity: env.WANDB_ENTITY,
+    apiKey: env.WANDB_API_KEY
+  });
+}
+
+// 保留向后兼容性 - 延迟初始化
+export const wandbClient = getWandBClient();

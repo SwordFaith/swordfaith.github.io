@@ -76,7 +76,7 @@ const {
 
 <script>
   let pagefind: any = null;
-  let searchTimeout: number | null = null;
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null;
   
   async function initializeSearch() {
     try {

@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '@/components/layout/BaseLayout.astro';
 import GitHubStats from '@/components/about/GitHubStats.astro';
-import WandBStats from '@/components/wandb/WandBStats.astro';
 ---
 
 <BaseLayout 
@@ -167,21 +166,10 @@ import WandBStats from '@/components/wandb/WandBStats.astro';
     <!-- GitHub Statistics -->
     <section class="mb-16">
       <GitHubStats 
-        username="your-github-username"
         showContributions={true}
         showLanguages={true}
-        showRepositories={true}
-        maxRepos={6}
-      />
-    </section>
-
-    <!-- WandB Statistics -->
-    <section class="mb-16">
-      <WandBStats 
-        entity="your-wandb-entity"
-        showProjects={true}
-        showRecentRuns={true}
-        limit={5}
+        showRepositories={false}
+        maxRepos={0}
       />
     </section>
 

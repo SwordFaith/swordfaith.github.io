@@ -245,7 +245,7 @@ export class GitHubClient {
         to: `${targetYear}-12-31T23:59:59Z`
       };
 
-      const response = await fetch('https://api.github.com/graphql', {
+      const response = await safeFetch('https://api.github.com/graphql', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${this.config.token}`,
@@ -352,16 +352,40 @@ export class GitHubClient {
       headers['Authorization'] = `token ${this.config.token}`;
     }
 
-    const response = await fetch(url, {
-      ...options,
-      headers
-    });
+    try {
+      // 使用代理感知的安全 fetch
+      const response = await safeFetch(url, {
+        ...options,
+        headers,
+      });
 
-    if (!response.ok) {
-      throw new Error(`GitHub API request failed: ${response.status} ${response.statusText}`);
+      if (response.status === 401) {
+        throw new Error('GitHub API authentication failed. Please check your token.');
+      }
+      if (response.status === 403) {
+        const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+        if (rateLimitRemaining === '0') {
+          const resetTime = response.headers.get('X-RateLimit-Reset');
+          const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000) : new Date();
+          throw new Error(`GitHub API rate limit exceeded. Resets at ${resetDate.toLocaleTimeString()}`);
+        }
+        throw new Error('GitHub API access forbidden. Please check your token permissions.');
+      }
+      if (response.status === 404) {
+        throw new Error('GitHub resource not found. Please check the username or repository name.');
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const proxyStatus = getProxyStatus();
+        const proxyInfo = proxyStatus.enabled 
+          ? `Proxy enabled: ${JSON.stringify(proxyStatus.urls)}` 
+          : 'No proxy configured';
+        throw new Error(`Network error: Unable to connect to GitHub API. ${proxyInfo}. Please check your internet connection and proxy settings.`);
+      }
+      throw error;
     }
-
-    return response;
   }
 
   /**
@@ -405,8 +429,37 @@ export class GitHubClient {
   }
 }
 
-// 默认实例
-export const githubClient = new GitHubClient({
-  username: process.env.GITHUB_USERNAME,
-  token: process.env.GITHUB_TOKEN
-});
+import { getServerEnv } from '../config/env';
+import { safeFetch, getProxyStatus } from './proxy';
+
+// 默认实例 - 延迟初始化以避免构建时 API 调用
+let _githubClient: GitHubClient | null = null;
+
+export function getGitHubClient(): GitHubClient {
+  if (!_githubClient) {
+    try {
+      const env = getServerEnv();
+      _githubClient = new GitHubClient({
+        username: env.GITHUB_USERNAME,
+        token: env.GITHUB_TOKEN
+      });
+    } catch (error) {
+      // 如果不在服务端，创建无配置的客户端（API 调用会失败但不会崩溃）
+      console.warn('GitHub client initialized without credentials (client-side)');
+      _githubClient = new GitHubClient({});
+    }
+  }
+  return _githubClient;
+}
+
+// 服务端专用客户端创建函数
+export function createServerGitHubClient(): GitHubClient {
+  const env = getServerEnv();
+  return new GitHubClient({
+    username: env.GITHUB_USERNAME,
+    token: env.GITHUB_TOKEN
+  });
+}
+
+// 保留向后兼容性 - 延迟初始化
+export const githubClient = getGitHubClient();

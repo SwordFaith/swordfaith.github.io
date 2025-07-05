@@ -1,8 +1,9 @@
 ---
-import { wandbClient, type WandBProject, type WandBRun } from '../../utils/wandb-client';
+import { WandBClient, type WandBProject, type WandBRun } from '../../utils/wandb-client';
+import { getServerEnv } from '../../config/env';
 
 export interface Props {
-  entity: string;
+  entity?: string;
   projects?: string[];
   limit?: number;
   showProjects?: boolean;
@@ -22,48 +23,84 @@ const {
 let wandbProjects: WandBProject[] = [];
 let recentRuns: WandBRun[] = [];
 let error: string | null = null;
+let isConfigured = false;
+let wandbEntity: string | undefined;
+let wandbApiKey: string | undefined;
 
+// 改进的环境变量处理
 try {
-  // 获取项目数据
-  if (showProjects) {
-    wandbProjects = await wandbClient.getProjects(entity);
-    
-    // 如果指定了项目列表，则过滤
-    if (projects.length > 0) {
-      wandbProjects = wandbProjects.filter(p => projects.includes(p.name));
-    }
-    
-    // 限制显示数量
-    wandbProjects = wandbProjects.slice(0, limit);
-  }
+  const env = getServerEnv();
+  wandbEntity = env.WANDB_ENTITY;
+  wandbApiKey = env.WANDB_API_KEY;
+  isConfigured = !!(wandbEntity && wandbApiKey);
   
-  // 获取最近的实验运行
-  if (showRecentRuns && wandbProjects.length > 0) {
-    const allRuns: WandBRun[] = [];
+  if (isConfigured && wandbEntity && wandbApiKey) {
+    const wandbClient = new WandBClient({
+      entity: wandbEntity,
+      apiKey: wandbApiKey
+    });
+    const targetEntity = entity || wandbEntity;
     
-    for (const project of wandbProjects.slice(0, 3)) { // 只从前3个项目获取运行数据
-      try {
-        const runs = await wandbClient.getRuns(project.name, entity, 10);
-        allRuns.push(...runs);
-      } catch (err) {
-        console.warn(`Failed to fetch runs for project ${project.name}:`, err);
+    // 获取项目数据
+    if (showProjects && targetEntity) {
+      wandbProjects = await wandbClient.getProjects(targetEntity);
+    
+      // 如果指定了项目列表，则过滤
+      if (projects.length > 0) {
+        wandbProjects = wandbProjects.filter(p => projects.includes(p.name));
       }
+      
+      // 限制显示数量
+      wandbProjects = wandbProjects.slice(0, limit);
     }
     
-    // 按时间排序并限制数量
-    recentRuns = allRuns
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-      .slice(0, limit);
+    // 获取最近的实验运行
+    if (showRecentRuns && wandbProjects.length > 0) {
+      const allRuns: WandBRun[] = [];
+      
+      for (const project of wandbProjects.slice(0, 3)) { // 只从前3个项目获取运行数据
+        try {
+          const runs = await wandbClient.getRuns(project.name, targetEntity, 10);
+          allRuns.push(...runs);
+        } catch (err) {
+          console.warn(`Failed to fetch runs for project ${project.name}:`, err);
+        }
+      }
+      
+      // 按时间排序并限制数量
+      recentRuns = allRuns
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        .slice(0, limit);
+    }
+  } else {
+    error = 'WandB is not configured. Please set WANDB_ENTITY and WANDB_API_KEY in your environment.';
   }
 } catch (err) {
   console.error('Failed to fetch WandB data:', err);
-  error = 'Failed to load WandB data';
+  
+  // 更详细的错误信息
+  if (err instanceof Error) {
+    if (err.message.includes('Network error') || err.message.includes('Unable to connect')) {
+      error = `网络连接失败: ${err.message}`;
+    } else if (err.message.includes('authentication')) {
+      error = `WandB 认证失败: ${err.message}`;
+    } else if (err.message.includes('rate limit')) {
+      error = `WandB API 限制: ${err.message}`;
+    } else {
+      error = `WandB 数据加载失败: ${err.message}`;
+    }
+  } else {
+    error = 'WandB 数据加载失败，请检查网络连接和配置';
+  }
 }
 
 // 计算总统计
 const totalProjects = wandbProjects.length;
 const totalRuns = wandbProjects.reduce((sum, p) => sum + p.run_count, 0);
 const finishedRuns = recentRuns.filter(r => r.state === 'finished').length;
+
+// 获取显示用的 entity
+let displayEntity = entity || wandbEntity || 'wandb';
 ---
 
 <div class={`wandb-stats ${className}`}>
@@ -75,14 +112,16 @@ const finishedRuns = recentRuns.filter(r => r.state === 'finished').length;
         </svg>
         WandB 实验统计
       </h3>
-      <a 
-        href={`https://wandb.ai/${entity}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="text-sm text-blue-600 hover:text-blue-800 transition-colors"
-      >
-        查看完整数据 ↗
-      </a>
+      {isConfigured && displayEntity && (
+        <a 
+          href={`https://wandb.ai/${displayEntity}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          查看完整数据 ↗
+        </a>
+      )}
     </div>
 
     {error ? (
@@ -90,7 +129,17 @@ const finishedRuns = recentRuns.filter(r => r.state === 'finished').length;
         <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <p class="text-gray-600">{error}</p>
+        <p class="text-gray-600 mb-4">{error}</p>
+        {!isConfigured && (
+          <div class="text-sm text-gray-500 space-y-2">
+            <p>配置步骤：</p>
+            <ol class="text-left inline-block space-y-1">
+              <li>1. 访问 <a href="https://wandb.ai/settings" target="_blank" class="text-blue-600 hover:underline">WandB Settings</a> 获取 API Key</li>
+              <li>2. 在 .env 文件中设置 WANDB_ENTITY 和 WANDB_API_KEY</li>
+              <li>3. 重启开发服务器</li>
+            </ol>
+          </div>
+        )}
       </div>
     ) : (
       <>
