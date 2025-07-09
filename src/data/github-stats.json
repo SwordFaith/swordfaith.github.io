@@ -1,5 +1,5 @@
 {
-  "lastUpdate": "2025-07-08T03:14:25.459Z",
+  "lastUpdate": "2025-07-09T03:16:45.959Z",
   "user": {
     "name": "Xiang Long",
     "login": "SwordFaith",
@@ -7,7 +7,7 @@
     "avatar_url": "https://avatars.githubusercontent.com/u/18397468?v=4",
     "html_url": "https://github.com/SwordFaith",
     "public_repos": 35,
-    "followers": 55,
+    "followers": 54,
     "following": 123,
     "created_at": "2016-04-11T12:20:39Z"
   },
@@ -19,120 +19,120 @@
   },
   "languageStats": {
     "Python": {
-      "bytes": 25497923,
-      "percentage": 62.00455359626281
+      "bytes": 25499667,
+      "percentage": 62.00618450465639
     },
     "Shell": {
-      "bytes": 791314,
-      "percentage": 1.9242771783597081
-    },
-    "Roff": {
-      "bytes": 26772,
-      "percentage": 0.06510278930872715
+      "bytes": 791301,
+      "percentage": 1.9241645706478878
     },
     "HTML": {
       "bytes": 131919,
-      "percentage": 0.3207939213662773
+      "percentage": 0.32078041857055495
     },
     "Cuda": {
       "bytes": 777388,
-      "percentage": 1.8904126391428646
+      "percentage": 1.8903330682595123
     },
     "Lean": {
       "bytes": 2571,
-      "percentage": 0.006252027166918328
+      "percentage": 0.006251764007799459
     },
     "C++": {
       "bytes": 2517207,
-      "percentage": 6.121216082752619
+      "percentage": 6.120958429708616
     },
     "CMake": {
       "bytes": 12478,
-      "percentage": 0.03034336639004547
+      "percentage": 0.03034208918293335
     },
     "Makefile": {
       "bytes": 63116,
-      "percentage": 0.15348228186200594
+      "percentage": 0.15347582151546893
     },
     "Go": {
       "bytes": 546533,
-      "percentage": 1.3290311799367465
+      "percentage": 1.3289752386132483
     },
     "JavaScript": {
       "bytes": 1968074,
-      "percentage": 4.785862354922451
+      "percentage": 4.78566090932941
+    },
+    "Roff": {
+      "bytes": 26772,
+      "percentage": 0.06510004901470522
     },
     "C": {
       "bytes": 4667203,
-      "percentage": 11.3494671137778
+      "percentage": 11.348989394202121
     },
     "Dockerfile": {
       "bytes": 109757,
-      "percentage": 0.2669014958224251
+      "percentage": 0.26689026145626027
     },
     "Batchfile": {
       "bytes": 15197,
-      "percentage": 0.03695529243705089
+      "percentage": 0.03695373692202582
     },
     "Ruby": {
       "bytes": 143097,
-      "percentage": 0.34797601380961185
+      "percentage": 0.3479613668705092
     },
     "Jupyter Notebook": {
       "bytes": 1306456,
-      "percentage": 3.176973319480145
+      "percentage": 3.1768395949333526
     },
     "Starlark": {
       "bytes": 21603,
-      "percentage": 0.052533077746766486
+      "percentage": 0.052530866534613654
     },
     "Smarty": {
       "bytes": 8501,
-      "percentage": 0.020672299862299768
+      "percentage": 0.02067142972785033
     },
     "CSS": {
       "bytes": 31708,
-      "percentage": 0.0771059033094696
+      "percentage": 0.0771026577826936
     },
     "CodeQL": {
       "bytes": 6361,
-      "percentage": 0.015468356596175608
+      "percentage": 0.015467705505100099
     },
     "Java": {
       "bytes": 875160,
-      "percentage": 2.1281696209258048
+      "percentage": 2.128080042421538
     },
     "TypeScript": {
       "bytes": 1229113,
-      "percentage": 2.988894541895172
+      "percentage": 2.988768733923927
     },
     "EJS": {
       "bytes": 38759,
-      "percentage": 0.0942521668465918
+      "percentage": 0.09424819960260569
     },
     "Lua": {
       "bytes": 16928,
-      "percentage": 0.041164650284555994
+      "percentage": 0.04116291759005416
     },
     "SCSS": {
       "bytes": 32218,
-      "percentage": 0.07834609539625621
+      "percentage": 0.07834279766755463
     },
     "PowerShell": {
       "bytes": 12356,
-      "percentage": 0.030046692988892593
+      "percentage": 0.030045428269299925
     },
     "Assembly": {
       "bytes": 221937,
-      "percentage": 0.5396951199316814
+      "percentage": 0.539672403189027
     },
     "Objective-C": {
       "bytes": 49006,
-      "percentage": 0.11917030079424333
+      "percentage": 0.11916528470098027
     },
     "Jsonnet": {
       "bytes": 2007,
-      "percentage": 0.004880520623883736
+      "percentage": 0.004880315193953136
     }
   },
   "topRepositories": [
@@ -186,15 +186,15 @@
     {
       "name": "MiniCPM",
       "full_name": "OpenBMB/MiniCPM",
-      "stargazers_count": 8062,
-      "forks_count": 500,
-      "updated_at": "2025-07-07T10:41:59Z"
+      "stargazers_count": 8069,
+      "forks_count": 501,
+      "updated_at": "2025-07-09T03:01:15Z"
     }
   ],
   "recentActivity": {
     "thisYear": {
-      "estimatedCommits": 66,
-      "monthlyAverage": 6,
+      "estimatedCommits": 46,
+      "monthlyAverage": 4,
       "weeklyAverage": 1
     }
   }
