@@ -1,5 +1,5 @@
 {
-  "lastUpdate": "2025-07-17T03:21:59.584Z",
+  "lastUpdate": "2025-07-18T03:23:37.906Z",
   "user": {
     "name": "Xiang Long",
     "login": "SwordFaith",
@@ -186,14 +186,14 @@
     {
       "name": "MiniCPM",
       "full_name": "OpenBMB/MiniCPM",
-      "stargazers_count": 8090,
+      "stargazers_count": 8091,
       "forks_count": 504,
-      "updated_at": "2025-07-17T01:22:53Z"
+      "updated_at": "2025-07-18T01:53:46Z"
     }
   ],
   "recentActivity": {
     "thisYear": {
-      "estimatedCommits": 104,
+      "estimatedCommits": 108,
       "monthlyAverage": 9,
       "weeklyAverage": 2
     }
