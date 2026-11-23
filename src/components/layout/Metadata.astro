@@ -60,7 +60,8 @@ const articleJsonLd = article && {
   ...(article.modifiedTime && { dateModified: article.modifiedTime.toISOString() }),
   author: { '@type': 'Person', name: article.author ?? siteConfig.author },
   url: canonicalUrl.href,
-  ...(imageUrl && { image: imageUrl.href }),
+  // The site-wide fallback image does not represent the article, so only page-specific images are claimed.
+  ...(imageUrl && image !== defaultImage && { image: imageUrl.href }),
 };
 // Escape HTML-significant characters so frontmatter strings cannot close the <script> element.
 const serializeJsonLd = (data: object) =>

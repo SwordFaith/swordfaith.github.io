@@ -15,7 +15,10 @@ export default defineConfig({
   base: '/', // 根站点不需要子路径
   integrations: [
     mdx(),
-    sitemap()
+    sitemap({
+      // /search is noindex; match the exact route so other paths containing "search" stay listed
+      filter: (page) => !/^\/search\/?$/.test(new URL(page).pathname),
+    })
   ],
   vite: {
     define: {
