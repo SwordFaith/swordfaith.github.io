@@ -14,10 +14,19 @@ describe('getTagSlug', () => {
     expect(getTagSlug(tag)).toBe(slug);
   });
 
-  it('builds paths that decode back to the readable slug', () => {
+  it('builds plain paths for plain tags', () => {
     expect(getTagPath('RLHF')).toBe('/tags/RLHF');
-    expect(decodeURIComponent(getTagPath('代码高亮'))).toBe('/tags/代码高亮');
   });
+
+  // Astro registers the raw slug as the route param and decodes request paths
+  // with decodeURI, which keeps %2B, %26, %40, %3D encoded. A link only reaches
+  // its page if decodeURI(link) is exactly the registered slug.
+  it.each(['C++', 'R&D', 'user@team', 'a=b', 'reward model', '代码高亮', 'C++ & R&D @ 实验=1'])(
+    'links to %j with a path that decodeURI maps back to the registered slug',
+    (tag) => {
+      expect(decodeURI(getTagPath(tag))).toBe(`/tags/${getTagSlug(tag)}`);
+    },
+  );
 
   // Each slug becomes a directory under dist/tags, so a separator or URL
   // delimiter would create a nested page, a query, a fragment or a broken escape.
@@ -56,6 +65,29 @@ describe('getTagSlug', () => {
 
   // The same visible tag typed with a precomposed or a combining accent must
   // land on one URL; otherwise links from different posts point to different pages.
+  // Astro's router strips a trailing .html from request paths, so such a page
+  // would build but never be reachable.
+  it('fails loudly for a slug ending in .html', () => {
+    expect(() => getTagSlug('notes.html')).toThrow(/must not end in "\.html"/);
+    expect(getTagSlug('html')).toBe('html');
+  });
+
+  // A slug becomes a directory name; file systems cap names at 255 bytes, and
+  // exceeding that aborts the build with an obscure ENAMETOOLONG.
+  it('fails loudly and names the tag when the slug is too long', () => {
+    const longTag = '强'.repeat(86); // 258 UTF-8 bytes
+    expect(() => getTagSlug(longTag)).toThrow(new RegExp(`${longTag}.*too long`));
+    expect(getTagSlug('强'.repeat(66))).toBe('强'.repeat(66)); // 198 bytes
+  });
+
+  // Stripping `?` between `e` and a combining accent leaves a decomposed
+  // sequence; without normalizing last it would pass the collision check next
+  // to `café` yet resolve to the same route.
+  it('normalizes after stripping so removed characters cannot split a composed form', () => {
+    expect(getTagSlug('cafe?́')).toBe('café');
+    expect(() => assertUniqueTagSlugs(['café', 'cafe?́'])).toThrow(/collision/);
+  });
+
   it('normalizes to NFC so composed and decomposed forms share a slug', () => {
     const composed = 'café';
     const decomposed = 'café';
