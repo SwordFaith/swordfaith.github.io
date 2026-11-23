@@ -1,5 +1,6 @@
 /* AstroWind Theme Custom Properties */
 :root {
+  scroll-padding-top: 5rem;
   /* Primary Colors */
   --aw-color-primary: rgb(1 97 239);
   --aw-color-secondary: rgb(1 84 207);
@@ -35,7 +36,7 @@
   
   /* Background Colors - Dark Mode */
   --aw-color-bg-page: rgb(3 6 32);
-  --aw-color-bg-card: rgb(100 116 139);
+  --aw-color-bg-card: rgb(15 23 42);
   --aw-color-bg-glass: rgba(3 6 32 / 0.9);
   
   /* Border Colors - Dark Mode */
@@ -243,6 +244,26 @@
 .link-primary:hover {
   color: var(--aw-color-link-hover);
   text-decoration: underline;
+}
+
+html.dark .astro-code,
+html.dark .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
+.search-highlight,
+[data-search-content] mark {
+  @apply rounded bg-yellow-200 px-0.5 font-medium text-gray-900 dark:bg-yellow-700 dark:text-white;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Smooth Transitions */

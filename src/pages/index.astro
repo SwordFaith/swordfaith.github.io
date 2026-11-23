@@ -1,130 +1,54 @@
 ---
-import BaseLayout from '@/components/layout/BaseLayout.astro';
-import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
-import Headline from '@/components/ui/Headline.astro';
-import Button from '@/components/ui/Button.astro';
 import { getCollection } from 'astro:content';
-import { SITE_TITLE, SITE_DESCRIPTION } from '@/utils/site-config';
+import PageLayout from '@/components/layout/PageLayout.astro';
+import Hero from '@/components/widgets/Hero.astro';
+import Features from '@/components/widgets/Features.astro';
+import BlogLatestPosts from '@/components/widgets/BlogLatestPosts.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '@/utils/site-config';
 
 const blogPosts = await getCollection('blog', ({ data }) => !data.draft);
-const recentPosts = blogPosts
-  .sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf())
-  .slice(0, 3);
+const recentPosts = blogPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+
+const metadata = {
+  title: SITE_TITLE,
+  ignoreTitleTemplate: true,
+  description: SITE_DESCRIPTION,
+};
+
+const researchAreas = [
+  {
+    title: '后训练技术',
+    description: 'RLHF、DPO、SFT 等后训练方法的研究与实现，提升模型对话能力和安全性。',
+    icon: 'sparkles' as const,
+  },
+  {
+    title: '强化学习算法',
+    description: 'PPO、SAC、DQN 等强化学习算法在大语言模型训练中的应用与优化。',
+    icon: 'bolt' as const,
+  },
+  {
+    title: '框架与数据',
+    description: '分布式训练框架开发，高质量训练数据构建与处理流程设计。',
+    icon: 'database' as const,
+  },
+];
 ---
 
-<BaseLayout title={SITE_TITLE}>
-  <!-- Hero Section -->
-  <WidgetWrapper bg="page" padding="xl">
-    <div class="text-center fade-in-up">
-      <p class="tagline mb-4">
-        学海无涯，进一寸有一寸的欢喜
-      </p>
-      <h1 class="heading-primary mb-6">
-        {SITE_TITLE}
-      </h1>
-      <p class="text-xl text-muted mb-8 max-w-2xl mx-auto">
-        {SITE_DESCRIPTION}
-      </p>
-      <div class="flex flex-col sm:flex-row justify-center gap-4 animate-fade-in">
-        <Button variant="primary" size="lg" href="/blog">
-          阅读博客
-        </Button>
-        <Button variant="secondary" size="lg" href="/about">
-          了解我
-        </Button>
-      </div>
-    </div>
-  </WidgetWrapper>
-
-  <!-- Research Areas -->
-  <WidgetWrapper bg="transparent" padding="lg">
-    <Headline
-      title="研究领域"
-      subtitle="聚焦前沿技术，探索LLM训练与优化的最佳实践"
-      align="center"
-      class="mb-12"
-    />
-    <div class="grid md:grid-cols-3 gap-8">
-      <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 fade-in-up">
-        <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center mb-4">
-          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-          </svg>
-        </div>
-        <h3 class="heading-card mb-3">后训练技术</h3>
-        <p class="text-muted">
-          RLHF、DPO、SFT 等后训练方法的研究与实现，提升模型对话能力和安全性
-        </p>
-      </div>
-      <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 fade-in-up">
-        <div class="w-12 h-12 bg-secondary-100 dark:bg-secondary-900/20 rounded-lg flex items-center justify-center mb-4">
-          <svg class="w-6 h-6 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-          </svg>
-        </div>
-        <h3 class="heading-card mb-3">强化学习算法</h3>
-        <p class="text-muted">
-          PPO、SAC、DQN 等强化学习算法在大语言模型训练中的应用与优化
-        </p>
-      </div>
-      <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 fade-in-up">
-        <div class="w-12 h-12 bg-accent-100 dark:bg-accent-900/20 rounded-lg flex items-center justify-center mb-4">
-          <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-          </svg>
-        </div>
-        <h3 class="heading-card mb-3">框架与数据</h3>
-        <p class="text-muted">
-          分布式训练框架开发，高质量训练数据构建与处理流程设计
-        </p>
-      </div>
-    </div>
-  </WidgetWrapper>
-
-  <!-- Recent Posts -->
-  {recentPosts.length > 0 && (
-    <WidgetWrapper bg="primary" padding="lg">
-      <Headline
-        title="最新文章"
-        subtitle="分享LLM领域的最新研究成果和技术实践"
-        align="center"
-        class="mb-12"
-      />
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {recentPosts.map((post, index) => (
-          <article class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden hover:shadow-md transition-all duration-300">
-            <div class="p-6">
-              <h3 class="heading-card mb-2">
-                <a href={`/blog/${post.slug}`} class="link-primary">
-                  {post.data.title}
-                </a>
-              </h3>
-              {post.data.description && (
-                <p class="text-muted mb-4">{post.data.description}</p>
-              )}
-              <div class="flex items-center text-sm text-muted">
-                <time datetime={post.data.publishDate.toISOString()}>
-                  {post.data.publishDate.toLocaleDateString('zh-CN')}
-                </time>
-                {post.data.tags.length > 0 && (
-                  <div class="ml-4 flex flex-wrap gap-2">
-                    {post.data.tags.slice(0, 2).map((tag) => (
-                      <span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-      <div class="text-center mt-8">
-        <Button variant="link" href="/blog" class="text-lg">
-          查看所有文章 →
-        </Button>
-      </div>
-    </WidgetWrapper>
-  )}
-</BaseLayout>
+<PageLayout metadata={metadata}>
+  <Hero
+    tagline="学海无涯，进一寸有一寸的欢喜"
+    title={SITE_TITLE}
+    subtitle={SITE_DESCRIPTION}
+    actions={[
+      { text: '阅读博客', href: '/blog', variant: 'primary' },
+      { text: '了解我', href: '/about', variant: 'secondary' },
+    ]}
+  />
+  <Features
+    tagline="Research"
+    title="研究领域"
+    subtitle="聚焦前沿技术，探索 LLM 训练与优化的最佳实践"
+    items={researchAreas}
+  />
+  <BlogLatestPosts posts={recentPosts} />
+</PageLayout>

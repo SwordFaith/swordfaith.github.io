@@ -1,5 +1,5 @@
 import { Buffer } from 'node:buffer';
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import {
   parseFragment,
@@ -95,6 +95,14 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function isWithinDirectory(root: string, candidate: string): boolean {
+  const relativePath = path.relative(root, candidate);
+  return relativePath !== ''
+    && relativePath !== '..'
+    && !relativePath.startsWith(`..${path.sep}`)
+    && !path.isAbsolute(relativePath);
+}
+
 function isSafeUrl(value: string, image = false): boolean {
   const url = value.trim();
   if (!url || /[\u0000-\u0020]/.test(url)) return false;
@@ -185,7 +193,7 @@ export class NotebookParser {
     return {
       id: `cell-${index}`,
       type: cell.cell_type,
-      source: textValue(cell.source).replace(/\r\n/g, '\n').trim(),
+      source: textValue(cell.source).replace(/\r\n?/g, '\n'),
       outputs: Array.isArray(cell.outputs)
         ? cell.outputs.map((output) => this.parseOutput(output))
         : [],
@@ -280,9 +288,34 @@ export class NotebookParser {
 
   static async loadNotebook(notebookPath: string): Promise<ParsedNotebook> {
     const filePath = this.resolveNotebookPath(notebookPath);
+    const notebooksRoot = path.resolve(process.cwd(), 'public', 'notebooks');
+    let realFilePath: string;
+    let realNotebooksRoot: string;
+    try {
+      [realFilePath, realNotebooksRoot] = await Promise.all([
+        realpath(filePath),
+        realpath(notebooksRoot),
+      ]);
+    } catch (error) {
+      throw new Error(
+        `Unable to read notebook "${notebookPath}" at ${filePath}: ${errorMessage(error)}. `
+        + 'Check the content entry notebookPath and ensure the .ipynb file exists.',
+      );
+    }
+
+    if (!isWithinDirectory(realNotebooksRoot, realFilePath)) {
+      throw new Error(
+        `Invalid notebookPath "${notebookPath}": real file ${realFilePath} resolves outside `
+        + `the real public notebooks directory ${realNotebooksRoot}.`,
+      );
+    }
+    if (path.extname(realFilePath) !== '.ipynb') {
+      throw new Error(`Invalid notebookPath "${notebookPath}": real file must have an .ipynb extension.`);
+    }
+
     let source: string;
     try {
-      source = await readFile(filePath, 'utf8');
+      source = await readFile(realFilePath, 'utf8');
     } catch (error) {
       throw new Error(
         `Unable to read notebook "${notebookPath}" at ${filePath}: ${errorMessage(error)}. `
@@ -309,10 +342,10 @@ export class NotebookParser {
       );
     }
     const publicRoot = path.resolve(process.cwd(), 'public');
+    const notebooksRoot = path.join(publicRoot, 'notebooks');
     const filePath = path.resolve(publicRoot, `.${notebookPath}`);
-    const relativePath = path.relative(publicRoot, filePath);
-    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
-      throw new Error(`Invalid notebookPath "${notebookPath}": path escapes the public directory.`);
+    if (!isWithinDirectory(notebooksRoot, filePath)) {
+      throw new Error(`Invalid notebookPath "${notebookPath}": path escapes the public notebooks directory.`);
     }
     if (path.extname(filePath) !== '.ipynb') {
       throw new Error(`Invalid notebookPath "${notebookPath}": expected an .ipynb file.`);

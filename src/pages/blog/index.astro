@@ -1,97 +1,40 @@
 ---
-import BaseLayout from '@/components/layout/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import List from '@/components/blog/List.astro';
+import PostTags from '@/components/blog/PostTags.astro';
+import PageLayout from '@/components/layout/PageLayout.astro';
+import SearchBox from '@/components/search/SearchBox.astro';
+import Headline from '@/components/ui/Headline.astro';
+import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
 
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
 
-// 获取所有标签
-const allTags = [...new Set(allPosts.flatMap(post => post.data.tags))];
+const metadata = {
+  title: '技术博客',
+  description: 'LLM 算法工程师的技术博客，分享后训练、强化学习算法、框架和数据研发的深度见解',
+};
 ---
 
-<BaseLayout 
-  title="技术博客 - LLM算法工程师"
-  description="LLM算法工程师的技术博客，分享后训练、强化学习算法、框架和数据研发的深度见解"
->
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <!-- Header -->
-    <header class="text-center mb-12">
-      <h1 class="heading-primary mb-4">技术博客</h1>
-      <p class="text-xl text-muted max-w-2xl mx-auto">
-        深度分享LLM后训练、强化学习算法、框架开发和数据工程的实践经验
-      </p>
-    </header>
-
-    <!-- Tags Filter -->
-    <section class="mb-8">
-      <h2 class="text-lg font-semibold text-page mb-4">热门标签</h2>
-      <div class="flex flex-wrap gap-2">
-        {allTags.map((tag) => (
-          <span class="bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full text-sm font-medium hover:bg-primary-200 dark:hover:bg-primary-800/30 transition-colors cursor-pointer">
-            {tag}
-          </span>
-        ))}
-      </div>
-    </section>
-
-    <!-- Posts Grid -->
-    <section class="grid gap-8">
-      {sortedPosts.map((post) => (
-        <article class="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden border border-gray-200 dark:border-slate-700">
-          <div class="p-6">
-            <header class="mb-4">
-              <h2 class="text-2xl font-bold text-page mb-2">
-                <a href={`/blog/${post.slug}`} class="link-primary">
-                  {post.data.title}
-                </a>
-              </h2>
-              {post.data.description && (
-                <p class="text-muted text-lg leading-relaxed">
-                  {post.data.description}
-                </p>
-              )}
-            </header>
-
-            <div class="flex items-center justify-between text-sm text-muted mb-4">
-              <div class="flex items-center space-x-4">
-                <time datetime={post.data.publishDate.toISOString()}>
-                  {post.data.publishDate.toLocaleDateString('zh-CN', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </time>
-                <span>•</span>
-                <span>{post.data.author}</span>
-                {post.data.katex && (
-                  <>
-                    <span>•</span>
-                    <span class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded text-xs">
-                      包含公式
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {post.data.tags.length > 0 && (
-              <div class="flex flex-wrap gap-2">
-                {post.data.tags.map((tag) => (
-                  <span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-sm">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </article>
-      ))}
-    </section>
-
-    {sortedPosts.length === 0 && (
-      <div class="text-center py-12">
-        <p class="text-muted text-lg">暂无博客文章，敬请期待...</p>
-      </div>
+<PageLayout metadata={metadata}>
+  <WidgetWrapper containerClass="max-w-4xl">
+    <Headline
+      tagline="Blog"
+      title="技术博客"
+      titleTag="h1"
+      subtitle="深度分享 LLM 后训练、强化学习算法、框架开发和数据工程的实践经验"
+      class="mb-10"
+    />
+    <div class="mx-auto mb-8 max-w-xl">
+      <SearchBox placeholder="搜索文章、笔记..." />
+    </div>
+    {allTags.length > 0 && (
+      <section class="mb-10 text-center" aria-labelledby="popular-tags">
+        <h2 id="popular-tags" class="sr-only">热门标签</h2>
+        <PostTags tags={allTags} class="justify-center" />
+      </section>
     )}
-  </div>
-</BaseLayout>
+    {sortedPosts.length > 0 ? <List posts={sortedPosts} /> : <p class="py-12 text-center text-lg text-muted">暂无博客文章，敬请期待...</p>}
+  </WidgetWrapper>
+</PageLayout>

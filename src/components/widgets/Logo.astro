@@ -1,0 +1,8 @@
+---
+import { getHomePermalink, SITE_LOGO } from '@/utils/site-config';
+---
+
+<a href={getHomePermalink()} class="flex items-center gap-2 text-xl font-bold tracking-tight text-page" aria-label={`${SITE_LOGO} 首页`}>
+  <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-500 text-sm font-extrabold text-white" aria-hidden="true">SF</span>
+  <span>{SITE_LOGO}</span>
+</a>

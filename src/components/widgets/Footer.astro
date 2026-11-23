@@ -1,0 +1,22 @@
+---
+import { footerData } from '@/navigation';
+import { SITE_AUTHOR } from '@/utils/site-config';
+---
+
+<footer class="border-t border-gray-200 bg-gray-50 dark:border-slate-800 dark:bg-slate-950/40">
+  <div class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 md:items-end">
+    <div>
+      <nav class="flex flex-wrap gap-x-6 gap-y-3" aria-label="页脚导航">
+        {footerData.links.map(({ text, href }) => <a href={href} class="text-sm text-muted hover:text-primary">{text}</a>)}
+      </nav>
+      <div class="mt-5 flex gap-5">
+        {footerData.socialLinks.map(({ text, href, ariaLabel }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel} class="text-sm font-medium text-muted hover:text-primary">{text}</a>
+        ))}
+      </div>
+    </div>
+    <p class="text-sm text-muted md:text-right">
+      &copy; {new Date().getFullYear()} {SITE_AUTHOR}. Built with <a href="https://astro.build" class="link-primary" target="_blank" rel="noopener noreferrer">Astro</a>.
+    </p>
+  </div>
+</footer>

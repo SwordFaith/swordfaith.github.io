@@ -1,0 +1,52 @@
+---
+import { I18N, UI, type MetaData } from '@/config/site';
+import Metadata from '@/components/layout/Metadata.astro';
+import BasicScripts from '@/components/layout/BasicScripts.astro';
+import '@/assets/styles/astrowind.css';
+
+export interface Props {
+  metadata?: MetaData;
+}
+
+const { metadata = {} } = Astro.props;
+---
+
+<!doctype html>
+<html lang={I18N.language} dir={I18N.textDirection} class="scroll-smooth" data-aw-theme={UI.theme}>
+  <head>
+    <Metadata {...metadata} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
+      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
+      crossorigin="anonymous"
+    />
+    <script is:inline>
+      (() => {
+        const applyTheme = (theme) => {
+          const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', isDark);
+          document.documentElement.dataset.awTheme = theme;
+        };
+        const savedTheme = localStorage.getItem('aw-theme');
+        const legacyTheme = localStorage.getItem('theme');
+        const isValidTheme = (theme) => theme === 'light' || theme === 'dark' || theme === 'system';
+        const initialTheme = isValidTheme(savedTheme) ? savedTheme : isValidTheme(legacyTheme) ? legacyTheme : 'system';
+        localStorage.setItem('aw-theme', initialTheme);
+        localStorage.setItem('theme', initialTheme);
+        applyTheme(initialTheme);
+      })();
+    </script>
+    <slot name="head" />
+  </head>
+  <body class="min-h-screen bg-page font-sans text-page antialiased">
+    <a href="#main-content" class="sr-only z-[100] bg-page px-4 py-2 focus:not-sr-only focus:fixed focus:left-4 focus:top-4">
+      跳转到主要内容
+    </a>
+    <slot />
+    <BasicScripts />
+  </body>
+</html>

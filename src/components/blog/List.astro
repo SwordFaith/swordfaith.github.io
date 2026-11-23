@@ -1,0 +1,14 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ListItem from '@/components/blog/ListItem.astro';
+
+export interface Props {
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { posts } = Astro.props;
+---
+
+<div>
+  {posts.map((post) => <ListItem post={post} />)}
+</div>

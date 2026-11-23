@@ -1,0 +1,75 @@
+---
+import { headerData } from '@/navigation';
+import Logo from '@/components/widgets/Logo.astro';
+import ToggleMenu from '@/components/widgets/ToggleMenu.astro';
+import ToggleTheme from '@/components/widgets/ToggleTheme.astro';
+
+const pathname = Astro.url.pathname;
+const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+---
+
+<header class="glass-effect sticky top-0 z-50 border-b border-gray-200/80 dark:border-slate-700/80" data-aw-header>
+  <div class="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+    <Logo />
+    <div class="flex items-center gap-1">
+      <nav class="hidden items-center gap-1 md:flex" aria-label="主导航">
+        {headerData.links.map(({ text, href }) => (
+          <a
+            href={href}
+            class:list={[
+              'rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-100 hover:text-page dark:hover:bg-slate-800',
+              isActive(href) ? 'text-primary' : 'text-muted',
+            ]}
+            aria-current={isActive(href) ? 'page' : undefined}
+          >
+            {text}
+          </a>
+        ))}
+      </nav>
+      <ToggleTheme />
+      <ToggleMenu />
+    </div>
+  </div>
+  <nav id="primary-navigation" class="hidden border-t border-gray-200 px-4 py-3 dark:border-slate-700 md:hidden" aria-label="移动端导航" data-aw-navigation>
+    <div class="mx-auto flex max-w-7xl flex-col gap-1">
+      {headerData.links.map(({ text, href }) => (
+        <a
+          href={href}
+          class:list={[
+            'rounded-lg px-3 py-3 font-medium hover:bg-gray-100 hover:text-page dark:hover:bg-slate-800',
+            isActive(href) ? 'bg-primary-50 text-primary dark:bg-primary-900/20' : 'text-muted',
+          ]}
+          aria-current={isActive(href) ? 'page' : undefined}
+        >
+          {text}
+        </a>
+      ))}
+    </div>
+  </nav>
+</header>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-aw-header]').forEach((header) => {
+    const button = header.querySelector<HTMLButtonElement>('[data-aw-toggle-menu]');
+    const navigation = header.querySelector<HTMLElement>('[data-aw-navigation]');
+    if (!button || !navigation) return;
+
+    const setMenuOpen = (open: boolean) => {
+      button.setAttribute('aria-expanded', String(open));
+      button.setAttribute('aria-label', open ? '关闭导航菜单' : '打开导航菜单');
+      navigation.classList.toggle('hidden', !open);
+    };
+
+    button.addEventListener('click', () => setMenuOpen(button.getAttribute('aria-expanded') !== 'true'));
+    navigation.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setMenuOpen(false)));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && button.getAttribute('aria-expanded') === 'true') {
+        setMenuOpen(false);
+        button.focus();
+      }
+    });
+    window.matchMedia('(min-width: 768px)').addEventListener('change', (event) => {
+      if (event.matches) setMenuOpen(false);
+    });
+  });
+</script>

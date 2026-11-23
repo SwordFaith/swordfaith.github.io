@@ -1,0 +1,37 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import PostTags from '@/components/blog/PostTags.astro';
+import { getPermalink } from '@/utils/site-config';
+
+export interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const permalink = getPermalink(post.slug, 'post');
+---
+
+<article class="group border-b border-gray-200 py-8 first:pt-0 last:border-0 dark:border-slate-700">
+  <div class="flex flex-col gap-5 sm:flex-row">
+    {post.data.cover && (
+      <a href={permalink} class="block shrink-0 overflow-hidden rounded-xl sm:w-48" tabindex="-1" aria-hidden="true">
+        <img src={post.data.cover} alt="" class="aspect-[16/10] h-full w-full object-cover group-hover:scale-105" loading="lazy" />
+      </a>
+    )}
+    <div class="min-w-0 flex-1">
+      <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+        <time datetime={post.data.publishDate.toISOString()}>
+          {post.data.publishDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </time>
+        <span aria-hidden="true">·</span>
+        <span>{post.data.author}</span>
+        {post.data.katex && <span class="rounded bg-green-50 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/25 dark:text-green-300">KaTeX</span>}
+      </div>
+      <h2 class="mb-3 text-2xl font-bold leading-snug text-page">
+        <a href={permalink} class="hover:text-primary">{post.data.title}</a>
+      </h2>
+      {post.data.description && <p class="mb-4 leading-relaxed text-muted">{post.data.description}</p>}
+      <PostTags tags={post.data.tags} />
+    </div>
+  </div>
+</article>

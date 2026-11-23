@@ -3,6 +3,7 @@ export interface Props {
   title?: string;
   subtitle?: string;
   tagline?: string;
+  titleTag?: 'h1' | 'h2' | 'h3';
   align?: 'left' | 'center' | 'right';
   class?: string;
 }
@@ -11,6 +12,7 @@ const {
   title,
   subtitle,
   tagline,
+  titleTag = 'h2',
   align = 'center',
   class: className = ''
 } = Astro.props;
@@ -25,6 +27,7 @@ const containerClasses = [
   alignClasses[align],
   className
 ].filter(Boolean).join(' ');
+const TitleTag = titleTag;
 ---
 
 {(title || subtitle || tagline) && (
@@ -35,9 +38,9 @@ const containerClasses = [
       </p>
     )}
     {title && (
-      <h2 class="heading-section mb-4">
+      <TitleTag class="heading-section mb-4">
         <Fragment set:html={title} />
-      </h2>
+      </TitleTag>
     )}
     {subtitle && (
       <p class="text-xl text-muted max-w-3xl mx-auto">

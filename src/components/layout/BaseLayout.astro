@@ -1,163 +1,26 @@
 ---
-import { SITE_DESCRIPTION, SITE_LOGO } from '@/utils/site-config';
-import '@/assets/styles/astrowind.css';
+import type { MetaData } from '@/config/site';
+import { SITE_DESCRIPTION } from '@/utils/site-config';
+import PageLayout from '@/components/layout/PageLayout.astro';
 
 export interface Props {
   title: string;
   description?: string;
   keywords?: string[];
   image?: string;
+  metadata?: MetaData;
 }
 
-const { 
-  title, 
-  description = SITE_DESCRIPTION, 
-  keywords = ["LLM", "算法工程师", "强化学习", "后训练", "技术博客"],
-  image = "/og-image.jpg"
-} = Astro.props;
-
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const { title, description = SITE_DESCRIPTION, keywords, image, metadata = {} } = Astro.props;
+const mergedMetadata: MetaData = {
+  title,
+  description,
+  keywords,
+  image,
+  ...metadata,
+};
 ---
 
-<!DOCTYPE html>
-<html lang="zh-CN" class="scroll-smooth">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="description" content={description} />
-    <meta name="keywords" content={keywords.join(", ")} />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="generator" content={Astro.generator} />
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href={canonicalURL} />
-    
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={Astro.url} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:image" content={new URL(image, Astro.url)} />
-    
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={Astro.url} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={new URL(image, Astro.url)} />
-    
-    <!-- Inter Variable Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-    
-    <!-- KaTeX CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" crossorigin="anonymous">
-    
-    <title>{title}</title>
-  </head>
-  <body class="antialiased text-page bg-page min-h-screen font-sans">
-    <style>
-      body {
-        color: var(--aw-color-text-page);
-        background-color: var(--aw-color-bg-page);
-      }
-    </style>
-    <nav class="glass-effect sticky top-0 z-50 border-b" style="border-color: var(--aw-color-border);">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="md:grid md:grid-cols-3 md:items-center h-16">
-          <!-- Logo -->
-          <div class="flex items-center">
-            <a href="/" class="text-xl font-bold link-primary">
-              {SITE_LOGO}
-            </a>
-          </div>
-          <!-- Navigation Links -->
-          <div class="hidden md:flex items-center justify-center space-x-8">
-            <a href="/" class="link-primary font-medium">首页</a>
-            <a href="/blog" class="link-primary font-medium">博客</a>
-            <a href="/notebooks" class="link-primary font-medium">Notebooks</a>
-            <a href="/about" class="link-primary font-medium">关于</a>
-          </div>
-          <!-- Right Actions -->
-          <div class="flex items-center justify-end">
-            <button id="theme-toggle" class="p-2 rounded-lg transition-colors theme-toggle-btn">
-              <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-              </svg>
-              <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </nav>
-    
-    <main class="flex-1">
-      <slot />
-    </main>
-    
-    <footer class="section-bg border-t" style="border-color: var(--aw-color-border);">
-      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-12 gap-4 md:gap-8">
-          <!-- Footer Links -->
-          <div class="col-span-12 md:col-span-8">
-            <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-              <a href="/" class="text-muted hover:text-primary transition-colors">首页</a>
-              <a href="/blog" class="text-muted hover:text-primary transition-colors">博客</a>
-              <a href="/notebooks" class="text-muted hover:text-primary transition-colors">Notebooks</a>
-              <a href="/about" class="text-muted hover:text-primary transition-colors">关于</a>
-            </div>
-          </div>
-          <!-- Copyright -->
-          <div class="col-span-12 md:col-span-4 md:text-right">
-            <p class="text-muted text-sm">
-              &copy; 2025 {SITE_LOGO}. Built with <a href="https://astro.build" class="link-primary">Astro</a>.
-            </p>
-          </div>
-        </div>
-      </div>
-    </footer>
-
-    <script>
-      // Dark mode toggle functionality
-      const themeToggle = document.getElementById('theme-toggle');
-      const darkIcon = document.getElementById('theme-toggle-dark-icon');
-      const lightIcon = document.getElementById('theme-toggle-light-icon');
-
-      // Check for saved theme preference or default to light mode
-      const currentTheme = localStorage.getItem('theme') || 'light';
-      
-      if (currentTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-        darkIcon?.classList.add('hidden');
-        lightIcon?.classList.remove('hidden');
-      } else {
-        document.documentElement.classList.remove('dark');
-        lightIcon?.classList.add('hidden');
-        darkIcon?.classList.remove('hidden');
-      }
-
-      themeToggle?.addEventListener('click', function() {
-        document.documentElement.classList.toggle('dark');
-        
-        if (document.documentElement.classList.contains('dark')) {
-          localStorage.setItem('theme', 'dark');
-          darkIcon?.classList.add('hidden');
-          lightIcon?.classList.remove('hidden');
-        } else {
-          localStorage.setItem('theme', 'light');
-          lightIcon?.classList.add('hidden');
-          darkIcon?.classList.remove('hidden');
-        }
-      });
-    </script>
-    
-    <script>
-      // AstroWind Animation System
-      import('/src/scripts/intersection-observer.ts');
-    </script>
-    
-  </body>
-</html>
+<PageLayout metadata={mergedMetadata}>
+  <slot />
+</PageLayout>

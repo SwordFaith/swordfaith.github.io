@@ -1,0 +1,36 @@
+<button
+  type="button"
+  class="inline-flex h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-gray-100 hover:text-page focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-slate-800"
+  aria-label="切换深浅色主题"
+  title="切换深浅色主题"
+  data-aw-toggle-theme
+>
+  <svg class="h-5 w-5 dark:hidden" data-aw-theme-icon="sun" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.8" />
+    <path stroke-linecap="round" stroke-width="1.8" d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+  </svg>
+  <svg class="hidden h-5 w-5 dark:block" data-aw-theme-icon="moon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.5 8.5 0 1 0 20.4 15.2Z" />
+  </svg>
+</button>
+
+<script>
+  const applyTheme = (theme: string) => {
+    const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.dataset.awTheme = theme;
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-aw-toggle-theme]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const nextTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+      localStorage.setItem('aw-theme', nextTheme);
+      localStorage.setItem('theme', nextTheme);
+      applyTheme(nextTheme);
+    });
+  });
+
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if ((localStorage.getItem('aw-theme') || 'system') === 'system') applyTheme('system');
+  });
+</script>

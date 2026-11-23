@@ -101,6 +101,31 @@ interface GitHubStatsData {
   };
 }
 
+const COMPARISON_EXCLUDED_FIELDS = new Set(['lastUpdate', 'updated_at']);
+
+function normalizeGitHubStatsForComparison(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(normalizeGitHubStatsForComparison);
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !COMPARISON_EXCLUDED_FIELDS.has(key))
+      .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0);
+
+    return Object.fromEntries(
+      entries.map(([key, entryValue]) => [key, normalizeGitHubStatsForComparison(entryValue)])
+    );
+  }
+
+  return value;
+}
+
+function hasMeaningfulGitHubStatsChanges(previous: unknown, next: unknown): boolean {
+  return JSON.stringify(normalizeGitHubStatsForComparison(previous))
+    !== JSON.stringify(normalizeGitHubStatsForComparison(next));
+}
+
 // 语言颜色映射
 const LANGUAGE_COLORS: Record<string, string> = {
   'TypeScript': '#3178c6',
@@ -360,7 +385,7 @@ class GitHubDailySync {
     const thisYearRepos = repositories.filter(repo => 
       new Date(repo.updated_at).getFullYear() === thisYear
     );
-    const estimatedCommits = Math.min(300, thisYearRepos.length * 5 + Math.floor(Math.random() * 100));
+    const estimatedCommits = Math.min(300, thisYearRepos.length * 5);
 
     return {
       lastUpdate: new Date().toISOString(),
@@ -403,6 +428,19 @@ class GitHubDailySync {
 
     // 确保目录存在
     await fs.mkdir(dataDir, { recursive: true });
+
+    let existingData: unknown;
+
+    try {
+      existingData = JSON.parse(await fs.readFile(outputFile, 'utf8'));
+    } catch {
+      existingData = undefined;
+    }
+
+    if (existingData !== undefined && !hasMeaningfulGitHubStatsChanges(existingData, data)) {
+      console.log('  No meaningful data changes; keeping the existing file and lastUpdate');
+      return;
+    }
 
     // 保存数据
     await fs.writeFile(outputFile, JSON.stringify(data, null, 2));
@@ -459,4 +497,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-export { GitHubDailySync };
+export { GitHubDailySync, hasMeaningfulGitHubStatsChanges, normalizeGitHubStatsForComparison };

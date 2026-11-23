@@ -1,9 +1,10 @@
 ---
 import { type CollectionEntry, getCollection } from 'astro:content';
-import BaseLayout from '@/components/layout/BaseLayout.astro';
+import SinglePost from '@/components/blog/SinglePost.astro';
+import PageLayout from '@/components/layout/PageLayout.astro';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
   return posts.map((post) => ({
     params: { slug: post.slug },
     props: post,
@@ -14,117 +15,37 @@ type Props = CollectionEntry<'blog'>;
 
 const post = Astro.props;
 const { Content } = await post.render();
+const metadata = {
+  title: post.data.title,
+  description: post.data.description,
+  keywords: post.data.tags,
+  image: post.data.cover,
+  openGraph: {
+    type: 'article',
+  },
+};
 ---
 
-<BaseLayout 
-  title={post.data.title}
-  description={post.data.description}
-  keywords={post.data.tags}
->
-  <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <!-- Article Header -->
-    <header class="mb-8 text-center">
-      <h1 class="heading-primary mb-4 leading-tight">
-        {post.data.title}
-      </h1>
-      
-      {post.data.description && (
-        <p class="text-xl text-muted mb-6 leading-relaxed">
-          {post.data.description}
-        </p>
-      )}
-      
-      <div class="flex items-center justify-center space-x-4 text-sm text-muted mb-6">
-        <time datetime={post.data.publishDate.toISOString()}>
-          {post.data.publishDate.toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </time>
-        <span>•</span>
-        <span>{post.data.author}</span>
-        {post.data.katex && (
-          <>
-            <span>•</span>
-            <span class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-2 py-1 rounded">
-              包含数学公式
-            </span>
-          </>
-        )}
-      </div>
-      
-      {post.data.tags.length > 0 && (
-        <div class="flex flex-wrap justify-center gap-2 mb-8">
-          {post.data.tags.map((tag) => (
-            <span class="bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full text-sm font-medium">
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-    </header>
-
-    <!-- Article Content -->
-    <div class="prose prose-lg dark:prose-invert max-w-none">
-      <Content />
-    </div>
-
-    <!-- WandB Integration -->
-    {post.data.wandb && (
-      <section class="mt-12 p-6 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
-        <h3 class="text-xl font-semibold text-page mb-4">相关实验结果</h3>
-        <div class="bg-white dark:bg-slate-900 rounded border border-gray-200 dark:border-slate-600">
-          <iframe 
-            src={`https://wandb.ai/${post.data.wandb.projectId}/runs/${post.data.wandb.runId}`}
-            width="100%" 
-            height="400"
-            class="rounded border-0"
-          ></iframe>
-        </div>
-      </section>
-    )}
-
-    <!-- Navigation -->
-    <nav class="mt-12 pt-8 border-t border-gray-200 dark:border-slate-700">
-      <div class="flex justify-between items-center">
-        <a href="/blog" class="link-primary font-medium">
-          ← 返回博客列表
-        </a>
-        <div class="flex space-x-4">
-          <a href="#" class="text-muted hover:text-page transition-colors">分享</a>
-          <a href="#" class="text-muted hover:text-page transition-colors">收藏</a>
-        </div>
-      </div>
-    </nav>
-  </article>
-</BaseLayout>
+<PageLayout metadata={metadata}>
+  <SinglePost post={post}>
+    <Content />
+  </SinglePost>
+</PageLayout>
 
 <style>
-  /* 优化代码块样式 */
-  .prose :where(pre):not(:where([class~="not-prose"] *)) {
-    @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto;
+  .prose :where(table):not(:where([class~='not-prose'] *)) {
+    @apply w-full border-collapse border border-gray-300 dark:border-gray-600;
   }
-  
-  /* 优化表格样式 */
-  .prose :where(table):not(:where([class~="not-prose"] *)) {
-    @apply border-collapse border border-gray-300 dark:border-gray-600 w-full;
+
+  .prose :where(th):not(:where([class~='not-prose'] *)) {
+    @apply border border-gray-300 bg-gray-50 p-2 text-left font-semibold dark:border-gray-600 dark:bg-gray-800;
   }
-  
-  .prose :where(th):not(:where([class~="not-prose"] *)) {
-    @apply border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-2 text-left font-semibold;
+
+  .prose :where(td):not(:where([class~='not-prose'] *)) {
+    @apply border border-gray-300 p-2 dark:border-gray-600;
   }
-  
-  .prose :where(td):not(:where([class~="not-prose"] *)) {
-    @apply border border-gray-300 dark:border-gray-600 p-2;
-  }
-  
-  /* 数学公式样式优化 */
+
   .katex-display {
     @apply my-6 overflow-x-auto;
-  }
-  
-  .katex {
-    @apply text-base;
   }
 </style>

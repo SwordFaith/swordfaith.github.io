@@ -1,0 +1,32 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Grid from '@/components/blog/Grid.astro';
+import Button from '@/components/ui/Button.astro';
+import Headline from '@/components/ui/Headline.astro';
+import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
+import { getBlogPermalink } from '@/utils/site-config';
+
+export interface Props {
+  title?: string;
+  information?: string;
+  posts: CollectionEntry<'blog'>[];
+  count?: number;
+}
+
+const {
+  title = '最新文章',
+  information = '分享 LLM 领域的研究成果、工程实践与实验记录',
+  posts,
+  count = 3,
+} = Astro.props;
+---
+
+{posts.length > 0 && (
+  <WidgetWrapper bg="primary">
+    <Headline title={title} subtitle={information} class="mb-12" />
+    <Grid posts={posts.slice(0, count)} />
+    <div class="mt-10 text-center">
+      <Button variant="secondary" href={getBlogPermalink()}>查看所有文章</Button>
+    </div>
+  </WidgetWrapper>
+)}

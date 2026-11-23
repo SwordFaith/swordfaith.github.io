@@ -1,250 +1,150 @@
 ---
-import BaseLayout from '@/components/layout/BaseLayout.astro';
 import GitHubStats from '@/components/about/GitHubStats.astro';
+import PageLayout from '@/components/layout/PageLayout.astro';
+import Button from '@/components/ui/Button.astro';
+import Headline from '@/components/ui/Headline.astro';
+import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
+import Features from '@/components/widgets/Features.astro';
+import Hero from '@/components/widgets/Hero.astro';
+
+const metadata = {
+  title: '关于我',
+  description: 'A researcher and builder focused on LLM post-training techniques, including RL, DPO, and SFT. Passionate about AI alignment and safety.',
+};
+
+const researchAreas = [
+  {
+    title: '后训练技术',
+    description: 'RLHF、DPO、SFT、Constitutional AI 等对齐与后训练方法。',
+    icon: 'sparkles' as const,
+  },
+  {
+    title: '强化学习算法',
+    description: 'PPO、SAC、DQN、Multi-agent RL 及大模型训练应用。',
+    icon: 'bolt' as const,
+  },
+  {
+    title: '分布式系统',
+    description: '大规模训练与推理框架、模型与数据并行、混合精度训练。',
+    icon: 'database' as const,
+  },
+  {
+    title: '数据工程',
+    description: '高质量训练数据构建、清洗预处理、偏好标注与数据增强。',
+    icon: 'database' as const,
+  },
+];
+
+const publications = [
+  {
+    title: 'MiniCPM: Unveiling the Potential of Small Language Models with Scalable Training Strategies',
+    venue: 'arXiv preprint arXiv:2404.06395, 2024',
+    stat: '324 citations',
+    authors: 'S Hu, Y Tu, X Han, C He, G Cui, X Long, Z Zheng, Y Fang, Y Huang, et al.',
+    description: 'Introduces MiniCPM, a series of end-side language models with only 2.4B parameters that significantly outperform Llama2-7B on comprehensive benchmarks. This work demonstrates efficient training strategies for small-scale language models that achieve strong performance through innovative architectural designs and training methodologies.',
+  },
+  {
+    title: 'MiniCPM4: Ultra-Efficient LLMs on End Devices',
+    venue: 'arXiv preprint arXiv:2506.07900, 2025',
+    authors: 'M Team, C Xiao, Y Li, X Han, Y Bai, J Cai, H Chen, W Chen, X Cong, X Long, et al.',
+    description: 'Latest advancement in the MiniCPM series, focusing on ultra-efficient deployment of large language models on end devices with enhanced performance and reduced computational requirements.',
+  },
+  {
+    title: 'IntTower: The Next Generation of Two-Tower Model for Pre-ranking System',
+    venue: 'Proceedings of the 31st ACM International Conference on Information & Knowledge Management, 2022',
+    stat: '25 citations',
+    authors: 'X Li, B Chen, HF Guo, J Li, C Zhu, X Long, S Li, Y Wang, W Guo, L Mao, et al.',
+    description: 'Proposes IntTower, a novel two-tower architecture for large-scale pre-ranking systems that significantly improves efficiency and accuracy in recommendation systems through innovative interaction modeling techniques.',
+  },
+  {
+    title: 'Exploring Text-Transformers in AAAI 2021 Shared Task: Covid-19 Fake News Detection in English',
+    venue: 'International Workshop on Combating Online Hostile Posts in Regional Languages, 2021',
+    stat: '52 citations',
+    authors: 'X Li, Y Xia, X Long, Z Li, S Li',
+    description: 'Develops transformer-based approaches for COVID-19 fake news detection, achieving state-of-the-art performance in the AAAI 2021 shared task through advanced natural language processing techniques.',
+  },
+  {
+    title: 'FenceMask: A Data Augmentation Approach for Pre-extracted Image Features',
+    venue: 'arXiv preprint arXiv:2006.07877, 2020',
+    stat: '37 citations',
+    authors: 'P Li, X Li, X Long',
+    description: 'Introduces FenceMask, a novel data augmentation technique for pre-extracted image features that improves model robustness and generalization in computer vision tasks.',
+  },
+  {
+    title: 'Low Resource Style Transfer via Domain Adaptive Meta Learning',
+    venue: 'arXiv preprint arXiv:2205.12475, 2022',
+    stat: '9 citations',
+    authors: 'X Li, X Long, Y Xia, S Li',
+    description: 'Addresses the challenge of style transfer in low-resource settings using domain adaptive meta learning techniques.',
+  },
+  {
+    title: 'KDD CUP 2021 MAG240M-LSC Team Passages Winner Solution',
+    venue: 'KDD CUP 2021 Competition, 2021',
+    stat: 'Winner',
+    authors: 'K Li, X Long, Z Feng, M Wang, X Liu, P Wang, Q Lin, K Zhao, B Ai',
+    description: 'Winning solution for the KDD CUP 2021 MAG240M-LSC challenge, demonstrating excellence in large-scale graph learning and academic paper analysis.',
+  },
+];
 ---
 
-<BaseLayout 
-  title="关于我 - SwordFaith"
-  description="A researcher and builder focused on LLM post-training techniques, including RL, DPO, and SFT. Passionate about AI alignment and safety."
->
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <!-- Profile Section -->
-    <section class="text-center mb-16">
-      <div class="w-32 h-32 mx-auto mb-6">
-        <img 
-          src="https://scholar.googleusercontent.com/citations?view_op=medium_photo&user=Fz855UwAAAAJ&citpid=1" 
-          alt="Xiang Long Profile Photo" 
-          class="w-full h-full object-cover rounded-full border-4 border-gray-200 dark:border-gray-600"
-        />
-      </div>
-      <h1 class="heading-primary mb-4">Xiang Long (SwordFaith)</h1>
-      <p class="text-xl text-muted mb-6">
-        大语言模型后训练技术研究员和算法工程师
-      </p>
-      <div class="flex justify-center space-x-4">
-        <a href="https://github.com/SwordFaith" target="_blank" class="text-muted hover:text-page transition-colors">
-          <span class="sr-only">GitHub</span>
-          <!-- GitHub icon would go here -->
-          GitHub
-        </a>
-        <a href="https://x.com/SDxFaith" target="_blank" class="text-muted hover:text-page transition-colors">
-          <span class="sr-only">Twitter</span>
-          <!-- Twitter icon would go here -->
-          Twitter
-        </a>
-        <a href="https://www.zhihu.com/people/zhi-shou-88" target="_blank" class="text-muted hover:text-page transition-colors">
-          <span class="sr-only">知乎</span>
-          知乎
-        </a>
-      </div>
-    </section>
+<PageLayout metadata={metadata}>
+  <Hero
+    compact
+    tagline="About"
+    title="Xiang Long (SwordFaith)"
+    subtitle="大语言模型后训练技术研究员和算法工程师"
+    actions={[
+      { text: '发送邮件', href: 'mailto:mid.of.change@gmail.com', variant: 'primary' },
+      { text: 'GitHub', href: 'https://github.com/SwordFaith', variant: 'secondary', target: '_blank' },
+    ]}
+  >
+    <img
+      slot="image"
+      src="https://scholar.googleusercontent.com/citations?view_op=medium_photo&user=Fz855UwAAAAJ&citpid=1"
+      alt="Xiang Long Profile Photo"
+      class="mx-auto mb-6 h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg dark:border-slate-700"
+    />
+  </Hero>
 
-    <!-- Bio Section -->
-    <section class="mb-16">
-      <h2 class="heading-section mb-6">个人简介</h2>
-      <div class="prose prose-lg dark:prose-invert max-w-none">
-        <p class="text-muted leading-relaxed">
-          我是一位专注于大语言模型后训练技术的算法工程师和研究员，主要研究方向包括强化学习从人类反馈（RLHF）、
-          直接偏好优化（DPO）、监督式微调（SFT）等后训练方法。在分布式训练框架开发和高质量数据构建方面有丰富经验。
-        </p>
-        <p class="text-muted leading-relaxed">
-          致力于通过技术创新推动AI系统的对齐和安全性，让大语言模型更好地服务于人类社会。
-        </p>
-      </div>
-    </section>
+  <WidgetWrapper padding="sm" containerClass="max-w-3xl">
+    <Headline title="个人简介" align="left" class="mb-6" />
+    <div class="space-y-4 text-lg leading-relaxed text-muted">
+      <p>我是一位专注于大语言模型后训练技术的算法工程师和研究员，主要研究方向包括强化学习从人类反馈（RLHF）、直接偏好优化（DPO）、监督式微调（SFT）等后训练方法。在分布式训练框架开发和高质量数据构建方面有丰富经验。</p>
+      <p>致力于通过技术创新推动 AI 系统的对齐和安全性，让大语言模型更好地服务于人类社会。</p>
+    </div>
+  </WidgetWrapper>
 
-    <!-- Research Interests -->
-    <section class="mb-16">
-      <h2 class="heading-section mb-6">研究方向</h2>
-      <div class="grid md:grid-cols-2 gap-6">
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-xl font-semibold text-page mb-3">后训练技术</h3>
-          <ul class="text-muted space-y-2">
-            <li>• RLHF (Reinforcement Learning from Human Feedback)</li>
-            <li>• DPO (Direct Preference Optimization)</li>
-            <li>• SFT (Supervised Fine-Tuning)</li>
-            <li>• Constitutional AI</li>
-          </ul>
-        </div>
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-xl font-semibold text-page mb-3">强化学习算法</h3>
-          <ul class="text-muted space-y-2">
-            <li>• PPO (Proximal Policy Optimization)</li>
-            <li>• SAC (Soft Actor-Critic)</li>
-            <li>• DQN (Deep Q-Network)</li>
-            <li>• Multi-agent RL</li>
-          </ul>
-        </div>
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-xl font-semibold text-page mb-3">分布式系统</h3>
-          <ul class="text-muted space-y-2">
-            <li>• 大规模模型训练框架</li>
-            <li>• 分布式推理系统</li>
-            <li>• 模型并行与数据并行</li>
-            <li>• 混合精度训练</li>
-          </ul>
-        </div>
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-xl font-semibold text-page mb-3">数据工程</h3>
-          <ul class="text-muted space-y-2">
-            <li>• 高质量训练数据构建</li>
-            <li>• 数据清洗与预处理</li>
-            <li>• 偏好数据标注</li>
-            <li>• 数据增强技术</li>
-          </ul>
-        </div>
-      </div>
-    </section>
+  <Features title="研究方向" subtitle="从算法研究到训练框架与数据工程的完整实践" items={researchAreas} columns={2} />
 
-    <!-- Publications/Work -->
-    <section class="mb-16">
-      <h2 class="heading-section mb-6">发表工作</h2>
-      <div class="space-y-6">
-        <!-- MiniCPM: Main contribution -->
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-page mb-2">
-            MiniCPM: Unveiling the Potential of Small Language Models with Scalable Training Strategies
-          </h3>
-          <p class="text-muted mb-2">
-            arXiv preprint arXiv:2404.06395, 2024 | <span class="text-green-600 font-semibold">324 citations</span>
+  <WidgetWrapper bg="primary" containerClass="max-w-4xl">
+    <Headline tagline="Publications" title="发表工作" class="mb-10" />
+    <div class="space-y-6">
+      {publications.map((publication) => (
+        <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+          <h3 class="mb-3 text-lg font-semibold leading-relaxed text-page">{publication.title}</h3>
+          <p class="mb-2 text-sm text-muted">
+            {publication.venue}
+            {publication.stat && <span class="ml-2 font-semibold text-primary">| {publication.stat}</span>}
           </p>
-          <p class="text-muted mb-3">
-            <strong>Authors:</strong> S Hu, Y Tu, X Han, C He, G Cui, <strong>X Long</strong>, Z Zheng, Y Fang, Y Huang, et al.
-          </p>
-          <p class="text-muted">
-            Introduces MiniCPM, a series of end-side language models with only 2.4B parameters that significantly outperform Llama2-7B on comprehensive benchmarks. This work demonstrates efficient training strategies for small-scale language models that achieve strong performance through innovative architectural designs and training methodologies.
-          </p>
-        </div>
+          <p class="mb-3 text-sm text-muted"><strong>Authors:</strong> {publication.authors}</p>
+          <p class="leading-relaxed text-muted">{publication.description}</p>
+        </article>
+      ))}
+    </div>
+    <div class="mt-8 text-center text-muted">
+      <p class="mb-4"><strong>Citation Statistics:</strong> 498 total citations | h-index: 8 | i10-index: 7</p>
+      <a href="https://scholar.google.com/citations?user=Fz855UwAAAAJ&hl=en" target="_blank" rel="noopener noreferrer" class="link-primary">View Full Google Scholar Profile →</a>
+    </div>
+  </WidgetWrapper>
 
-        <!-- MiniCPM4: Latest work -->
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-page mb-2">
-            MiniCPM4: Ultra-Efficient LLMs on End Devices
-          </h3>
-          <p class="text-muted mb-2">
-            arXiv preprint arXiv:2506.07900, 2025
-          </p>
-          <p class="text-muted mb-3">
-            <strong>Authors:</strong> M Team, C Xiao, Y Li, X Han, Y Bai, J Cai, H Chen, W Chen, X Cong, <strong>X Long</strong>, et al.
-          </p>
-          <p class="text-muted">
-            Latest advancement in the MiniCPM series, focusing on ultra-efficient deployment of large language models on end devices with enhanced performance and reduced computational requirements.
-          </p>
-        </div>
+  <WidgetWrapper containerClass="max-w-5xl">
+    <GitHubStats username="SwordFaith" showContributions showLanguages showRepositories maxRepos={2} />
+  </WidgetWrapper>
 
-        <!-- IntTower: Pre-ranking system -->
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-page mb-2">
-            IntTower: The Next Generation of Two-Tower Model for Pre-ranking System
-          </h3>
-          <p class="text-muted mb-2">
-            Proceedings of the 31st ACM International Conference on Information & Knowledge Management, 2022 | <span class="text-green-600 font-semibold">25 citations</span>
-          </p>
-          <p class="text-muted mb-3">
-            <strong>Authors:</strong> X Li, B Chen, HF Guo, J Li, C Zhu, <strong>X Long</strong>, S Li, Y Wang, W Guo, L Mao, et al.
-          </p>
-          <p class="text-muted">
-            Proposes IntTower, a novel two-tower architecture for large-scale pre-ranking systems that significantly improves efficiency and accuracy in recommendation systems through innovative interaction modeling techniques.
-          </p>
-        </div>
-
-        <!-- Fake News Detection -->
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-page mb-2">
-            Exploring Text-Transformers in AAAI 2021 Shared Task: Covid-19 Fake News Detection in English
-          </h3>
-          <p class="text-muted mb-2">
-            International Workshop on Combating Online Hostile Posts in Regional Languages, 2021 | <span class="text-green-600 font-semibold">52 citations</span>
-          </p>
-          <p class="text-muted mb-3">
-            <strong>Authors:</strong> X Li, Y Xia, <strong>X Long</strong>, Z Li, S Li
-          </p>
-          <p class="text-muted">
-            Develops transformer-based approaches for COVID-19 fake news detection, achieving state-of-the-art performance in the AAAI 2021 shared task through advanced natural language processing techniques.
-          </p>
-        </div>
-
-        <!-- FenceMask: Data Augmentation -->
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-page mb-2">
-            FenceMask: A Data Augmentation Approach for Pre-extracted Image Features
-          </h3>
-          <p class="text-muted mb-2">
-            arXiv preprint arXiv:2006.07877, 2020 | <span class="text-green-600 font-semibold">37 citations</span>
-          </p>
-          <p class="text-muted mb-3">
-            <strong>Authors:</strong> P Li, X Li, <strong>X Long</strong>
-          </p>
-          <p class="text-muted">
-            Introduces FenceMask, a novel data augmentation technique for pre-extracted image features that improves model robustness and generalization in computer vision tasks.
-          </p>
-        </div>
-
-        <!-- Additional works -->
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-page mb-2">
-            Low Resource Style Transfer via Domain Adaptive Meta Learning
-          </h3>
-          <p class="text-muted mb-2">
-            arXiv preprint arXiv:2205.12475, 2022 | <span class="text-green-600 font-semibold">9 citations</span>
-          </p>
-          <p class="text-muted mb-3">
-            <strong>Authors:</strong> X Li, <strong>X Long</strong>, Y Xia, S Li
-          </p>
-          <p class="text-muted">
-            Addresses the challenge of style transfer in low-resource settings using domain adaptive meta learning techniques.
-          </p>
-        </div>
-
-        <!-- Competition Achievement -->
-        <div class="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-slate-700">
-          <h3 class="text-lg font-semibold text-page mb-2">
-            KDD CUP 2021 MAG240M-LSC Team Passages Winner Solution
-          </h3>
-          <p class="text-muted mb-2">
-            KDD CUP 2021 Competition, 2021 | <span class="text-orange-600 font-semibold">🏆 Winner</span>
-          </p>
-          <p class="text-muted mb-3">
-            <strong>Authors:</strong> K Li, <strong>X Long</strong>, Z Feng, M Wang, X Liu, P Wang, Q Lin, K Zhao, B Ai
-          </p>
-          <p class="text-muted">
-            Winning solution for the KDD CUP 2021 MAG240M-LSC challenge, demonstrating excellence in large-scale graph learning and academic paper analysis.
-          </p>
-        </div>
-
-        <div class="text-center mt-8">
-          <p class="text-muted mb-4">
-            <strong>Citation Statistics:</strong> 498 total citations | h-index: 8 | i10-index: 7
-          </p>
-          <a href="https://scholar.google.com/citations?user=Fz855UwAAAAJ&hl=en" 
-             target="_blank" 
-             class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors">
-            View Full Google Scholar Profile →
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- GitHub Statistics -->
-    <section class="mb-16">
-      <GitHubStats 
-        username="SwordFaith"
-        showContributions={true}
-        showLanguages={true}
-        showRepositories={true}
-        maxRepos={2}
-      />
-    </section>
-
-    <!-- Contact -->
-    <section class="text-center">
-      <h2 class="heading-section mb-6">联系方式</h2>
-      <p class="text-muted mb-6">
-        如果您对我的研究工作感兴趣，或者想要合作交流，欢迎联系我。邮箱：mid.of.change@gmail.com
-      </p>
-      <a href="mailto:mid.of.change@gmail.com" class="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg transition-colors">
-        发送邮件
-      </a>
-    </section>
-  </div>
-</BaseLayout>
+  <WidgetWrapper bg="transparent" padding="sm">
+    <Headline title="联系方式" subtitle="如果您对我的研究工作感兴趣，或者想要合作交流，欢迎联系我。" class="mb-8" />
+    <div class="text-center">
+      <Button variant="primary" size="lg" href="mailto:mid.of.change@gmail.com">mid.of.change@gmail.com</Button>
+    </div>
+  </WidgetWrapper>
+</PageLayout>

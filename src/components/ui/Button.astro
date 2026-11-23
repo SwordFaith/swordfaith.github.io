@@ -45,6 +45,8 @@ const classes = [
   class={classes}
   href={href}
   target={target}
+  rel={target === '_blank' ? 'noopener noreferrer' : undefined}
+  type={href ? undefined : 'button'}
   {...rest}
 >
   <slot />
