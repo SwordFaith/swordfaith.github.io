@@ -85,7 +85,10 @@ const kernelName = notebook.metadata.kernelspec?.display_name
                         <pre class="output-text" data-stream={output.streamName}>{output.content}</pre>
                       )}
                       {output.type === 'html' && (
-                        <div class="output-html" set:html={output.content} />
+                        <div
+                          class="output-html prose prose-sm max-w-none dark:prose-invert dark:prose-dark"
+                          set:html={output.content}
+                        />
                       )}
                       {output.type === 'image' && (
                         <img
@@ -212,14 +215,21 @@ const kernelName = notebook.metadata.kernelspec?.display_name
     @apply text-sm font-mono bg-gray-100 p-3 rounded whitespace-pre-wrap overflow-x-auto dark:bg-slate-800;
   }
 
+  /* Prose classes live in the template: scoped @apply rules cannot reach set:html descendants.
+     prose-dark carries the site's dark overrides for colors the typography config hard-codes. */
   .output-item > .output-html {
-    /* prose-dark carries the site's dark overrides for colors the typography config hard-codes. */
-    @apply prose prose-sm max-w-none overflow-x-auto dark:prose-invert dark:prose-dark;
+    @apply overflow-x-auto;
   }
 
   /* Plots are often rendered with transparent backgrounds and dark axes; keep them on white. */
   .output-item > .output-image {
     @apply max-w-full h-auto rounded border border-gray-200 bg-white dark:border-slate-700;
+  }
+
+  /* Same backdrop for images inside set:html content, which lacks the scoping attribute. */
+  :global(.dark) .markdown-content :global(img),
+  :global(.dark) .output-html :global(img) {
+    background-color: rgb(255 255 255);
   }
 
   .output-item > .output-error {
