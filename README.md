@@ -20,7 +20,7 @@
 
 **Phase 3: 数据集成**
 - [x] WandB 实验结果嵌入（文章 frontmatter `wandb` 字段 → iframe）
-- [x] GitHub 统计：仓库内静态 JSON 快照，手动同步更新，构建时渲染
+- [x] GitHub 统计：部署构建时尽力刷新（不提交），失败时回退到仓库内的 JSON 快照；每周定时重新构建
 - [x] 个人展示页面完善
 
 ## 📋 下一步开发
@@ -41,7 +41,7 @@
 
 ## 🛠️ 本地开发
 
-需要 Node.js 22.23.4 或更高版本。
+Node.js 版本以 `.nvmrc` 为准（Node 24，可用 `nvm use`），CI 同样读取该文件；`package.json` 的 `engines` 最低要求 22.23.4。
 
 ```bash
 # 安装依赖
@@ -56,6 +56,9 @@ npm run build
 # 预览构建结果
 npm run preview
 ```
+
+- 草稿（frontmatter `draft: true`，包括公式渲染、代码高亮两篇测试文章）不进入生产构建，也不出现在列表、标签、RSS 中；`npm run dev` 下可通过 `/blog/<slug>` 直接访问。
+- 向 `main` 提交的 Pull Request 会在 GitHub Actions 中运行 lint、typecheck、测试和构建，但不部署。
 
 ## 📝 添加新文章
 
@@ -82,9 +85,10 @@ katex: true  # 启用数学公式
 - **公式渲染**: KaTeX + remark-math + rehype-katex
 - **代码高亮**: Shiki (支持多主题)
 - **搜索引擎**: Pagefind (本地搜索)
-- **数据集成**: WandB iframe 嵌入 + GitHub 统计（手动同步的静态 JSON 快照）
+- **数据集成**: WandB iframe 嵌入 + GitHub 统计（部署时刷新的静态 JSON，仓库内快照兜底）
 - **部署平台**: GitHub Pages + GitHub Actions
-- **开发工具**: ESLint + TypeScript 严格模式
+- **字体**: Inter Variable + JetBrains Mono Variable，通过 @fontsource-variable 自托管（不依赖 Google Fonts）
+- **开发工具**: ESLint + TypeScript（`astro check`）+ Vitest
 
 ## 🌟 核心特性
 
@@ -92,24 +96,30 @@ katex: true  # 启用数学公式
 - **数学公式支持**: 完整的 LaTeX 语法支持，行内和块级公式
 - **代码高亮**: 多语言语法高亮（Notebook 代码单元支持复制）
 - **Jupyter Notebook**: 原生支持 .ipynb 文件展示
-- **全文搜索**: Pagefind 中文内容全文搜索；文章另可通过标签页按标签浏览
+- **全文搜索**: Pagefind 索引已发布的博客文章和 Notebook 详情页；文章另可通过标签页按标签浏览（标签 URL 即标签原文，如 `/tags/RLHF`）
 
 ### 📊 数据驱动展示
 - **WandB 集成**: 在文章 frontmatter 中配置 `wandb.projectId` / `wandb.runId`，文末嵌入对应运行页面
 - **GitHub 统计**: 个人代码统计、语言分析、项目展示
-- **静态数据**: GitHub 统计来自仓库中提交的 `src/data/github-stats.json` 快照，需手动刷新（在 GitHub Actions 中手动运行 "Sync GitHub Stats Data" workflow，或本地运行 `npm run sync:github:daily`）；构建和浏览时不调用 GitHub API
+- **静态数据**: GitHub 统计在构建时从 `src/data/github-stats.json` 静态渲染，浏览时不调用 GitHub API。该文件的来源：
+  - 部署（push 到 `main`、手动运行、每周定时）在构建前尽力运行 `npm run sync:github:daily` 刷新数据，只用于本次构建、不提交；需要仓库 Secret `_GITHUB_TOKEN`，缺失、失败、超时或数据无效时回退到仓库内的快照并输出 warning
+  - `scheduled-deploy.yml` 每周一 03:23 UTC 重新构建并部署一次，让关于页拿到新数据
+  - 仓库内提交的快照是兜底（PR 检查也用它构建），通过手动运行 "Sync GitHub Stats Data" workflow 或本地 `npm run sync:github:daily` 更新
 
 ### 🚀 开发体验
-- **组件化架构**: 25+ 个可复用组件
+- **组件化架构**: 28 个 `.astro` 组件
 - **TypeScript 支持**: 完整的类型安全
 - **热重载开发**: 快速的开发反馈
-- **自动部署**: GitHub Actions 自动构建和部署
+- **自动部署**: GitHub Actions 自动构建和部署；PR 只做检查
+- **404 页面**: 自定义 404 页（`src/pages/404.astro`）
 
 ## 🔧 环境配置
 
 ### 环境变量
 
-可用变量见 `.env.example`。GitHub 统计同步脚本需要以下变量（不会自动读取 `.env`，需在 shell 中导出；CI 中由 `sync-data.yml` 注入）：
+构建本身不需要任何环境变量：站点标题、描述和 URL 写在 `src/config/site.ts`（`SITE` 对象），不再使用 `SITE_URL` / `SITE_TITLE` / `SITE_DESCRIPTION` 环境变量或仓库 Variables。
+
+可用变量见 `.env.example`。只有 GitHub 统计同步脚本需要以下变量（不会自动读取 `.env`，需在 shell 中导出；CI 中由 `deploy.yml` 和 `sync-data.yml` 从仓库 Secret `_GITHUB_TOKEN`、Variable `_GITHUB_USERNAME` 注入）：
 
 ```bash
 GITHUB_USERNAME=your-github-username   # 可选，默认 SwordFaith
@@ -125,11 +135,12 @@ npm run dev
 # 构建 + 搜索索引
 npm run build
 
-# 代码检查 / 类型检查
+# 代码检查 / 类型检查 / 测试（Vitest）
 npm run lint
 npm run typecheck
+npm test
 
-# 手动同步 GitHub 统计（覆盖 src/data/github-stats.json，直接用 Node 运行 TypeScript）
+# 同步 GitHub 统计并改写 src/data/github-stats.json（提交后即更新兜底快照；直接用 Node 运行 TypeScript）
 GITHUB_TOKEN=... npm run sync:github:daily
 ```
 

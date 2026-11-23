@@ -31,7 +31,8 @@
 - **框架**：Astro 7.x + TypeScript
 - **样式**：Tailwind CSS + AstroWind设计主题 + 自定义组件库
 - **部署**：GitHub Pages（主）+ Vercel（预留）
-- **CI/CD**：GitHub Actions 自动部署
+- **CI/CD**：GitHub Actions 自动部署（push 到 `main`、手动、每周定时）；向 `main` 的 PR 只运行 lint、typecheck、测试和构建，不部署
+- **开发环境**：Node 版本以 `.nvmrc` 为准（Node 24，CI 同样读取）；测试用 Vitest（`npm test`，`tests/`）
 
 ### 2. 内容处理
 - **公式渲染**：remark-math + rehype-katex + KaTeX（已实现）
@@ -41,7 +42,7 @@
 
 ### 3. 数据集成
 - **WandB**：文章 frontmatter `wandb.projectId` / `wandb.runId` → 文章页 iframe 嵌入（已实现，无 API 调用）
-- **GitHub**：同步脚本调用 REST API 生成 `src/data/github-stats.json` 快照（手动触发 workflow 或本地运行），构建时静态渲染（已实现）
+- **GitHub**：同步脚本调用 REST API 生成 `src/data/github-stats.json`，构建时静态渲染（已实现）。部署构建前尽力刷新（不提交，失败回退到仓库内快照），每周定时重新构建；仓库内快照通过手动 workflow 或本地运行更新
 - **学术数据**：Google Scholar API（论文信息同步）
 
 ### 4. 多平台转载工具
@@ -63,26 +64,34 @@
 .
 ├── astro.config.mjs             # Astro 配置（Markdown/KaTeX/Shiki/集成）
 ├── tailwind.config.js           # Tailwind 配置
+├── postcss.config.mjs           # PostCSS 配置
 ├── eslint.config.mjs            # ESLint 配置
-├── .env.example                 # 环境变量配置模板
+├── tsconfig.json                # TypeScript 配置（`@/*` 路径别名）
+├── .nvmrc                       # Node 版本（24），本地与 CI 共用
+├── .env.example                 # 环境变量配置模板（仅 GitHub 统计同步脚本使用）
 ├── .github/workflows/
-│   ├── deploy.yml               # 构建并部署到 GitHub Pages
-│   └── sync-data.yml            # 手动触发：同步 GitHub 统计数据并提交
+│   ├── deploy.yml               # push/手动：检查 + 刷新 GitHub 统计 + 构建 + 部署；PR：只检查和构建
+│   ├── scheduled-deploy.yml     # 每周一 03:23 UTC 调用 deploy.yml 重新构建部署
+│   └── sync-data.yml            # 手动触发：同步 GitHub 统计数据并提交快照
+├── tests/                       # Vitest 单元测试（tags / notebook HTML 清洗）
 ├── public/
-│   └── notebooks/               # 原始 .ipynb 文件（Notebook 页面数据源）
+│   ├── notebooks/               # 原始 .ipynb 文件（Notebook 页面数据源）
+│   └── favicon.svg / og-image.* / robots.txt
 └── src/
     ├── content.config.ts        # 内容集合配置（blog / notebooks）
     ├── navigation.ts            # 导航配置
-    ├── config/site.ts           # 站点元数据
+    ├── config/site.ts           # 站点元数据（标题、描述、URL 等，astro.config.mjs 也读取）
+    ├── env.d.ts
     ├── pages/
     │   ├── index.astro          # 首页
+    │   ├── 404.astro            # 404 页面
     │   ├── about.astro          # 关于我页面
     │   ├── archive.astro        # 归档
     │   ├── search.astro         # 搜索
     │   ├── rss.xml.ts           # RSS
     │   ├── blog/                # 博客列表 + [...slug] 详情
     │   ├── notebooks/           # Notebook 列表 + [...slug] 详情
-    │   └── tags/                # 标签索引 + [tag] 列表
+    │   └── tags/                # 标签索引 + [tag] 列表（URL 即标签原文，如 /tags/RLHF）
     ├── components/
     │   ├── layout/              # BaseLayout / Layout / PageLayout / Metadata / BasicScripts
     │   ├── ui/                  # AstroWind 风格 UI：Button / Headline / WidgetWrapper
@@ -92,10 +101,10 @@
     │   ├── search/SearchBox.astro
     │   └── about/GitHubStats.astro  # 读取 src/data/github-stats.json 静态渲染
     ├── content/
-    │   ├── blog/                # 博客文章 Markdown
+    │   ├── blog/                # 博客文章 Markdown（`draft: true` 不进入生产构建）
     │   └── notebooks/           # Notebook 元数据（指向 public/notebooks/*.ipynb）
     ├── data/
-    │   ├── github-stats.json    # 已提交的 GitHub 统计快照（手动同步更新）
+    │   ├── github-stats.json    # 已提交的 GitHub 统计快照（PR 检查和部署刷新失败时的兜底）
     │   └── github-stats-default.json # 数据缺失时的兜底
     ├── scripts/
     │   ├── sync-github-daily.ts # GitHub 统计同步脚本（npm run sync:github:daily）
@@ -105,7 +114,9 @@
     │   ├── number-formatter.ts
     │   ├── site-config.ts
     │   └── tags.ts
-    └── assets/styles/astrowind.css  # AstroWind 主题样式
+    └── assets/
+        ├── images/avatar.jpg
+        └── styles/astrowind.css # AstroWind 主题样式 + 自托管字体 @font-face
 ```
 （Phase 4 规划中的导出脚本、图床工具等尚未创建，见下方待办清单。）
 
@@ -156,20 +167,22 @@
 - **内容系统**：Markdown 博客 + Jupyter Notebook 支持
 - **数学公式**：KaTeX 完整集成，支持行内和块级公式
 - **代码高亮**：Shiki 语法高亮（Notebook 代码单元支持复制）
-- **页面结构**：首页、博客列表/详情、Notebook 列表/详情、关于页面
+- **页面结构**：首页、博客列表/详情、Notebook 列表/详情、关于页面、归档、标签、搜索、404
 - **响应式设计**：移动端适配和交互优化，支持暗色主题
 - **SEO 基础**：Meta 标签、Open Graph、站点地图
 - **部署配置**：GitHub Actions + GitHub Pages
 - **WandB 集成**：文章 frontmatter 配置 run 后在文末 iframe 嵌入
-- **GitHub 统计**：手动同步的静态 JSON 快照，构建时渲染项目统计、语言分析
-- **搜索功能**：Pagefind 集成、备用搜索机制
+- **GitHub 统计**：部署时刷新的静态 JSON（仓库内快照兜底），构建时渲染项目统计、语言分析
+- **搜索功能**：Pagefind 集成，只索引已发布的博客文章和 Notebook 详情页
+- **草稿**：`draft: true` 的文章不进入生产构建，`astro dev` 下可通过直接 URL 访问
+- **测试**：Vitest，2 个测试文件、113 个用例
 
 ### 📝 示例内容
 - **博客文章**：
   - RLHF 算法详解（含复杂数学公式）
   - DPO vs RLHF 对比分析
-  - 数学公式渲染测试（完整 LaTeX 支持验证）
-  - 代码高亮测试（多语言支持验证）
+  - 数学公式渲染测试（完整 LaTeX 支持验证；草稿，仅 `astro dev` 下可直接访问）
+  - 代码高亮测试（多语言支持验证；草稿，仅 `astro dev` 下可直接访问）
 - **Jupyter Notebook**：
   - RLHF 实验分析示例（完整交互式展示）
 
@@ -181,7 +194,9 @@
 
 #### GitHub 集成系统
 - **同步脚本** (`src/scripts/sync-github-daily.ts`): 调用 GitHub REST API 获取用户、仓库、语言统计，写入 `src/data/github-stats.json`
-  - 手动刷新：在 GitHub Actions 中手动运行 "Sync GitHub Stats Data"（`.github/workflows/sync-data.yml`，仅 `workflow_dispatch`，同步后提交数据文件），或本地运行 `GITHUB_TOKEN=... npm run sync:github:daily`（Node 原生 TypeScript 类型擦除直接运行）
+  - 部署时刷新：`deploy.yml` 在非 PR 运行中、构建前尽力执行 `npm run sync:github:daily`（需要仓库 Secret `_GITHUB_TOKEN`，120 秒超时），结果只用于本次构建、不提交；Secret 缺失、同步失败、超时或数据结构无效时回退到已提交的 JSON，并输出 warning annotation
+  - 每周重新构建：`scheduled-deploy.yml`（每周一 03:23 UTC）调用 `deploy.yml`，让关于页定期拿到新数据
+  - 更新仓库内快照：在 GitHub Actions 中手动运行 "Sync GitHub Stats Data"（`.github/workflows/sync-data.yml`，仅 `workflow_dispatch`，同步后提交数据文件；该提交不会自动触发部署），或本地运行 `GITHUB_TOKEN=... npm run sync:github:daily`（Node 原生 TypeScript 类型擦除直接运行）
   - 数据无实质变化时不改写文件
 - **GitHubStats** (`src/components/about/GitHubStats.astro`): 统计展示组件，构建时读取静态 JSON
   - 编程语言使用分析（带颜色编码和百分比）
@@ -192,17 +207,17 @@
 #### 搜索功能增强
 - **Pagefind 集成优化**：解决构建兼容性问题
   - 构建时自动生成搜索索引：`npm run build:search`
-  - 支持中文内容全文搜索（23 个页面，1927 个词）
+  - 只索引带 `data-pagefind-body` 的博客文章和 Notebook 详情页（当前 3 个页面，663 个词）
   - 智能加载检测 + 优雅降级机制
 - **搜索组件增强** (`src/components/search/SearchBox.astro`):
   - 动态加载检测 + 错误处理改进
-  - 备用搜索机制（当 Pagefind 不可用时）
+  - Pagefind 不可用时显示错误提示和重试按钮
   - 键盘导航支持 + 搜索结果高亮
 
 #### 环境配置和工具
 - **环境变量模板** (`.env.example`): API 密钥配置指南
-  - GitHub（仅同步脚本使用）: GITHUB_USERNAME, GITHUB_TOKEN
-  - 站点配置: SITE_URL, SITE_TITLE, SITE_DESCRIPTION
+  - GitHub（仅同步脚本使用）: GITHUB_USERNAME, GITHUB_TOKEN（CI 中来自仓库 Secret `_GITHUB_TOKEN` / Variable `_GITHUB_USERNAME`）
+  - 站点配置：不使用环境变量或仓库 Variables，标题、描述和 URL 写在 `src/config/site.ts`
 - **构建脚本优化** (`package.json`):
   - 集成 Pagefind 搜索索引生成到构建流程
   - 新增数据同步命令和类型检查
@@ -233,8 +248,8 @@
   - 响应式设计改进，smooth scroll 和字体优化
 
 ### 📊 构建统计
-- **页面数量**：23 个静态页面（含标签页）
-- **文章数量**：4 篇博客文章 + 1 个 Notebook
+- **页面数量**：17 个静态页面（含标签页和 404 页）
+- **文章数量**：4 篇博客文章（其中 2 篇渲染测试为草稿，生产构建只发布 2 篇）+ 1 个 Notebook
 - **组件数量**：28 个 `.astro` 组件
 - **构建时间**：数秒（Astro 7 静态生成 + Pagefind 索引）
 - **搜索索引**：自动生成 Pagefind 全文搜索
@@ -243,14 +258,14 @@
 ## 技术栈总结
 - **前端框架**：Astro 7.x + TypeScript
 - **设计系统**：AstroWind 主题 + Tailwind CSS + @tailwindcss/typography
-- **字体系统**：Inter Variable + JetBrains Mono
+- **字体系统**：Inter Variable + JetBrains Mono Variable（@fontsource-variable 自托管，不依赖 Google Fonts）
 - **内容管理**：Astro Content Collections (Markdown + MDX)
 - **公式渲染**：KaTeX + remark-math + rehype-katex
 - **代码高亮**：Shiki (支持多主题)
 - **搜索引擎**：Pagefind (本地搜索)
-- **数据集成**：WandB iframe 嵌入 + GitHub 统计（手动同步的静态 JSON 快照）
+- **数据集成**：WandB iframe 嵌入 + GitHub 统计（部署时刷新的静态 JSON，仓库内快照兜底）
 - **部署平台**：GitHub Pages + GitHub Actions
-- **开发工具**：ESLint + TypeScript 严格模式
+- **开发工具**：ESLint + TypeScript（`astro check`）+ Vitest
 - **性能优化**：静态生成 + 组件懒加载 + 响应式设计
 
 ## 下一步开发重点
