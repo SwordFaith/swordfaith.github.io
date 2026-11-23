@@ -21,6 +21,13 @@ export interface MetaData {
     site?: string;
     cardType?: string;
   };
+  // Article-level data; when set, emits article:* Open Graph tags and BlogPosting JSON-LD.
+  article?: {
+    publishedTime: Date;
+    modifiedTime?: Date;
+    author?: string;
+    tags?: string[];
+  };
 }
 
 export const SITE = {

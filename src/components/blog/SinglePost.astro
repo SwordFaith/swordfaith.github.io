@@ -38,12 +38,14 @@ const wandbUrl = post.data.wandb?.projectId && post.data.wandb?.runId
   {post.data.cover && <img src={post.data.cover} alt={post.data.title} class="mx-auto mb-10 w-full max-w-3xl rounded-2xl shadow-lg" />}
 
   <div class="post-content-grid">
-    <aside class="post-toc">
+    <aside class="post-toc" data-pagefind-ignore>
       <TableOfContents headings={headings} variant="desktop" />
     </aside>
 
     <div class="post-main">
-      <TableOfContents headings={headings} variant="mobile" />
+      <div data-pagefind-ignore>
+        <TableOfContents headings={headings} variant="mobile" />
+      </div>
 
       <div class="prose prose-lg mx-auto max-w-none dark:prose-invert prose-headings:scroll-mt-24 prose-pre:bg-slate-900 prose-pre:text-slate-100">
         <slot />
@@ -56,7 +58,9 @@ const wandbUrl = post.data.wandb?.projectId && post.data.wandb?.runId
         </section>
       )}
 
-      <ToBlogLink previousPost={previousPost} nextPost={nextPost} />
+      <div data-pagefind-ignore>
+        <ToBlogLink previousPost={previousPost} nextPost={nextPost} />
+      </div>
     </div>
   </div>
 </article>

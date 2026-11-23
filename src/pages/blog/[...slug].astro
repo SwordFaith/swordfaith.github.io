@@ -34,10 +34,16 @@ const metadata = {
   openGraph: {
     type: 'article',
   },
+  article: {
+    publishedTime: post.data.publishDate,
+    modifiedTime: post.data.updateDate,
+    author: post.data.author,
+    tags: post.data.tags,
+  },
 };
 ---
 
-<PageLayout metadata={metadata}>
+<PageLayout metadata={metadata} searchable>
   <SinglePost post={post} headings={headings} previousPost={previousPost} nextPost={nextPost}>
     <Content />
   </SinglePost>
