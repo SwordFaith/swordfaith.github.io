@@ -91,7 +91,7 @@
     │   ├── rss.xml.ts           # RSS
     │   ├── blog/                # 博客列表 + [...slug] 详情
     │   ├── notebooks/           # Notebook 列表 + [...slug] 详情
-    │   └── tags/                # 标签索引 + [tag] 列表（URL 即标签原文，如 /tags/RLHF）
+    │   └── tags/                # 标签索引 + [tag] 列表（URL 为标签派生的 slug，见 utils/tags.ts：去掉 / \ ? # % 和控制字符，空白变 -，如 RLHF → /tags/RLHF、reward model → /tags/reward-model、C# → /tags/C）
     ├── components/
     │   ├── layout/              # BaseLayout / Layout / PageLayout / Metadata / BasicScripts
     │   ├── ui/                  # AstroWind 风格 UI：Button / Headline / WidgetWrapper

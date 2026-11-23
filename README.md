@@ -96,7 +96,7 @@ katex: true  # 启用数学公式
 - **数学公式支持**: 完整的 LaTeX 语法支持，行内和块级公式
 - **代码高亮**: 多语言语法高亮（Notebook 代码单元支持复制）
 - **Jupyter Notebook**: 原生支持 .ipynb 文件展示
-- **全文搜索**: Pagefind 索引已发布的博客文章和 Notebook 详情页；文章另可通过标签页按标签浏览（标签 URL 即标签原文，如 `/tags/RLHF`）
+- **全文搜索**: Pagefind 索引已发布的博客文章和 Notebook 详情页；文章另可通过标签页按标签浏览（标签 URL 是由标签文本生成的 slug，规则见 `src/utils/tags.ts` 的 `getTagSlug()`：去掉 `/ \ ? # %` 和控制字符，去掉首尾的点和空白，内部连续空白变为 `-`，其余字符（包括大小写和中文）保持不变，如 `RLHF` → `/tags/RLHF`、`reward model` → `/tags/reward-model`、`C#` → `/tags/C`；slug 为空、以 `.html` 结尾、超过 200 字节，或两个标签的 slug 不区分大小写相同时，构建直接报错）
 
 ### 📊 数据驱动展示
 - **WandB 集成**: 在文章 frontmatter 中配置 `wandb.projectId` / `wandb.runId`，文末嵌入对应运行页面
