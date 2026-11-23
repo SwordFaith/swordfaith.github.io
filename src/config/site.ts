@@ -29,7 +29,6 @@ export const SITE = {
   description: '专注于后训练、强化学习算法、框架和数据研发的技术分享',
   origin: 'https://swordfaith.github.io',
   basePathname: '/',
-  trailingSlash: false,
 } as const;
 
 export const METADATA = {
