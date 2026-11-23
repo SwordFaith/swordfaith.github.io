@@ -28,20 +28,20 @@
 ## 技术方案
 
 ### 1. 核心架构
-- **框架**：Astro 5.x + TypeScript
+- **框架**：Astro 7.x + TypeScript
 - **样式**：Tailwind CSS + AstroWind设计主题 + 自定义组件库
 - **部署**：GitHub Pages（主）+ Vercel（预留）
 - **CI/CD**：GitHub Actions 自动部署
 
 ### 2. 内容处理
 - **公式渲染**：remark-math + rehype-katex + KaTeX（已实现）
-- **代码高亮**：Shiki + 自定义组件（支持复制功能，已实现）
+- **代码高亮**：Astro 内置 Shiki，亮/暗双主题（已实现；Notebook 代码单元支持复制）
 - **Notebook 解析**：自定义 TypeScript 解析器 + 显示组件（已实现）
 - **图表可视化**：Observable Plot + Plotly.js（待实现）
 
 ### 3. 数据集成
-- **WandB**：API 定时同步 + 静态缓存 + iframe 嵌入
-- **GitHub**：GraphQL API 获取项目统计和贡献数据
+- **WandB**：文章 frontmatter `wandb.projectId` / `wandb.runId` → 文章页 iframe 嵌入（已实现，无 API 调用）
+- **GitHub**：GitHub Actions 每日调用 REST API 同步为 `src/data/github-stats.json`，构建时静态渲染（已实现）
 - **学术数据**：Google Scholar API（论文信息同步）
 
 ### 4. 多平台转载工具
@@ -60,64 +60,54 @@
 
 ## 项目结构
 ```
-src/
-├── pages/
-│   ├── index.astro              # 首页
-│   ├── about.astro              # 关于我页面
-│   ├── blog/
-│   │   └── [...slug].astro      # 博客文章页面
-│   └── notebooks/
-│       └── [...slug].astro      # Notebook 展示页面
-├── components/
-│   ├── layout/
-│   │   └── BaseLayout.astro     # 基础布局（已实现）
-│   ├── ui/                      # AstroWind 风格UI组件
-│   │   ├── Button.astro         # 通用按钮组件（已实现）
-│   │   ├── Headline.astro       # 标题组件（已实现）
-│   │   └── WidgetWrapper.astro  # 包装器组件（已实现）
-│   ├── blog/
-│   │   └── CodeBlock.astro      # 代码高亮组件（已实现）
-│   ├── notebook/
-│   │   ├── NotebookViewer.astro # 完整Notebook查看器（已实现）
-│   │   └── SimpleNotebookViewer.astro # 简化Notebook显示（已实现）
-│   ├── search/
-│   │   └── SearchBox.astro      # 搜索组件（已实现）
-│   ├── wandb/
-│   │   ├── WandBEmbed.astro     # WandB 嵌入组件（已实现）
-│   │   └── WandBStats.astro     # WandB 统计组件（已实现）
-│   └── about/
-│       ├── GitHubStats.astro    # GitHub 统计（已实现）
-│       ├── Timeline.astro       # 时间轴组件（待实现）
-│       ├── PublicationCard.astro # 论文卡片（待实现）
-│       └── SkillRadar.astro     # 技能雷达图（待实现）
-├── assets/
-│   └── styles/
-│       └── astrowind.css        # AstroWind 主题样式（已实现）
-├── content/
-│   ├── blog/                    # 博客文章 Markdown
-│   ├── notebooks/               # Jupyter Notebook 文件
-│   └── config.ts                # 内容集合配置
-├── scripts/
-│   ├── sync-wandb.ts            # WandB 数据同步（已实现）
-│   ├── build-search-index.ts    # 搜索索引构建（已实现）
-│   ├── export-zhihu.ts          # 知乎格式导出（待实现）
-│   ├── export-wechat.ts         # 微信公众号导出（待实现）
-│   ├── export-medium.ts         # Medium 导出（待实现）
-│   └── export-xiaohongshu.ts    # 小红书多图导出（待实现）
-├── utils/
-│   ├── notebook-parser.ts       # Notebook 解析器（已实现）
-│   ├── wandb-client.ts          # WandB API 客户端（已实现）
-│   ├── github-client.ts         # GitHub API 客户端（已实现）
-│   ├── image-uploader.ts        # 图床上传工具（待实现）
-│   ├── format-converter.ts      # 格式转换器（待实现）
-│   └── math-renderer.ts         # 数学公式渲染（待实现）
-└── config/
-    ├── astro.config.mjs         # Astro 配置
-    ├── tailwind.config.js       # Tailwind 配置
-    └── deploy.yml               # GitHub Actions 配置
-├── .env.example                 # 环境变量配置模板（已实现）
-└── package.json                 # 项目依赖和脚本配置
+.
+├── astro.config.mjs             # Astro 配置（Markdown/KaTeX/Shiki/集成）
+├── tailwind.config.js           # Tailwind 配置
+├── eslint.config.mjs            # ESLint 配置
+├── .env.example                 # 环境变量配置模板
+├── .github/workflows/
+│   ├── deploy.yml               # 构建并部署到 GitHub Pages
+│   └── sync-data.yml            # 每日同步 GitHub 统计数据
+├── public/
+│   └── notebooks/               # 原始 .ipynb 文件（Notebook 页面数据源）
+└── src/
+    ├── content.config.ts        # 内容集合配置（blog / notebooks）
+    ├── navigation.ts            # 导航配置
+    ├── config/site.ts           # 站点元数据
+    ├── pages/
+    │   ├── index.astro          # 首页
+    │   ├── about.astro          # 关于我页面
+    │   ├── archive.astro        # 归档
+    │   ├── search.astro         # 搜索
+    │   ├── rss.xml.ts           # RSS
+    │   ├── blog/                # 博客列表 + [...slug] 详情
+    │   ├── notebooks/           # Notebook 列表 + [...slug] 详情
+    │   └── tags/                # 标签索引 + [tag] 列表
+    ├── components/
+    │   ├── layout/              # BaseLayout / Layout / PageLayout / Metadata / BasicScripts
+    │   ├── ui/                  # AstroWind 风格 UI：Button / Headline / WidgetWrapper
+    │   ├── widgets/             # Header / Footer / Hero / Features / BlogLatestPosts / Logo / Toggle*
+    │   ├── blog/                # SinglePost / List / Grid / TableOfContents / PostTags 等
+    │   ├── notebook/            # NotebookViewer / SimpleNotebookViewer
+    │   ├── search/SearchBox.astro
+    │   └── about/GitHubStats.astro  # 读取 src/data/github-stats.json 静态渲染
+    ├── content/
+    │   ├── blog/                # 博客文章 Markdown
+    │   └── notebooks/           # Notebook 元数据（指向 public/notebooks/*.ipynb）
+    ├── data/
+    │   ├── github-stats.json    # CI 每日同步的 GitHub 统计
+    │   └── github-stats-default.json # 数据缺失时的兜底
+    ├── scripts/
+    │   ├── sync-github-daily.ts # GitHub 统计同步脚本（npm run sync:github:daily）
+    │   └── intersection-observer.ts
+    ├── utils/
+    │   ├── notebook-parser.ts   # Notebook 解析器
+    │   ├── number-formatter.ts
+    │   ├── site-config.ts
+    │   └── tags.ts
+    └── assets/styles/astrowind.css  # AstroWind 主题样式
 ```
+（Phase 4 规划中的导出脚本、图床工具等尚未创建，见下方待办清单。）
 
 ## 开发计划
 
@@ -161,17 +151,17 @@ src/
 ## 当前实现状态
 
 ### ✅ 已完成功能
-- **基础架构**：Astro 5.x + TypeScript + Tailwind CSS
+- **基础架构**：Astro 7.x + TypeScript + Tailwind CSS
 - **设计系统**：AstroWind 设计主题集成，统一的色彩和字体系统
 - **内容系统**：Markdown 博客 + Jupyter Notebook 支持
 - **数学公式**：KaTeX 完整集成，支持行内和块级公式
-- **代码高亮**：Shiki 语法高亮 + 自定义复制功能
+- **代码高亮**：Shiki 语法高亮（Notebook 代码单元支持复制）
 - **页面结构**：首页、博客列表/详情、Notebook 列表/详情、关于页面
 - **响应式设计**：移动端适配和交互优化，支持暗色主题
 - **SEO 基础**：Meta 标签、Open Graph、站点地图
 - **部署配置**：GitHub Actions + GitHub Pages
-- **WandB 集成**：API 客户端、数据同步脚本、可视化组件
-- **GitHub 统计**：个人数据获取、项目统计、语言分析
+- **WandB 集成**：文章 frontmatter 配置 run 后在文末 iframe 嵌入
+- **GitHub 统计**：CI 每日同步静态 JSON，构建时渲染项目统计、语言分析
 - **搜索功能**：Pagefind 集成、备用搜索机制
 
 ### 📝 示例内容
@@ -185,29 +175,15 @@ src/
 
 ### 🎯 Phase 3 新增功能详细实现
 
-#### WandB 集成系统
-- **WandBClient** (`src/utils/wandb-client.ts`): 完整的 TypeScript API 客户端
-  - 支持项目列表、实验运行、指标历史数据获取
-  - 智能缓存机制（5分钟默认过期）+ 手动缓存清理
-  - 错误处理和超时重试机制
-- **WandBEmbed** (`src/components/wandb/WandBEmbed.astro`): iframe 嵌入组件
-  - 支持项目概览、运行详情、图表展示等多种类型
-  - 响应式设计 + 加载失败时的优雅降级
-  - 自动生成 WandB 链接和嵌入参数
-- **WandBStats** (`src/components/wandb/WandBStats.astro`): 统计展示组件
-  - 项目概览、实验数量、运行状态统计
-  - 最近实验列表 + 项目活跃度展示
-- **数据同步脚本** (`src/scripts/sync-wandb.ts`): 自动化数据同步
-  - 支持完整同步和增量同步模式
-  - 本地缓存文件管理 + 同步报告生成
-  - CLI 支持：`npm run sync:wandb` 和 `npm run sync:wandb:incremental`
+#### WandB 集成
+- 文章 frontmatter 中的 `wandb.projectId` / `wandb.runId`（schema 见 `src/content.config.ts`）由 `src/components/blog/SinglePost.astro` 渲染为文末 iframe
+- 不调用 WandB API，无需密钥（早期的 WandB API 客户端、统计组件和同步脚本因无引用已删除）
 
 #### GitHub 集成系统
-- **GitHubClient** (`src/utils/github-client.ts`): GitHub API 客户端
-  - REST API + GraphQL API 双重支持
-  - 用户信息、仓库列表、语言统计、贡献图数据获取
-  - 10分钟智能缓存 + API 限制避免机制
-- **GitHubStats** (`src/components/about/GitHubStats.astro`): 统计展示组件
+- **同步脚本** (`src/scripts/sync-github-daily.ts`): 调用 GitHub REST API 获取用户、仓库、语言统计，写入 `src/data/github-stats.json`
+  - 由 `.github/workflows/sync-data.yml` 每日运行；本地用 `GITHUB_TOKEN=... npm run sync:github:daily`（Node 原生 TypeScript 类型擦除直接运行）
+  - 数据无实质变化时不改写文件
+- **GitHubStats** (`src/components/about/GitHubStats.astro`): 统计展示组件，构建时读取静态 JSON
   - 编程语言使用分析（带颜色编码和百分比）
   - 热门仓库展示（Star/Fork 排序）
   - 贡献统计概览 + 响应式设计
@@ -216,7 +192,7 @@ src/
 #### 搜索功能增强
 - **Pagefind 集成优化**：解决构建兼容性问题
   - 构建时自动生成搜索索引：`npm run build:search`
-  - 支持中文内容全文搜索（9个页面，1735个词）
+  - 支持中文内容全文搜索（23 个页面，1927 个词）
   - 智能加载检测 + 优雅降级机制
 - **搜索组件增强** (`src/components/search/SearchBox.astro`):
   - 动态加载检测 + 错误处理改进
@@ -225,8 +201,7 @@ src/
 
 #### 环境配置和工具
 - **环境变量模板** (`.env.example`): API 密钥配置指南
-  - WandB: WANDB_ENTITY, WANDB_API_KEY
-  - GitHub: GITHUB_USERNAME, GITHUB_TOKEN
+  - GitHub（仅同步脚本使用）: GITHUB_USERNAME, GITHUB_TOKEN
   - 站点配置: SITE_URL, SITE_TITLE, SITE_DESCRIPTION
 - **构建脚本优化** (`package.json`):
   - 集成 Pagefind 搜索索引生成到构建流程
@@ -258,22 +233,22 @@ src/
   - 响应式设计改进，smooth scroll 和字体优化
 
 ### 📊 构建统计
-- **页面数量**：9 个静态页面
+- **页面数量**：23 个静态页面（含标签页）
 - **文章数量**：4 篇博客文章 + 1 个 Notebook
-- **组件数量**：23+ 个自定义组件（新增 3 个 UI 组件）
-- **构建时间**：~12 秒（静态生成 + 搜索索引）
+- **组件数量**：28 个 `.astro` 组件
+- **构建时间**：数秒（Astro 7 静态生成 + Pagefind 索引）
 - **搜索索引**：自动生成 Pagefind 全文搜索
 - **设计系统**：AstroWind 主题，支持亮色/暗色模式切换
 
 ## 技术栈总结
-- **前端框架**：Astro 5.x + TypeScript
+- **前端框架**：Astro 7.x + TypeScript
 - **设计系统**：AstroWind 主题 + Tailwind CSS + @tailwindcss/typography
 - **字体系统**：Inter Variable + JetBrains Mono
 - **内容管理**：Astro Content Collections (Markdown + MDX)
 - **公式渲染**：KaTeX + remark-math + rehype-katex
 - **代码高亮**：Shiki (支持多主题)
 - **搜索引擎**：Pagefind (本地搜索)
-- **数据集成**：WandB API + GitHub API + 缓存机制
+- **数据集成**：WandB iframe 嵌入 + GitHub 统计（CI 每日同步为静态 JSON）
 - **部署平台**：GitHub Pages + GitHub Actions
 - **开发工具**：ESLint + TypeScript 严格模式
 - **性能优化**：静态生成 + 组件懒加载 + 响应式设计
