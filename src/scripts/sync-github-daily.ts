@@ -126,26 +126,6 @@ function hasMeaningfulGitHubStatsChanges(previous: unknown, next: unknown): bool
     !== JSON.stringify(normalizeGitHubStatsForComparison(next));
 }
 
-// 语言颜色映射
-const LANGUAGE_COLORS: Record<string, string> = {
-  'TypeScript': '#3178c6',
-  'JavaScript': '#f1e05a',
-  'Python': '#3572A5',
-  'Java': '#b07219',
-  'C++': '#f34b7d',
-  'C': '#555555',
-  'Go': '#00ADD8',
-  'Rust': '#dea584',
-  'Vue': '#4FC08D',
-  'HTML': '#e34c26',
-  'CSS': '#1572B6',
-  'Shell': '#89e051',
-  'Dockerfile': '#384d54',
-  'Jupyter Notebook': '#DA5B0B',
-  'CUDA': '#3A4E3A',
-  'Makefile': '#427819'
-};
-
 class GitHubDailySync {
   private username: string;
   private token: string;
@@ -278,7 +258,7 @@ class GitHubDailySync {
 
         // 防止 API 限制
         await this.sleep(50);
-      } catch (error) {
+      } catch {
         console.warn(`  Warning: Failed to get languages for ${repo.name}`);
       }
     }

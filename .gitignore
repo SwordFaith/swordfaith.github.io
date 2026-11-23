@@ -49,9 +49,6 @@ pids
 tmp/
 temp/
 
-# WandB cache
-public/data/wandb/
-
 # Search index (generated)
 public/pagefind/
 
