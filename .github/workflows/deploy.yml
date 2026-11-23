@@ -7,9 +7,11 @@ on:
   # Checks only (lint, typecheck, tests, build); never deploys
   pull_request:
     branches: [ main ]
-  # Weekly rebuild so the About page picks up fresh GitHub stats without committing them
-  schedule:
-    - cron: '23 3 * * 1'
+  # Called by scheduled-deploy.yml for the weekly rebuild. The cron lives there because
+  # GitHub disables a scheduled workflow (all of its triggers) after 60 days without
+  # repository activity; keeping it separate means only the weekly caller can be disabled.
+  # In a called workflow github.event_name is the caller's event ('schedule').
+  workflow_call:
   # Allow manual runs
   workflow_dispatch:
 
@@ -18,6 +20,7 @@ permissions: {}
 
 # Pull requests: one run per PR, superseded runs are cancelled.
 # Deploys (push/schedule/dispatch): one at a time, never cancel an in-progress deploy.
+# The scheduled caller must not declare the 'pages' group itself (caller/called deadlock).
 concurrency:
   group: ${{ github.event_name == 'pull_request' && format('pr-checks-{0}', github.ref) || 'pages' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -53,8 +56,10 @@ jobs:
 
       # Deploy path only (PR checks build from the committed JSON to stay deterministic).
       # Best-effort: the refreshed file is used for this build only and never committed.
-      # On a missing token, sync failure, or invalid output, fall back to the committed
-      # JSON and emit a warning annotation so the deploy still goes through.
+      # On a missing token, sync failure (the script exits non-zero if any sub-request
+      # failed), timeout, or invalid output, fall back to the committed JSON and emit a
+      # warning annotation so the deploy still goes through. The timeout keeps a slow API
+      # from holding the shared 'pages' concurrency slot.
       - name: Refresh GitHub stats (best-effort)
         if: github.event_name != 'pull_request'
         env:
@@ -75,8 +80,8 @@ jobs:
 
           if [ -z "$GITHUB_TOKEN" ]; then
             echo "::warning title=GitHub stats not refreshed::Secret _GITHUB_TOKEN is not set; using committed $STATS_FILE"
-          elif ! npm run sync:github:daily || ! validate; then
-            echo "::warning title=GitHub stats not refreshed::Sync failed or produced invalid data (see log); using committed $STATS_FILE"
+          elif ! timeout 120 npm run sync:github:daily || ! validate; then
+            echo "::warning title=GitHub stats not refreshed::Sync failed, timed out, or produced invalid data (see log); using committed $STATS_FILE"
             git checkout -- "$STATS_FILE"
           fi
 
@@ -87,6 +92,10 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+          # Site config from repository Variables (read by src/utils/site-config.ts)
+          SITE_URL: ${{ vars.SITE_URL }}
+          SITE_TITLE: ${{ vars.SITE_TITLE }}
+          SITE_DESCRIPTION: ${{ vars.SITE_DESCRIPTION }}
 
       - name: Upload artifact
         if: github.event_name != 'pull_request'
