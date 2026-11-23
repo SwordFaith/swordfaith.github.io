@@ -43,7 +43,8 @@ const metadata = {
   </SinglePost>
 </PageLayout>
 
-<style>
+<style is:global>
+  /* Global because markdown-rendered elements carry no Astro scope attribute; .prose keeps it post-only. */
   .prose :where(table):not(:where([class~='not-prose'] *)) {
     @apply w-full border-collapse border border-gray-300 dark:border-gray-600;
   }
@@ -56,7 +57,7 @@ const metadata = {
     @apply border border-gray-300 p-2 dark:border-gray-600;
   }
 
-  .katex-display {
+  .prose .katex-display {
     @apply my-6 overflow-x-auto;
   }
 </style>

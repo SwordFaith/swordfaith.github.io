@@ -3,11 +3,9 @@ title: "DPO vs RLHF: 直接偏好优化的优势与局限"
 description: "对比分析DPO和RLHF两种后训练方法的原理、实现和性能差异"
 publishDate: 2024-02-01
 tags: ["DPO", "RLHF", "对比分析", "后训练"]
-author: "LLM Engineer"
+author: "SwordFaith"
 katex: true
 ---
-
-# DPO vs RLHF: 直接偏好优化的优势与局限
 
 直接偏好优化（Direct Preference Optimization, DPO）作为RLHF的替代方案，近期在学术界和工业界引起了广泛关注。本文将深入对比这两种方法的优缺点。
 
