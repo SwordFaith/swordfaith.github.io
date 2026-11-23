@@ -18,8 +18,10 @@ export async function getStaticPaths() {
     },
   }));
 
-  // Drafts (e.g. rendering fixtures) are reachable by direct URL in dev only and never join prev/next navigation.
-  const draftPaths = import.meta.env.DEV
+  // Drafts (e.g. rendering fixtures) are reachable by direct URL under `astro dev` only and never join prev/next
+  // navigation. Gate on import.meta.hot (Vite HMR, set only by the dev server, always undefined in builds), not
+  // import.meta.env.DEV, which follows NODE_ENV and is true in `NODE_ENV=development astro build`.
+  const draftPaths = import.meta.hot
     ? allPosts.filter(({ data }) => data.draft).map((post) => ({ params: { slug: post.id }, props: { post } }))
     : [];
 
@@ -68,6 +70,20 @@ const metadata = {
 
   /* Horizontal-only scroll (per KaTeX docs); vertical padding keeps glyphs that overshoot the strut from being clipped. */
   .prose .katex-display {
-    @apply my-4 overflow-x-auto overflow-y-hidden py-2;
+    @apply my-4 overflow-x-auto overflow-y-hidden py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500;
   }
 </style>
+
+<script>
+  // Give only overflowing display equations a tab stop so keyboard users can scroll them.
+  function updateEquationTabStops() {
+    document.querySelectorAll<HTMLElement>('.prose .katex-display').forEach((el) => {
+      if (el.scrollWidth > el.clientWidth) el.tabIndex = 0;
+      else el.removeAttribute('tabindex');
+    });
+  }
+
+  updateEquationTabStops();
+  document.fonts.ready.then(updateEquationTabStops);
+  window.addEventListener('resize', updateEquationTabStops);
+</script>
