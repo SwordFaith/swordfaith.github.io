@@ -108,8 +108,9 @@ function isSafeUrl(value: string, image = false): boolean {
   if (!url || /[\u0000-\u0020]/.test(url)) return false;
   if (/^https?:\/\//i.test(url)) return true;
   if (!image && /^mailto:/i.test(url)) return true;
-  if (/^#/.test(url) || /^\/(?!\/)/.test(url)) return true;
-  if (!/^[a-z][a-z0-9+.-]*:/i.test(url) && !url.startsWith('//')) return true;
+  // Browsers treat `\` like `/`, so `/\host` and `\\host` are protocol-relative too.
+  if (/^#/.test(url) || /^\/(?![/\\])/.test(url)) return true;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(url) && !/^[/\\]{2}/.test(url)) return true;
   return false;
 }
 
