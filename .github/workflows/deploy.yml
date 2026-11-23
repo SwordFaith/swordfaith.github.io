@@ -1,84 +1,114 @@
 name: Deploy to GitHub Pages
 
 on:
-  # 当推送到 main 分支时触发部署
+  # Deploy on every push to main
   push:
     branches: [ main ]
-  # 允许手动触发工作流
+  # Checks only (lint, typecheck, tests, build); never deploys
+  pull_request:
+    branches: [ main ]
+  # Weekly rebuild so the About page picks up fresh GitHub stats without committing them
+  schedule:
+    - cron: '23 3 * * 1'
+  # Allow manual runs
   workflow_dispatch:
 
-# 设置 GITHUB_TOKEN 权限以允许部署到 GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# No default token permissions; each job requests only what it needs
+permissions: {}
 
-# 只允许一个并发部署，跳过运行中的部署队列中的运行
+# Pull requests: one run per PR, superseded runs are cancelled.
+# Deploys (push/schedule/dispatch): one at a time, never cancel an in-progress deploy.
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('pr-checks-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      
+        with:
+          persist-credentials: false
+
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-        
-      - name: Check GitHub stats data
-        run: |
-          if [ -f "src/data/github-stats.json" ]; then
-            echo "✅ GitHub stats data found"
-            LAST_UPDATE=$(node -e "
-              try {
-                const data = JSON.parse(require('fs').readFileSync('src/data/github-stats.json', 'utf8'));
-                console.log(data.lastUpdate || 'Unknown');
-              } catch (e) {
-                console.log('Unknown (parse error)');
-              }
-            ")
-            echo "📊 Data last updated: $LAST_UPDATE"
-          else
-            echo "⚠️ GitHub stats data not found, using default data"
-          fi
-      
-      - name: Run type check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
         run: npm run typecheck
-      
+
+      - name: Test
+        run: npm test --if-present
+
+      # Deploy path only (PR checks build from the committed JSON to stay deterministic).
+      # Best-effort: the refreshed file is used for this build only and never committed.
+      # On a missing token, sync failure, or invalid output, fall back to the committed
+      # JSON and emit a warning annotation so the deploy still goes through.
+      - name: Refresh GitHub stats (best-effort)
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_USERNAME: ${{ vars._GITHUB_USERNAME || 'SwordFaith' }}
+          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          STATS_FILE: src/data/github-stats.json
+        run: |
+          # Fails unless the file parses and has the fields the About page renders
+          validate() {
+            node -e '
+              const d = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+              if (!d.lastUpdate || !d.user || !d.summary || !d.languageStats || !Array.isArray(d.topRepositories)) {
+                throw new Error("missing required fields");
+              }
+              console.log("GitHub stats lastUpdate: " + d.lastUpdate);
+            ' "$STATS_FILE"
+          }
+
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "::warning title=GitHub stats not refreshed::Secret _GITHUB_TOKEN is not set; using committed $STATS_FILE"
+          elif ! npm run sync:github:daily || ! validate; then
+            echo "::warning title=GitHub stats not refreshed::Sync failed or produced invalid data (see log); using committed $STATS_FILE"
+            git checkout -- "$STATS_FILE"
+          fi
+
+          # Whatever is in place now must be valid, otherwise fail before building
+          validate
+
       - name: Build with Astro
         run: npm run build
         env:
           NODE_ENV: production
-          # 站点配置（使用 Variables）
-          SITE_URL: ${{ vars.SITE_URL }}
-          SITE_TITLE: ${{ vars.SITE_TITLE }}
-          SITE_DESCRIPTION: ${{ vars.SITE_DESCRIPTION }}
-          # 注意：构建时不再调用 GitHub API，直接使用预同步的数据
-      
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
-      
+
       - name: Upload artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
         with:
           path: './dist'
 
   deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
     steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
