@@ -25,8 +25,8 @@ export interface MetaData {
 
 export const SITE = {
   name: 'SwordFaith',
-  title: 'LLM算法工程师技术博客',
-  description: '专注于后训练、强化学习算法、框架和数据研发的技术分享',
+  title: "SwordFaith's Blog",
+  description: 'Pursuing simple and universal ideas 追求简单普适的想法',
   origin: 'https://swordfaith.github.io',
   basePathname: '/',
 } as const;
