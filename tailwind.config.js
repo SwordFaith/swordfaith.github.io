@@ -55,9 +55,23 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Inter Variable', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        serif: ['Inter Variable', 'Inter', 'ui-serif', 'Georgia', 'serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace']
+        // Latin glyphs come from self-hosted variable fonts (see astrowind.css);
+        // CJK glyphs fall through to system fonts.
+        sans: [
+          'Inter Variable', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI',
+          'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Source Han Sans SC',
+          'sans-serif'
+        ],
+        serif: [
+          'ui-serif', 'Georgia', 'Cambria', 'Times New Roman',
+          'Songti SC', 'STSong', 'SimSun', 'Noto Serif CJK SC', 'Source Han Serif SC',
+          'serif'
+        ],
+        mono: [
+          'JetBrains Mono Variable', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas',
+          'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC',
+          'monospace'
+        ]
       },
       fontSize: {
         xs: ['0.75rem', { lineHeight: '1rem' }],
