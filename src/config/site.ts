@@ -9,6 +9,7 @@ export interface MetaData {
     follow?: boolean;
   };
   image?: string;
+  imageAlt?: string;
   openGraph?: {
     url?: string;
     siteName?: string;
@@ -41,6 +42,10 @@ export const METADATA = {
   robots: {
     index: true,
     follow: true,
+  },
+  image: {
+    src: '/og-image.png',
+    alt: 'SwordFaith：LLM 后训练与强化学习技术博客',
   },
   openGraph: {
     siteName: SITE.name,

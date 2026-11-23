@@ -1,0 +1,39 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+export interface Props {
+  headings: MarkdownHeading[];
+  variant: 'mobile' | 'desktop';
+}
+
+const { headings, variant } = Astro.props;
+const tocHeadings = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+---
+
+{tocHeadings.length > 0 && variant === 'mobile' && (
+  <details class="mb-8 rounded-xl border border-gray-200 p-4 dark:border-slate-700 lg:hidden">
+    <summary class="cursor-pointer font-semibold text-page">本文目录</summary>
+    <nav class="mt-4" aria-label="移动端文章目录">
+      <ol class="space-y-2 border-l border-gray-200 pl-4 text-sm dark:border-slate-700">
+        {tocHeadings.map((heading) => (
+          <li class:list={[{ 'ml-4': heading.depth === 3 }]}>
+            <a href={`#${heading.slug}`} class="text-muted hover:text-primary">{heading.text}</a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  </details>
+)}
+
+{tocHeadings.length > 0 && variant === 'desktop' && (
+  <nav class="text-sm" aria-label="文章目录">
+    <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-page">本文目录</h2>
+    <ol class="space-y-2 border-l border-gray-200 pl-4 dark:border-slate-700">
+      {tocHeadings.map((heading) => (
+        <li class:list={[{ 'ml-3': heading.depth === 3 }]}>
+          <a href={`#${heading.slug}`} class="leading-relaxed text-muted hover:text-primary">{heading.text}</a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+)}

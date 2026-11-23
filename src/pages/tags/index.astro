@@ -1,0 +1,52 @@
+---
+import { getCollection } from 'astro:content';
+import PageLayout from '@/components/layout/PageLayout.astro';
+import Headline from '@/components/ui/Headline.astro';
+import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
+import { getTagPath, getUniqueTags } from '@/utils/tags';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const tagCounts = new Map<string, number>();
+
+for (const post of allPosts) {
+  for (const tag of getUniqueTags(post.data.tags)) {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  }
+}
+
+const tags = [...tagCounts.entries()].sort(([tagA], [tagB]) => tagA.localeCompare(tagB, 'zh-CN'));
+
+const metadata = {
+  title: '文章标签',
+  description: '按标签浏览技术博客文章',
+};
+---
+
+<PageLayout metadata={metadata}>
+  <WidgetWrapper containerClass="max-w-4xl">
+    <Headline
+      tagline="Tags"
+      title="文章标签"
+      titleTag="h1"
+      subtitle={`通过 ${tags.length} 个标签发现感兴趣的内容`}
+      class="mb-10"
+    />
+    {tags.length > 0 ? (
+      <ul class="flex flex-wrap justify-center gap-3">
+        {tags.map(([tag, count]) => (
+          <li>
+            <a
+              href={getTagPath(tag)}
+              class="flex items-center gap-2 rounded-full bg-primary-50 px-4 py-2 font-medium text-primary-700 transition-colors hover:bg-primary-100 dark:bg-primary-900/25 dark:text-primary-300 dark:hover:bg-primary-900/40"
+            >
+              <span>{tag}</span>
+              <span class="rounded-full bg-white/70 px-2 py-0.5 text-xs dark:bg-slate-800/60" aria-label={`${count} 篇文章`}>
+                {count}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    ) : <p class="py-12 text-center text-lg text-muted">暂无标签</p>}
+  </WidgetWrapper>
+</PageLayout>

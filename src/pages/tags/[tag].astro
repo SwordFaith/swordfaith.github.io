@@ -1,0 +1,65 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import List from '@/components/blog/List.astro';
+import PageLayout from '@/components/layout/PageLayout.astro';
+import Headline from '@/components/ui/Headline.astro';
+import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
+import { getTagSlug, getUniqueTags } from '@/utils/tags';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+  const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+  const postsByTag = new Map<string, CollectionEntry<'blog'>[]>();
+
+  for (const post of sortedPosts) {
+    for (const tag of getUniqueTags(post.data.tags)) {
+      const taggedPosts = postsByTag.get(tag) ?? [];
+      taggedPosts.push(post);
+      postsByTag.set(tag, taggedPosts);
+    }
+  }
+
+  const slugOwners = new Map<string, string>();
+
+  return [...postsByTag.entries()].map(([tag, posts]) => {
+    const slug = getTagSlug(tag);
+    const existingTag = slugOwners.get(slug);
+
+    if (existingTag !== undefined) {
+      throw new Error(`标签 slug 冲突：${JSON.stringify(existingTag)} 与 ${JSON.stringify(tag)} 都生成了 ${slug}`);
+    }
+
+    slugOwners.set(slug, tag);
+    return { params: { tag: slug }, props: { tag, posts } };
+  });
+}
+
+interface Props {
+  tag: string;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { tag, posts } = Astro.props;
+
+const metadata = {
+  title: `标签：${tag}`,
+  description: `标签 ${tag} 下的全部技术博客文章`,
+};
+---
+
+<PageLayout metadata={metadata}>
+  <WidgetWrapper containerClass="max-w-4xl">
+    <Headline
+      tagline="Tag"
+      title={tag}
+      titleTag="h1"
+      subtitle={`共 ${posts.length} 篇文章`}
+      class="mb-10"
+    />
+    <List posts={posts} />
+    <div class="mt-10 text-center">
+      <a href="/tags" class="font-medium text-primary hover:underline">查看全部标签</a>
+    </div>
+  </WidgetWrapper>
+</PageLayout>

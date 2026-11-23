@@ -1,0 +1,33 @@
+---
+import PageLayout from '@/components/layout/PageLayout.astro';
+import SearchBox from '@/components/search/SearchBox.astro';
+import Headline from '@/components/ui/Headline.astro';
+import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
+
+const initialQuery = Astro.url.searchParams.get('q')?.trim() || '';
+
+const metadata = {
+  title: '全站搜索',
+  description: '搜索博客文章、Notebook 和站内页面',
+};
+---
+
+<PageLayout metadata={metadata}>
+  <WidgetWrapper containerClass="max-w-4xl">
+    <Headline
+      tagline="Search"
+      title="全站搜索"
+      titleTag="h1"
+      subtitle="搜索博客文章、Notebook 和站内页面"
+      class="mb-10"
+    />
+    <SearchBox
+      id="search-page"
+      layout="inline"
+      limit={20}
+      initialQuery={initialQuery}
+      syncUrl
+      placeholder="输入关键词，搜索全站内容..."
+    />
+  </WidgetWrapper>
+</PageLayout>

@@ -1,55 +1,84 @@
 ---
 export interface Props {
+  id?: string;
   placeholder?: string;
   className?: string;
+  layout?: 'dropdown' | 'inline';
+  limit?: number;
+  initialQuery?: string;
+  syncUrl?: boolean;
 }
 
-const { placeholder = '搜索文章、笔记...', className = '' } = Astro.props;
+const {
+  id = 'site-search',
+  placeholder = '搜索文章、笔记...',
+  className = '',
+  layout = 'dropdown',
+  limit = 8,
+  initialQuery = '',
+  syncUrl = false,
+} = Astro.props;
+
+const inputId = `${id}-input`;
+const resultsId = `${id}-results`;
+const statusId = `${id}-status`;
 ---
 
-<div class={`relative ${className}`} data-search-root>
-  <label class="sr-only" for="search-input">搜索站内内容</label>
-  <div class="relative">
+<div
+  class={`relative ${className}`}
+  data-search-root
+  data-pagefind-ignore
+  data-search-layout={layout}
+  data-search-limit={limit}
+  data-search-sync-url={syncUrl ? 'true' : undefined}
+>
+  <form action="/search" method="get" role="search" class="relative">
+    <label class="sr-only" for={inputId}>搜索站内内容</label>
     <svg class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
     </svg>
     <input
       type="search"
-      id="search-input"
+      id={inputId}
+      name="q"
+      value={initialQuery}
       class="block w-full rounded-full border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-page placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-slate-700 dark:bg-slate-900 dark:placeholder-gray-400"
       placeholder={placeholder}
       autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      aria-controls={resultsId}
+      aria-describedby={statusId}
       data-search-input
     />
-  </div>
-  <div id="search-results" role="region" aria-label="搜索结果" class="absolute z-50 mt-2 hidden max-h-96 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900" data-search-results>
-    <p class="hidden p-4 text-center text-sm text-muted" data-search-loading role="status">搜索中...</p>
+  </form>
+
+  <div
+    id={resultsId}
+    role="region"
+    aria-label="搜索结果"
+    class:list={[
+      layout === 'dropdown'
+        ? 'absolute left-0 right-0 z-[60] mt-2 hidden max-h-[70vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900'
+        : 'mt-8 min-h-32 rounded-2xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-6',
+    ]}
+    data-search-results
+  >
+    <p class="p-4 text-center text-sm text-muted" data-search-idle>输入至少 2 个字符开始搜索</p>
+    <p class="hidden p-4 text-center text-sm text-muted" data-search-loading>正在搜索...</p>
+    <p class="hidden p-4 text-center text-sm text-muted" data-search-empty>未找到相关内容，请尝试其他关键词</p>
+    <div class="hidden p-4 text-center" data-search-error role="alert">
+      <p class="text-sm text-muted">搜索服务暂时不可用，请稍后重试</p>
+      <button type="button" class="mt-3 rounded-lg px-4 py-2 text-sm font-medium text-primary hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-primary-900/20" data-search-retry>
+        重试
+      </button>
+    </div>
     <div class="divide-y divide-gray-100 dark:divide-slate-800" data-search-content></div>
-    <p class="hidden p-4 text-center text-sm text-muted" data-search-empty role="status">未找到相关内容</p>
   </div>
+  <p id={statusId} class="sr-only" role="status" aria-live="polite" aria-atomic="true" data-search-status></p>
 </div>
 
 <script>
-  interface PagefindResultData {
-    url: string;
-    excerpt: string;
-    meta: {
-      title?: string;
-      date?: string;
-    };
-  }
-
-  interface PagefindSearchResult {
-    results: Array<{
-      data: () => Promise<PagefindResultData>;
-    }>;
-  }
-
-  interface PagefindModule {
-    init?: () => void | Promise<void>;
-    search: (query: string) => Promise<PagefindSearchResult>;
-  }
-
   let pagefindPromise: Promise<PagefindModule> | undefined;
 
   const loadPagefind = () => {
@@ -59,98 +88,187 @@ const { placeholder = '搜索文章、笔记...', className = '' } = Astro.props
         const pagefind = await import(/* @vite-ignore */ pagefindPath) as PagefindModule;
         await pagefind.init?.();
         return pagefind;
-      })();
+      })().catch((error: unknown) => {
+        pagefindPromise = undefined;
+        throw error;
+      });
     }
     return pagefindPromise;
   };
 
   document.querySelectorAll<HTMLElement>('[data-search-root]').forEach((root) => {
     const input = root.querySelector<HTMLInputElement>('[data-search-input]');
+    const form = root.querySelector<HTMLFormElement>('form');
     const results = root.querySelector<HTMLElement>('[data-search-results]');
+    const idle = root.querySelector<HTMLElement>('[data-search-idle]');
     const loading = root.querySelector<HTMLElement>('[data-search-loading]');
     const content = root.querySelector<HTMLElement>('[data-search-content]');
     const empty = root.querySelector<HTMLElement>('[data-search-empty]');
-    if (!input || !results || !loading || !content || !empty) return;
+    const error = root.querySelector<HTMLElement>('[data-search-error]');
+    const retry = root.querySelector<HTMLButtonElement>('[data-search-retry]');
+    const status = root.querySelector<HTMLElement>('[data-search-status]');
+    if (!input || !form || !results || !idle || !loading || !content || !empty || !error || !retry || !status) return;
 
+    const isInline = root.dataset.searchLayout === 'inline';
+    const parsedLimit = Number.parseInt(root.dataset.searchLimit || '8', 10);
+    const resultLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 8;
     let searchTimeout: ReturnType<typeof setTimeout> | undefined;
     let requestId = 0;
 
-    const setExpanded = (expanded: boolean) => {
-      results.classList.toggle('hidden', !expanded);
+    const setResultsVisible = (visible: boolean) => {
+      results.classList.toggle('hidden', !(isInline || visible));
     };
 
-    const renderResults = (items: PagefindResultData[]) => {
+    const setState = (state: 'idle' | 'loading' | 'results' | 'empty' | 'error', message = '') => {
+      idle.classList.toggle('hidden', state !== 'idle');
+      loading.classList.toggle('hidden', state !== 'loading');
+      empty.classList.toggle('hidden', state !== 'empty');
+      error.classList.toggle('hidden', state !== 'error');
+      results.setAttribute('aria-busy', String(state === 'loading'));
+      status.textContent = message;
+    };
+
+    const resultLinks = () => Array.from(content.querySelectorAll<HTMLAnchorElement>('a'));
+
+    const syncQuery = (query: string) => {
+      if (root.dataset.searchSyncUrl !== 'true') return;
+      const url = new URL(window.location.href);
+      if (query) url.searchParams.set('q', query);
+      else url.searchParams.delete('q');
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    };
+
+    const renderResults = (items: PagefindResultData[], total: number, query: string) => {
       content.replaceChildren();
       items.forEach((item) => {
         const link = document.createElement('a');
         link.href = item.url;
-        link.className = 'group block rounded-lg p-4 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none dark:hover:bg-slate-800 dark:focus:bg-slate-800';
+        link.className = 'group block rounded-lg p-4 hover:bg-gray-50 focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-slate-800 dark:focus:bg-slate-800';
 
         const title = document.createElement('span');
         title.className = 'mb-1 block font-semibold text-page group-hover:text-primary';
         title.textContent = item.meta.title || item.url;
 
         const excerpt = document.createElement('span');
-        excerpt.className = 'line-clamp-2 block text-sm leading-relaxed text-muted';
+        excerpt.className = 'line-clamp-3 block text-sm leading-relaxed text-muted [&_mark]:bg-primary-100 [&_mark]:text-page dark:[&_mark]:bg-primary-900/40';
         excerpt.innerHTML = item.excerpt;
 
         link.append(title, excerpt);
         content.append(link);
       });
-      loading.classList.add('hidden');
-      empty.classList.toggle('hidden', items.length > 0);
-      setExpanded(true);
+
+      if (items.length === 0) {
+        setState('empty', `没有找到与“${query}”相关的内容`);
+      } else {
+        const resultMessage = total > items.length
+          ? `找到 ${total} 条结果，显示前 ${items.length} 条`
+          : `找到 ${total} 条结果`;
+        setState('results', resultMessage);
+      }
+      setResultsVisible(true);
     };
 
     const performSearch = async (query: string) => {
       const currentRequest = ++requestId;
-      loading.classList.remove('hidden');
-      empty.classList.add('hidden');
       content.replaceChildren();
-      setExpanded(true);
+      setState('loading', `正在搜索“${query}”`);
+      setResultsVisible(true);
 
       try {
         const pagefind = await loadPagefind();
         const search = await pagefind.search(query);
-        const items = await Promise.all(search.results.slice(0, 8).map((result) => result.data()));
-        if (currentRequest === requestId) renderResults(items);
-      } catch (error) {
-        console.warn('Pagefind is unavailable. Run npm run build to create the search index.', error);
-        if (currentRequest === requestId) renderResults([]);
+        const items = await Promise.all(search.results.slice(0, resultLimit).map((result) => result.data()));
+        if (currentRequest === requestId) renderResults(items, search.results.length, query);
+      } catch (searchError) {
+        console.warn('Pagefind is unavailable. Run npm run build to create the search index.', searchError);
+        if (currentRequest === requestId) {
+          content.replaceChildren();
+          setState('error', '搜索服务暂时不可用，请稍后重试');
+          setResultsVisible(true);
+        }
       }
+    };
+
+    const resetSearch = () => {
+      requestId += 1;
+      content.replaceChildren();
+      setState('idle');
+      setResultsVisible(false);
     };
 
     input.addEventListener('input', () => {
       clearTimeout(searchTimeout);
       const query = input.value.trim();
+      syncQuery(query);
       if (query.length < 2) {
-        requestId += 1;
-        setExpanded(false);
+        resetSearch();
         return;
       }
-      searchTimeout = setTimeout(() => performSearch(query), 250);
+      searchTimeout = setTimeout(() => void performSearch(query), 250);
     });
 
     input.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
-        setExpanded(false);
-        input.blur();
+        clearTimeout(searchTimeout);
+        setResultsVisible(false);
       }
       if (event.key === 'ArrowDown') {
-        const firstResult = content.querySelector<HTMLAnchorElement>('a');
-        if (firstResult) {
+        const firstResult = resultLinks()[0];
+        if (firstResult && !results.classList.contains('hidden')) {
           event.preventDefault();
           firstResult.focus();
         }
       }
     });
 
+    content.addEventListener('keydown', (event) => {
+      const links = resultLinks();
+      const currentIndex = links.indexOf(document.activeElement as HTMLAnchorElement);
+      if (event.key === 'ArrowDown' && currentIndex >= 0) {
+        event.preventDefault();
+        links[Math.min(currentIndex + 1, links.length - 1)]?.focus();
+      }
+      if (event.key === 'ArrowUp' && currentIndex >= 0) {
+        event.preventDefault();
+        if (currentIndex === 0) input.focus();
+        else links[currentIndex - 1]?.focus();
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setResultsVisible(false);
+        input.focus();
+      }
+    });
+
     input.addEventListener('focus', () => {
-      if (content.childElementCount > 0) setExpanded(true);
+      if (input.value.trim().length >= 2 && !loading.classList.contains('hidden')) setResultsVisible(true);
+      else if (input.value.trim().length >= 2 && content.childElementCount > 0) setResultsVisible(true);
+      else if (!error.classList.contains('hidden') || !empty.classList.contains('hidden')) setResultsVisible(true);
+    });
+
+    form.addEventListener('submit', (event) => {
+      if (input.value.trim().length < 2) {
+        event.preventDefault();
+        resetSearch();
+        input.focus();
+      }
+    });
+
+    retry.addEventListener('click', () => {
+      const query = input.value.trim();
+      if (query.length >= 2) void performSearch(query);
     });
 
     document.addEventListener('click', (event) => {
-      if (!root.contains(event.target as Node)) setExpanded(false);
+      if (!root.contains(event.target as Node)) setResultsVisible(false);
     });
+
+    const urlQuery = root.dataset.searchSyncUrl === 'true'
+      ? new URL(window.location.href).searchParams.get('q')?.trim()
+      : undefined;
+    const initialQuery = urlQuery ?? input.value.trim();
+    if (urlQuery !== undefined) input.value = initialQuery;
+    if (initialQuery.length >= 2) void performSearch(initialQuery);
+    else resetSearch();
   });
 </script>

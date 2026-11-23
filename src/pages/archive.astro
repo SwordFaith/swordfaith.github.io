@@ -1,0 +1,58 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import PageLayout from '@/components/layout/PageLayout.astro';
+import Headline from '@/components/ui/Headline.astro';
+import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
+import { getPermalink } from '@/utils/site-config';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+const postsByYear = new Map<number, CollectionEntry<'blog'>[]>();
+
+for (const post of sortedPosts) {
+  const year = post.data.publishDate.getUTCFullYear();
+  const yearPosts = postsByYear.get(year) ?? [];
+  yearPosts.push(post);
+  postsByYear.set(year, yearPosts);
+}
+
+const years = [...postsByYear.entries()].sort(([yearA], [yearB]) => yearB - yearA);
+
+const metadata = {
+  title: '文章归档',
+  description: '按年份和发布日期浏览全部技术博客文章',
+};
+---
+
+<PageLayout metadata={metadata}>
+  <WidgetWrapper containerClass="max-w-4xl">
+    <Headline
+      tagline="Archive"
+      title="文章归档"
+      titleTag="h1"
+      subtitle={`按时间倒序收录全部 ${sortedPosts.length} 篇文章`}
+      class="mb-10"
+    />
+    {years.length > 0 ? years.map(([year, posts]) => (
+      <section class="mb-12 last:mb-0" aria-labelledby={`archive-${year}`}>
+        <h2 id={`archive-${year}`} class="mb-6 border-b border-gray-200 pb-3 text-3xl font-bold text-page dark:border-slate-700">
+          {year}
+          <span class="ml-2 text-base font-normal text-muted">{posts.length} 篇</span>
+        </h2>
+        <ol class="space-y-5">
+          {posts.map((post) => (
+            <li class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-5">
+              <time datetime={post.data.publishDate.toISOString()} class="shrink-0 text-sm tabular-nums text-muted sm:w-20">
+                {post.data.publishDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', timeZone: 'UTC' })}
+              </time>
+              <a href={getPermalink(post.slug, 'post')} class="text-lg font-medium leading-snug text-page hover:text-primary">
+                {post.data.title}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )) : <p class="py-12 text-center text-lg text-muted">暂无博客文章，敬请期待...</p>}
+  </WidgetWrapper>
+</PageLayout>

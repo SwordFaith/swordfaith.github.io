@@ -1,20 +1,25 @@
 ---
+import type { MarkdownHeading } from 'astro';
 import type { CollectionEntry } from 'astro:content';
 import PostTags from '@/components/blog/PostTags.astro';
+import TableOfContents from '@/components/blog/TableOfContents.astro';
 import ToBlogLink from '@/components/blog/ToBlogLink.astro';
 
 export interface Props {
   post: CollectionEntry<'blog'>;
+  headings: MarkdownHeading[];
+  previousPost?: CollectionEntry<'blog'>;
+  nextPost?: CollectionEntry<'blog'>;
 }
 
-const { post } = Astro.props;
+const { post, headings, previousPost, nextPost } = Astro.props;
 const wandbUrl = post.data.wandb?.projectId && post.data.wandb?.runId
   ? `https://wandb.ai/${post.data.wandb.projectId}/runs/${post.data.wandb.runId}`
   : undefined;
 ---
 
-<article class="mx-auto max-w-3xl px-4 py-12 sm:px-6 md:py-16">
-  <header class="mb-10 text-center">
+<article class="mx-auto max-w-7xl px-4 py-12 sm:px-6 md:py-16">
+  <header class="mx-auto mb-10 max-w-3xl text-center">
     <div class="mb-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-muted">
       <time datetime={post.data.publishDate.toISOString()}>
         {post.data.publishDate.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -30,18 +35,28 @@ const wandbUrl = post.data.wandb?.projectId && post.data.wandb?.runId
     <PostTags tags={post.data.tags} class="justify-center" />
   </header>
 
-  {post.data.cover && <img src={post.data.cover} alt={post.data.title} class="mb-10 w-full rounded-2xl shadow-lg" />}
+  {post.data.cover && <img src={post.data.cover} alt={post.data.title} class="mx-auto mb-10 w-full max-w-3xl rounded-2xl shadow-lg" />}
 
-  <div class="prose prose-lg mx-auto max-w-none dark:prose-invert prose-headings:scroll-mt-24 prose-pre:bg-slate-900 prose-pre:text-slate-100">
-    <slot />
+  <div class="post-content-grid">
+    <aside class="post-toc">
+      <TableOfContents headings={headings} variant="desktop" />
+    </aside>
+
+    <div class="post-main">
+      <TableOfContents headings={headings} variant="mobile" />
+
+      <div class="prose prose-lg mx-auto max-w-none dark:prose-invert prose-headings:scroll-mt-24 prose-pre:bg-slate-900 prose-pre:text-slate-100">
+        <slot />
+      </div>
+
+      {wandbUrl && (
+        <section class="mt-12 rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-slate-700 dark:bg-slate-900" aria-labelledby="wandb-title">
+          <h2 id="wandb-title" class="mb-4 text-xl font-semibold text-page">相关实验结果</h2>
+          <iframe src={wandbUrl} title="WandB 实验结果" width="100%" height="400" class="rounded-lg border-0 bg-white dark:bg-slate-950" loading="lazy"></iframe>
+        </section>
+      )}
+
+      <ToBlogLink previousPost={previousPost} nextPost={nextPost} />
+    </div>
   </div>
-
-  {wandbUrl && (
-    <section class="mt-12 rounded-2xl border border-gray-200 bg-gray-50 p-5 dark:border-slate-700 dark:bg-slate-900" aria-labelledby="wandb-title">
-      <h2 id="wandb-title" class="mb-4 text-xl font-semibold text-page">相关实验结果</h2>
-      <iframe src={wandbUrl} title="WandB 实验结果" width="100%" height="400" class="rounded-lg border-0 bg-white dark:bg-slate-950" loading="lazy"></iframe>
-    </section>
-  )}
-
-  <ToBlogLink />
 </article>

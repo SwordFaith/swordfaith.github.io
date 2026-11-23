@@ -4,26 +4,50 @@ import { siteConfig } from '@/utils/site-config';
 
 export interface Props extends MetaData {}
 
+const defaultImage = METADATA.image.src;
+const defaultImageAlt = METADATA.image.alt;
 const {
   title = siteConfig.title,
   ignoreTitleTemplate = false,
   description = siteConfig.description,
   keywords = METADATA.keywords,
-  canonical = Astro.url.pathname,
+  canonical,
   robots = METADATA.robots,
-  image,
+  image = defaultImage,
+  imageAlt,
   openGraph = {},
   twitter = {},
 } = Astro.props;
 
 const siteUrl = Astro.site || new URL(siteConfig.url);
-const canonicalUrl = new URL(canonical, siteUrl);
-const imageUrl = image ? new URL(image, siteUrl) : undefined;
+const basePath = `${import.meta.env.BASE_URL.replace(/\/+$/, '')}/`;
+const baseUrl = new URL(basePath, siteUrl);
+const baseWithoutTrailingSlash = basePath.replace(/\/$/, '');
+const withBase = (value: string) => {
+  if (!value.startsWith('/') || value.startsWith('//') || basePath === '/') return value;
+  if (value === baseWithoutTrailingSlash) return basePath;
+  if (value.startsWith(basePath)) return value;
+  return `${baseWithoutTrailingSlash}${value}`;
+};
+const toAbsoluteUrl = (value: string | URL, includeBase = true) => {
+  if (includeBase && typeof value === 'string') {
+    if (value.startsWith('/') && !value.startsWith('//')) return new URL(withBase(value), siteUrl);
+    return new URL(value, baseUrl);
+  }
+  return new URL(value, siteUrl);
+};
+const currentPathname = Astro.url.pathname === baseWithoutTrailingSlash ? basePath : Astro.url.pathname;
+const canonicalUrl = toAbsoluteUrl(canonical ?? currentPathname, canonical !== undefined);
+canonicalUrl.search = '';
+canonicalUrl.hash = '';
+const imageUrl = image ? toAbsoluteUrl(image) : undefined;
+const resolvedImageAlt = imageAlt ?? (image === defaultImage ? defaultImageAlt : `${title}：${description}`);
 const seoTitle = ignoreTitleTemplate || title === siteConfig.title
   ? title
   : METADATA.title.template.replace('%s', title);
 const robotsContent = [robots.index ? 'index' : 'noindex', robots.follow ? 'follow' : 'nofollow'].join(', ');
 const openGraphData = { ...METADATA.openGraph, ...openGraph };
+const openGraphUrl = openGraphData.url ? toAbsoluteUrl(openGraphData.url) : canonicalUrl;
 const twitterData = { ...METADATA.twitter, ...twitter };
 ---
 
@@ -37,16 +61,21 @@ const twitterData = { ...METADATA.twitter, ...twitter };
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 <meta name="theme-color" content="#030620" media="(prefers-color-scheme: dark)" />
 <link rel="canonical" href={canonicalUrl} />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="sitemap" href="/sitemap-index.xml" />
+<link rel="icon" type="image/svg+xml" href={withBase('/favicon.svg')} />
+<link rel="sitemap" href={withBase('/sitemap-index.xml')} />
 
 <meta property="og:type" content={openGraphData.type} />
-<meta property="og:url" content={openGraphData.url || canonicalUrl} />
+<meta property="og:url" content={openGraphUrl} />
 <meta property="og:site_name" content={openGraphData.siteName} />
 <meta property="og:locale" content={openGraphData.locale} />
 <meta property="og:title" content={seoTitle} />
 <meta property="og:description" content={description} />
-{imageUrl && <meta property="og:image" content={imageUrl} />}
+{imageUrl && (
+  <>
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:image:alt" content={resolvedImageAlt} />
+  </>
+)}
 
 <meta name="twitter:card" content={twitterData.cardType} />
 <meta name="twitter:url" content={canonicalUrl} />
@@ -54,4 +83,9 @@ const twitterData = { ...METADATA.twitter, ...twitter };
 <meta name="twitter:description" content={description} />
 {twitterData.handle && <meta name="twitter:creator" content={twitterData.handle} />}
 {twitterData.site && <meta name="twitter:site" content={twitterData.site} />}
-{imageUrl && <meta name="twitter:image" content={imageUrl} />}
+{imageUrl && (
+  <>
+    <meta name="twitter:image" content={imageUrl} />
+    <meta name="twitter:image:alt" content={resolvedImageAlt} />
+  </>
+)}

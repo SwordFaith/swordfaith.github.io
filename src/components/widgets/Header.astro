@@ -3,6 +3,7 @@ import { headerData } from '@/navigation';
 import Logo from '@/components/widgets/Logo.astro';
 import ToggleMenu from '@/components/widgets/ToggleMenu.astro';
 import ToggleTheme from '@/components/widgets/ToggleTheme.astro';
+import SearchBox from '@/components/search/SearchBox.astro';
 
 const pathname = Astro.url.pathname;
 const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -26,12 +27,31 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
           </a>
         ))}
       </nav>
+      <button
+        type="button"
+        class="hidden h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-gray-100 hover:text-page focus:outline-none focus:ring-2 focus:ring-primary-500 dark:hover:bg-slate-800 md:inline-flex"
+        aria-label="打开搜索"
+        aria-expanded="false"
+        aria-controls="header-search-panel"
+        title="搜索"
+        data-aw-toggle-search
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m21 21-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+        </svg>
+      </button>
       <ToggleTheme />
       <ToggleMenu />
     </div>
   </div>
+  <div id="header-search-panel" class="hidden border-t border-gray-200 dark:border-slate-700" data-aw-search-panel>
+    <div class="mx-auto max-w-3xl px-4 py-4 sm:px-6">
+      <SearchBox id="header-search" placeholder="搜索全站内容..." />
+    </div>
+  </div>
   <nav id="primary-navigation" class="hidden border-t border-gray-200 px-4 py-3 dark:border-slate-700 md:hidden" aria-label="移动端导航" data-aw-navigation>
     <div class="mx-auto flex max-w-7xl flex-col gap-1">
+      <SearchBox id="mobile-search" className="mb-2" placeholder="搜索全站内容..." />
       {headerData.links.map(({ text, href }) => (
         <a
           href={href}
@@ -52,6 +72,8 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
   document.querySelectorAll<HTMLElement>('[data-aw-header]').forEach((header) => {
     const button = header.querySelector<HTMLButtonElement>('[data-aw-toggle-menu]');
     const navigation = header.querySelector<HTMLElement>('[data-aw-navigation]');
+    const searchButton = header.querySelector<HTMLButtonElement>('[data-aw-toggle-search]');
+    const searchPanel = header.querySelector<HTMLElement>('[data-aw-search-panel]');
     if (!button || !navigation) return;
 
     const setMenuOpen = (open: boolean) => {
@@ -60,16 +82,37 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
       navigation.classList.toggle('hidden', !open);
     };
 
-    button.addEventListener('click', () => setMenuOpen(button.getAttribute('aria-expanded') !== 'true'));
+    const setSearchOpen = (open: boolean) => {
+      if (!searchButton || !searchPanel) return;
+      searchButton.setAttribute('aria-expanded', String(open));
+      searchButton.setAttribute('aria-label', open ? '关闭搜索' : '打开搜索');
+      searchPanel.classList.toggle('hidden', !open);
+      if (open) {
+        setMenuOpen(false);
+        requestAnimationFrame(() => searchPanel.querySelector<HTMLInputElement>('[data-search-input]')?.focus());
+      }
+    };
+
+    button.addEventListener('click', () => {
+      setSearchOpen(false);
+      setMenuOpen(button.getAttribute('aria-expanded') !== 'true');
+    });
+    searchButton?.addEventListener('click', () => setSearchOpen(searchButton.getAttribute('aria-expanded') !== 'true'));
     navigation.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setMenuOpen(false)));
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && button.getAttribute('aria-expanded') === 'true') {
-        setMenuOpen(false);
-        button.focus();
+      if (event.key === 'Escape') {
+        if (button.getAttribute('aria-expanded') === 'true') {
+          setMenuOpen(false);
+          button.focus();
+        } else if (searchButton?.getAttribute('aria-expanded') === 'true') {
+          setSearchOpen(false);
+          searchButton.focus();
+        }
       }
     });
     window.matchMedia('(min-width: 768px)').addEventListener('change', (event) => {
       if (event.matches) setMenuOpen(false);
+      else setSearchOpen(false);
     });
   });
 </script>

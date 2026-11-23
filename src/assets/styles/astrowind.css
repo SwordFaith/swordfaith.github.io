@@ -260,6 +260,39 @@ html.dark .astro-code span {
   @apply rounded bg-yellow-200 px-0.5 font-medium text-gray-900 dark:bg-yellow-700 dark:text-white;
 }
 
+.post-main {
+  min-width: 0;
+}
+
+.post-toc {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .post-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 48rem) minmax(0, 1fr);
+    column-gap: 2rem;
+  }
+
+  .post-toc {
+    display: block;
+    grid-column: 1;
+  }
+
+  .post-toc > nav {
+    position: sticky;
+    top: 6rem;
+    max-height: calc(100vh - 8rem);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+
+  .post-main {
+    grid-column: 2;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

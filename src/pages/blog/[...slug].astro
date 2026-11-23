@@ -4,17 +4,28 @@ import SinglePost from '@/components/blog/SinglePost.astro';
 import PageLayout from '@/components/layout/PageLayout.astro';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog', ({ data }) => !data.draft);
-  return posts.map((post) => ({
+  const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+    (a, b) => a.data.publishDate.valueOf() - b.data.publishDate.valueOf() || a.slug.localeCompare(b.slug),
+  );
+
+  return posts.map((post, index) => ({
     params: { slug: post.slug },
-    props: post,
+    props: {
+      post,
+      previousPost: posts[index - 1],
+      nextPost: posts[index + 1],
+    },
   }));
 }
 
-type Props = CollectionEntry<'blog'>;
+interface Props {
+  post: CollectionEntry<'blog'>;
+  previousPost?: CollectionEntry<'blog'>;
+  nextPost?: CollectionEntry<'blog'>;
+}
 
-const post = Astro.props;
-const { Content } = await post.render();
+const { post, previousPost, nextPost } = Astro.props;
+const { Content, headings } = await post.render();
 const metadata = {
   title: post.data.title,
   description: post.data.description,
@@ -27,7 +38,7 @@ const metadata = {
 ---
 
 <PageLayout metadata={metadata}>
-  <SinglePost post={post}>
+  <SinglePost post={post} headings={headings} previousPost={previousPost} nextPost={nextPost}>
     <Content />
   </SinglePost>
 </PageLayout>
