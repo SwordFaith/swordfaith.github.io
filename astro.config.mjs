@@ -1,6 +1,6 @@
 import { defineConfig } from 'astro/config';
 import { loadEnv } from 'vite';
-import tailwind from '@astrojs/tailwind';
+import { unified } from '@astrojs/markdown-remark';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import remarkMath from 'remark-math';
@@ -14,7 +14,6 @@ export default defineConfig({
   site: 'https://swordfaith.github.io',
   base: '/', // 根站点不需要子路径
   integrations: [
-    tailwind(),
     mdx(),
     sitemap()
   ],
@@ -39,8 +38,10 @@ export default defineConfig({
     }
   },
   markdown: {
-    remarkPlugins: [remarkMath],
-    rehypePlugins: [rehypeKatex],
+    processor: unified({
+      remarkPlugins: [remarkMath],
+      rehypePlugins: [rehypeKatex],
+    }),
     shikiConfig: {
       themes: {
         light: 'github-light',

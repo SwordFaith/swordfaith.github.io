@@ -8,7 +8,7 @@ export interface Props {
 }
 
 const { post } = Astro.props;
-const permalink = getPermalink(post.slug, 'post');
+const permalink = getPermalink(post.id, 'post');
 ---
 
 <article class="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm hover:-translate-y-1 hover:shadow-xl dark:border-slate-700 dark:bg-slate-900">

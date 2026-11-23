@@ -27,7 +27,7 @@ export async function buildSearchIndex() {
     const blogPosts = await getCollection('blog');
     for (const post of blogPosts) {
       searchItems.push({
-        url: `/blog/${post.slug}`,
+        url: `/blog/${post.id}`,
         title: post.data.title,
         description: post.data.description || '',
         content: post.body,
@@ -41,7 +41,7 @@ export async function buildSearchIndex() {
     const notebooks = await getCollection('notebooks');
     for (const notebook of notebooks) {
       searchItems.push({
-        url: `/notebooks/${notebook.slug}`,
+        url: `/notebooks/${notebook.id}`,
         title: notebook.data.title,
         description: notebook.data.description || '',
         content: notebook.body,

@@ -3,6 +3,7 @@ import { I18N, UI, type MetaData } from '@/config/site';
 import Metadata from '@/components/layout/Metadata.astro';
 import BasicScripts from '@/components/layout/BasicScripts.astro';
 import '@/assets/styles/astrowind.css';
+import 'katex/dist/katex.min.css';
 
 export interface Props {
   metadata?: MetaData;
@@ -18,12 +19,6 @@ const { metadata = {} } = Astro.props;
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css"
-      integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"
-      crossorigin="anonymous"
-    />
     <script is:inline>
       (() => {
         const applyTheme = (theme) => {

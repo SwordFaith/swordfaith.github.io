@@ -1,13 +1,13 @@
 # LLM 算法工程师个人博客
 
-基于 Astro 5.x 构建的个人技术博客，专注于 LLM 后训练、强化学习算法、框架、数据研发的分享和展示。
+基于 Astro 7.x 构建的个人技术博客，专注于 LLM 后训练、强化学习算法、框架、数据研发的分享和展示。
 
 ## 🚀 项目状态
 
 ### ✅ Phase 1-3 已完成
 
 **Phase 1: 基础框架搭建**
-- [x] Astro 5.x + TypeScript + Tailwind CSS 架构
+- [x] Astro 7.x + TypeScript + Tailwind CSS 架构
 - [x] 响应式布局和导航系统
 - [x] GitHub Pages 自动部署配置
 - [x] SEO 优化和站点地图
@@ -41,6 +41,8 @@
 - [ ] 性能优化和缓存策略
 
 ## 🛠️ 本地开发
+
+需要 Node.js 22.23.4 或更高版本。
 
 ```bash
 # 安装依赖

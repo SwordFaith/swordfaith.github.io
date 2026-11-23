@@ -7,7 +7,7 @@ import { NotebookParser } from '@/utils/notebook-parser';
 export async function getStaticPaths() {
   const notebooks = await getCollection('notebooks');
   return notebooks.map((notebook) => ({
-    params: { slug: notebook.slug },
+    params: { slug: notebook.id },
     props: notebook,
   }));
 }

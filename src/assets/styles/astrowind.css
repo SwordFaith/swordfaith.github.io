@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* AstroWind Theme Custom Properties */
 :root {
   scroll-padding-top: 5rem;
@@ -183,10 +187,10 @@
 
 /* Animation on medium+ screens only */
 @media (max-width: 768px) {
-  .md\\:fade-in-up,
-  .md\\:animate-fade-in,
-  .md\\:animate-slide-left,
-  .md\\:animate-slide-right {
+    .md\:fade-in-up,
+    .md\:animate-fade-in,
+    .md\:animate-slide-left,
+    .md\:animate-slide-right {
     opacity: 1;
     transform: none;
   }

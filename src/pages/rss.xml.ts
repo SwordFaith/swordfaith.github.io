@@ -16,7 +16,7 @@ export async function GET(context: APIContext) {
       title: post.data.title,
       description: post.data.description ?? '',
       pubDate: post.data.publishDate,
-      link: getPermalink(post.slug, 'post'),
+      link: getPermalink(post.id, 'post'),
     })),
   });
 }
