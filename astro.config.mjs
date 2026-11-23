@@ -10,6 +10,8 @@ import { SITE } from './src/config/site.ts';
 export default defineConfig({
   site: SITE.origin,
   base: SITE.basePathname,
+  // Pages are emitted as <route>/index.html; GitHub Pages redirects /route to /route/.
+  trailingSlash: 'always',
   integrations: [
     mdx(),
     sitemap({

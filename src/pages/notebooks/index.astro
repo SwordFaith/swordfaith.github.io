@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '@/components/layout/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { getPermalink } from '@/utils/site-config';
 
 const allNotebooks = await getCollection('notebooks', ({ data }) => !data.draft);
 const sortedNotebooks = allNotebooks.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
@@ -35,7 +36,7 @@ const sortedNotebooks = allNotebooks.sort((a, b) => b.data.publishDate.valueOf()
               </div>
               
               <h2 class="text-2xl font-bold text-page mb-2">
-                <a href={`/notebooks/${notebook.id}`} class="link-primary">
+                <a href={getPermalink(`notebooks/${notebook.id}`)} class="link-primary">
                   {notebook.data.title}
                 </a>
               </h2>

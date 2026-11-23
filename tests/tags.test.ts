@@ -15,7 +15,14 @@ describe('getTagSlug', () => {
   });
 
   it('builds plain paths for plain tags', () => {
-    expect(getTagPath('RLHF')).toBe('/tags/RLHF');
+    expect(getTagPath('RLHF')).toBe('/tags/RLHF/');
+  });
+
+  // Tag pages are emitted as /tags/<slug>/index.html and their canonical URL
+  // ends in `/`; a slash-less link costs a redirect on GitHub Pages and 404s
+  // under `astro dev` with trailingSlash: 'always'.
+  it.each(['RLHF', '代码高亮', 'C++', 'Node.js'])('ends the link to %j with exactly one slash', (tag) => {
+    expect(getTagPath(tag)).toMatch(/[^/]\/$/);
   });
 
   // Astro registers the raw slug as the route param and decodes request paths
@@ -24,7 +31,7 @@ describe('getTagSlug', () => {
   it.each(['C++', 'R&D', 'user@team', 'a=b', 'reward model', '代码高亮', 'C++ & R&D @ 实验=1'])(
     'links to %j with a path that decodeURI maps back to the registered slug',
     (tag) => {
-      expect(decodeURI(getTagPath(tag))).toBe(`/tags/${getTagSlug(tag)}`);
+      expect(decodeURI(getTagPath(tag))).toBe(`/tags/${getTagSlug(tag)}/`);
     },
   );
 

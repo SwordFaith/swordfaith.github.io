@@ -4,7 +4,7 @@ import PageLayout from '@/components/layout/PageLayout.astro';
 import Hero from '@/components/widgets/Hero.astro';
 import Features from '@/components/widgets/Features.astro';
 import BlogLatestPosts from '@/components/widgets/BlogLatestPosts.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '@/utils/site-config';
+import { getBlogPermalink, getPermalink, SITE_DESCRIPTION, SITE_TITLE } from '@/utils/site-config';
 
 const blogPosts = await getCollection('blog', ({ data }) => !data.draft);
 const recentPosts = blogPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
@@ -40,8 +40,8 @@ const researchAreas = [
     title={SITE_TITLE}
     subtitle={SITE_DESCRIPTION}
     actions={[
-      { text: '阅读博客', href: '/blog', variant: 'primary' },
-      { text: '了解我', href: '/about', variant: 'secondary' },
+      { text: '阅读博客', href: getBlogPermalink(), variant: 'primary' },
+      { text: '了解我', href: getPermalink('about'), variant: 'secondary' },
     ]}
   />
   <Features
