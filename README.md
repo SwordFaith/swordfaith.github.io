@@ -20,7 +20,7 @@
 
 **Phase 3: 数据集成**
 - [x] WandB 实验结果嵌入（文章 frontmatter `wandb` 字段 → iframe）
-- [x] GitHub 统计：GitHub Actions 每日同步为静态 JSON，构建时渲染
+- [x] GitHub 统计：仓库内静态 JSON 快照，手动同步更新，构建时渲染
 - [x] 个人展示页面完善
 
 ## 📋 下一步开发
@@ -82,7 +82,7 @@ katex: true  # 启用数学公式
 - **公式渲染**: KaTeX + remark-math + rehype-katex
 - **代码高亮**: Shiki (支持多主题)
 - **搜索引擎**: Pagefind (本地搜索)
-- **数据集成**: WandB iframe 嵌入 + GitHub 统计（CI 每日同步为静态 JSON）
+- **数据集成**: WandB iframe 嵌入 + GitHub 统计（手动同步的静态 JSON 快照）
 - **部署平台**: GitHub Pages + GitHub Actions
 - **开发工具**: ESLint + TypeScript 严格模式
 
@@ -92,12 +92,12 @@ katex: true  # 启用数学公式
 - **数学公式支持**: 完整的 LaTeX 语法支持，行内和块级公式
 - **代码高亮**: 多语言语法高亮（Notebook 代码单元支持复制）
 - **Jupyter Notebook**: 原生支持 .ipynb 文件展示
-- **全文搜索**: 中文内容全文搜索，支持标签筛选
+- **全文搜索**: Pagefind 中文内容全文搜索；文章另可通过标签页按标签浏览
 
 ### 📊 数据驱动展示
 - **WandB 集成**: 在文章 frontmatter 中配置 `wandb.projectId` / `wandb.runId`，文末嵌入对应运行页面
 - **GitHub 统计**: 个人代码统计、语言分析、项目展示
-- **静态数据**: GitHub 统计由 GitHub Actions 每日同步到 `src/data/github-stats.json`，构建和浏览时不调用外部 API
+- **静态数据**: GitHub 统计来自仓库中提交的 `src/data/github-stats.json` 快照，需手动刷新（在 GitHub Actions 中手动运行 "Sync GitHub Stats Data" workflow，或本地运行 `npm run sync:github:daily`）；构建和浏览时不调用 GitHub API
 
 ### 🚀 开发体验
 - **组件化架构**: 25+ 个可复用组件

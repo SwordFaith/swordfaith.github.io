@@ -41,7 +41,7 @@
 
 ### 3. 数据集成
 - **WandB**：文章 frontmatter `wandb.projectId` / `wandb.runId` → 文章页 iframe 嵌入（已实现，无 API 调用）
-- **GitHub**：GitHub Actions 每日调用 REST API 同步为 `src/data/github-stats.json`，构建时静态渲染（已实现）
+- **GitHub**：同步脚本调用 REST API 生成 `src/data/github-stats.json` 快照（手动触发 workflow 或本地运行），构建时静态渲染（已实现）
 - **学术数据**：Google Scholar API（论文信息同步）
 
 ### 4. 多平台转载工具
@@ -55,7 +55,7 @@
 - **静态生成**：Astro 岛屿架构，按需加载（已实现）
 - **图片优化**：WebP 转换 + 懒加载（待实现）
 - **公式缓存**：服务端预渲染 + CDN 缓存（已实现）
-- **搜索功能**：Pagefind 本地搜索引擎（组件已准备，待启用）
+- **搜索功能**：Pagefind 本地搜索引擎（已启用，`npm run build` 时生成索引）
 - **SEO 优化**：Open Graph、Twitter Card、结构化数据（基础已实现）
 
 ## 项目结构
@@ -67,7 +67,7 @@
 ├── .env.example                 # 环境变量配置模板
 ├── .github/workflows/
 │   ├── deploy.yml               # 构建并部署到 GitHub Pages
-│   └── sync-data.yml            # 每日同步 GitHub 统计数据
+│   └── sync-data.yml            # 手动触发：同步 GitHub 统计数据并提交
 ├── public/
 │   └── notebooks/               # 原始 .ipynb 文件（Notebook 页面数据源）
 └── src/
@@ -95,7 +95,7 @@
     │   ├── blog/                # 博客文章 Markdown
     │   └── notebooks/           # Notebook 元数据（指向 public/notebooks/*.ipynb）
     ├── data/
-    │   ├── github-stats.json    # CI 每日同步的 GitHub 统计
+    │   ├── github-stats.json    # 已提交的 GitHub 统计快照（手动同步更新）
     │   └── github-stats-default.json # 数据缺失时的兜底
     ├── scripts/
     │   ├── sync-github-daily.ts # GitHub 统计同步脚本（npm run sync:github:daily）
@@ -161,7 +161,7 @@
 - **SEO 基础**：Meta 标签、Open Graph、站点地图
 - **部署配置**：GitHub Actions + GitHub Pages
 - **WandB 集成**：文章 frontmatter 配置 run 后在文末 iframe 嵌入
-- **GitHub 统计**：CI 每日同步静态 JSON，构建时渲染项目统计、语言分析
+- **GitHub 统计**：手动同步的静态 JSON 快照，构建时渲染项目统计、语言分析
 - **搜索功能**：Pagefind 集成、备用搜索机制
 
 ### 📝 示例内容
@@ -181,7 +181,7 @@
 
 #### GitHub 集成系统
 - **同步脚本** (`src/scripts/sync-github-daily.ts`): 调用 GitHub REST API 获取用户、仓库、语言统计，写入 `src/data/github-stats.json`
-  - 由 `.github/workflows/sync-data.yml` 每日运行；本地用 `GITHUB_TOKEN=... npm run sync:github:daily`（Node 原生 TypeScript 类型擦除直接运行）
+  - 手动刷新：在 GitHub Actions 中手动运行 "Sync GitHub Stats Data"（`.github/workflows/sync-data.yml`，仅 `workflow_dispatch`，同步后提交数据文件），或本地运行 `GITHUB_TOKEN=... npm run sync:github:daily`（Node 原生 TypeScript 类型擦除直接运行）
   - 数据无实质变化时不改写文件
 - **GitHubStats** (`src/components/about/GitHubStats.astro`): 统计展示组件，构建时读取静态 JSON
   - 编程语言使用分析（带颜色编码和百分比）
@@ -248,7 +248,7 @@
 - **公式渲染**：KaTeX + remark-math + rehype-katex
 - **代码高亮**：Shiki (支持多主题)
 - **搜索引擎**：Pagefind (本地搜索)
-- **数据集成**：WandB iframe 嵌入 + GitHub 统计（CI 每日同步为静态 JSON）
+- **数据集成**：WandB iframe 嵌入 + GitHub 统计（手动同步的静态 JSON 快照）
 - **部署平台**：GitHub Pages + GitHub Actions
 - **开发工具**：ESLint + TypeScript 严格模式
 - **性能优化**：静态生成 + 组件懒加载 + 响应式设计
