@@ -19,8 +19,8 @@ describe('getTagSlug', () => {
   });
 
   // Tag pages are emitted as /tags/<slug>/index.html and their canonical URL
-  // ends in `/`; a slash-less link costs a redirect on GitHub Pages and 404s
-  // under `astro dev` with trailingSlash: 'always'.
+  // ends in `/`; a slash-less link costs a redirect on GitHub Pages and
+  // disagrees with the canonical URL.
   it.each(['RLHF', '代码高亮', 'C++', 'Node.js'])('ends the link to %j with exactly one slash', (tag) => {
     expect(getTagPath(tag)).toMatch(/[^/]\/$/);
   });

@@ -20,8 +20,8 @@ export const siteConfig: SiteConfig = {
 
 export const trimSlash = (value: string) => value.trim().replace(/^\/+|\/+$/g, '');
 
-// Pages are built as <route>/index.html and served at <route>/ (trailingSlash: 'always'),
-// so page links end in `/` to match canonicals and skip the GitHub Pages redirect.
+// Pages are built as <route>/index.html and served at <route>/, so page links
+// end in `/` to match canonicals and skip the GitHub Pages redirect.
 // File URLs (/rss.xml, assets, .ipynb downloads) must not go through this helper.
 const withTrailingSlash = (path: string) => (path.endsWith('/') ? path : `${path}/`);
 
