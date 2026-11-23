@@ -305,7 +305,7 @@ class GitHubDailySync {
   }>> {
     const pinnedRepos = [
       { owner: 'OpenBMB', repo: 'MiniCPM' },
-      { owner: 'volcengine', repo: 'verl' }
+      { owner: 'verl-project', repo: 'verl' }
     ];
 
     const pinnedData = [];

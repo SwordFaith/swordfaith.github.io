@@ -34,6 +34,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
+          # Scheduled runs build the current tip of main, not the event SHA, so re-running
+          # an old scheduled run cannot roll the site back. Other events keep the default ('').
+          ref: ${{ github.event_name == 'schedule' && github.ref || '' }}
           persist-credentials: false
 
       - name: Setup Node.js
@@ -67,13 +70,23 @@ jobs:
           GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
           STATS_FILE: src/data/github-stats.json
         run: |
-          # Fails unless the file parses and has the fields the About page renders
+          # Fails unless the file parses and every field GitHubStats.astro renders has the right type
           validate() {
             node -e '
               const d = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-              if (!d.lastUpdate || !d.user || !d.summary || !d.languageStats || !Array.isArray(d.topRepositories)) {
-                throw new Error("missing required fields");
-              }
+              const num = (v) => typeof v === "number" && Number.isFinite(v);
+              const str = (v) => typeof v === "string";
+              const s = d.summary || {};
+              const a = d.recentActivity?.thisYear || {};
+              const ok = str(d.lastUpdate) && str(d.user?.html_url)
+                && [s.totalStars, s.totalRepos, s.totalForks, s.activeYears,
+                    a.estimatedCommits, a.monthlyAverage, a.weeklyAverage].every(num)
+                && typeof d.languageStats === "object" && d.languageStats !== null
+                && Object.values(d.languageStats).every((l) => num(l?.percentage))
+                && Array.isArray(d.topRepositories)
+                && Array.isArray(d.pinnedRepositoriesData)
+                && d.pinnedRepositoriesData.every((r) => str(r?.full_name) && num(r.stargazers_count) && num(r.forks_count));
+              if (!ok) throw new Error("unexpected data shape");
               console.log("GitHub stats lastUpdate: " + d.lastUpdate);
             ' "$STATS_FILE"
           }
