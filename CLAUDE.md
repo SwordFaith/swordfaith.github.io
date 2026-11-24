@@ -28,22 +28,23 @@
 ## 技术方案
 
 ### 1. 核心架构
-- **框架**：Astro 7.x + TypeScript
-- **样式**：Tailwind CSS + AstroWind设计主题 + 自定义组件库
+- **框架**：Astro 7.x + TypeScript（`tsconfig.json` 继承非 strict 的 `astro/tsconfigs/base`）
+- **样式**：Tailwind CSS + @tailwindcss/typography + AstroWind 风格设计系统（见下方「设计系统」）
+- **字体**：Inter Variable + JetBrains Mono Variable，@fontsource-variable 自托管（不依赖 Google Fonts），中文回落到系统字体
 - **部署**：GitHub Pages（主）+ Vercel（预留）
 - **CI/CD**：GitHub Actions 自动部署（push 到 `main`、手动、每周定时）；向 `main` 的 PR 只运行 lint、typecheck、测试和构建，不部署
-- **开发环境**：Node 版本以 `.nvmrc` 为准（Node 24，CI 同样读取）；测试用 Vitest（`npm test`，`tests/`）
+- **开发环境**：Node 版本以 `.nvmrc` 为准（Node 24，CI 同样读取）；ESLint + `astro check` + Vitest（`npm test`，`tests/`）
 
 ### 2. 内容处理
-- **公式渲染**：remark-math + rehype-katex + KaTeX（已实现）
-- **代码高亮**：Astro 内置 Shiki，亮/暗双主题（已实现；Notebook 代码单元支持复制）
-- **Notebook 解析**：自定义 TypeScript 解析器 + 显示组件（已实现）
+- **公式渲染**：remark-math + rehype-katex，构建时渲染为 HTML，KaTeX CSS 全局打包（已实现）
+- **代码高亮**：Astro 内置 Shiki，亮/暗双主题（已实现；Notebook 代码单元支持复制，但没有语法着色，见「已知问题」）
+- **Notebook 解析**：自定义 TypeScript 解析器 + 显示组件 + 输出 HTML 清洗（已实现）
 - **图表可视化**：Observable Plot + Plotly.js（待实现）
 
 ### 3. 数据集成
 - **WandB**：文章 frontmatter `wandb.projectId` / `wandb.runId` → 文章页 iframe 嵌入（已实现，无 API 调用）
-- **GitHub**：同步脚本调用 REST API 生成 `src/data/github-stats.json`，构建时静态渲染（已实现）。部署构建前尽力刷新（不提交，失败回退到仓库内快照），每周定时重新构建；仓库内快照通过手动 workflow 或本地运行更新
-- **学术数据**：Google Scholar API（论文信息同步）
+- **GitHub**：同步脚本调用 REST API 生成 `src/data/github-stats.json`，构建时静态渲染（已实现，流程见「GitHub 统计」）
+- **学术数据**：Google Scholar API（论文信息同步，待实现；关于页引用数目前手写）
 
 ### 4. 多平台转载工具
 - **格式转换器**：Markdown → 各平台特定格式
@@ -53,11 +54,10 @@
 - **自动化脚本**：一键导出各平台内容
 
 ### 5. 性能优化
-- **静态生成**：Astro 岛屿架构，按需加载（已实现）
-- **图片优化**：WebP 转换 + 懒加载（待实现）
-- **公式缓存**：服务端预渲染 + CDN 缓存（已实现）
+- **静态生成**：纯静态输出，不使用前端框架 island（无 `client:*` 指令），交互由少量内联脚本实现（已实现）
+- **图片优化**：关于页头像经 `astro:assets` 输出 WebP；文章封面等图片的 WebP 转换 + 懒加载（待实现）
 - **搜索功能**：Pagefind 本地搜索引擎（已启用，`npm run build` 时生成索引）
-- **SEO 优化**：Open Graph、Twitter Card、结构化数据（基础已实现）
+- **SEO 优化**：Meta、Open Graph、Twitter Card、文章页 BlogPosting JSON-LD、站点地图、RSS（已实现）
 
 ## 项目结构
 ```
@@ -122,23 +122,8 @@
 
 ## 开发计划
 
-### ✅ Phase 1: 基础框架搭建（已完成）
-1. ✅ Astro 项目初始化和基础配置
-2. ✅ Tailwind CSS 样式系统搭建
-3. ✅ 基础页面布局和导航
-4. ✅ GitHub Pages 部署配置
-
-### ✅ Phase 2: 核心功能实现（已完成）
-1. ✅ Markdown 博客系统
-2. ✅ 数学公式渲染集成
-3. ✅ 代码高亮和语法支持
-4. ✅ Jupyter Notebook 展示功能
-
-### ✅ Phase 3: 数据集成（已完成）
-1. ✅ WandB API 集成和数据同步
-2. ✅ GitHub 统计数据获取
-3. ✅ 个人介绍页面完善
-4. ✅ 搜索功能实现
+### ✅ Phase 1–3（已完成）
+基础框架与 GitHub Pages 部署、Markdown 博客 + 公式 + 代码高亮 + Notebook 展示、WandB 嵌入 + GitHub 统计 + 关于页 + 搜索。现状见「当前实现状态」。
 
 ### Phase 4: 多平台内容分发工具
 1. **知乎导出器**：HTML 格式 + LaTeX 公式转图片 + 代码块格式化
@@ -150,32 +135,23 @@
 7. **一键发布脚本**：自动化内容分发 + 平台 API 集成 + 发布状态追踪
 
 ### Phase 5: 高级功能和优化
-1. **性能优化**：图片懒加载 + WebP 转换 + Bundle 分析 + 缓存策略
+1. **性能优化**：文章图片懒加载 + WebP 转换 + Bundle 分析 + 缓存策略
 2. **数据可视化增强**：Observable Plot + Plotly.js + 自定义图表组件
 3. **学术数据集成**：Google Scholar API + 论文信息同步 + 引用统计
 4. **Vercel 部署支持**：多平台部署选项 + 环境变量管理 + 自动部署
 5. **监控和分析**：访问统计 + 性能监控 + 用户行为分析
-6. **SEO 优化完善**：结构化数据 + 站点地图优化 + 页面性能提升
-7. **内容管理增强**：标签系统 + 分类管理 + 内容搜索优化
-8. **交互功能**：评论系统 + 订阅功能 + 社交分享
+6. **SEO 优化完善**：扩展结构化数据（目前仅文章页输出 BlogPosting）+ 站点地图优化 + 页面性能提升
+7. **内容管理增强**：分类管理 + 内容搜索优化
+8. **交互功能**：评论系统 + 社交分享
 
 ## 当前实现状态
 
 ### ✅ 已完成功能
-- **基础架构**：Astro 7.x + TypeScript + Tailwind CSS
-- **设计系统**：AstroWind 设计主题集成，统一的色彩和字体系统
-- **内容系统**：Markdown 博客 + Jupyter Notebook 支持
-- **数学公式**：KaTeX 完整集成，支持行内和块级公式
-- **代码高亮**：Shiki 语法高亮（Notebook 代码单元支持复制）
+- **内容系统**：Markdown 博客 + Jupyter Notebook 展示（静态渲染）
 - **页面结构**：首页、博客列表/详情、Notebook 列表/详情、关于页面、归档、标签、搜索、404
-- **响应式设计**：移动端适配和交互优化，支持暗色主题
-- **SEO 基础**：Meta 标签、Open Graph、站点地图
-- **部署配置**：GitHub Actions + GitHub Pages
-- **WandB 集成**：文章 frontmatter 配置 run 后在文末 iframe 嵌入
-- **GitHub 统计**：部署时刷新的静态 JSON（仓库内快照兜底），构建时渲染项目统计、语言分析
-- **搜索功能**：Pagefind 集成，只索引已发布的博客文章和 Notebook 详情页
+- **响应式设计**：移动端适配，亮/暗主题切换
 - **草稿**：`draft: true` 的文章不进入生产构建，`astro dev` 下可通过直接 URL 访问
-- **测试**：Vitest，2 个测试文件、113 个用例
+- **测试**：Vitest，2 个测试文件、113 个用例；PR 检查和部署前都会运行
 
 ### 📝 示例内容
 - **博客文章**：
@@ -184,119 +160,68 @@
   - 数学公式渲染测试（完整 LaTeX 支持验证；草稿，仅 `astro dev` 下可直接访问）
   - 代码高亮测试（多语言支持验证；草稿，仅 `astro dev` 下可直接访问）
 - **Jupyter Notebook**：
-  - RLHF 实验分析示例（完整交互式展示）
+  - RLHF 实验分析示例
 
-### 🎯 Phase 3 新增功能详细实现
+### 🎯 关键实现细节
 
 #### WandB 集成
 - 文章 frontmatter 中的 `wandb.projectId` / `wandb.runId`（schema 见 `src/content.config.ts`）由 `src/components/blog/SinglePost.astro` 渲染为文末 iframe
-- 不调用 WandB API，无需密钥（早期的 WandB API 客户端、统计组件和同步脚本因无引用已删除）
+- 不调用 WandB API，无需密钥
 
-#### GitHub 集成系统
+#### GitHub 统计
 - **同步脚本** (`src/scripts/sync-github-daily.ts`): 调用 GitHub REST API 获取用户、仓库、语言统计，写入 `src/data/github-stats.json`
   - 部署时刷新：`deploy.yml` 在非 PR 运行中、构建前尽力执行 `npm run sync:github:daily`（需要仓库 Secret `_GITHUB_TOKEN`，120 秒超时），结果只用于本次构建、不提交；Secret 缺失、同步失败、超时或数据结构无效时回退到已提交的 JSON，并输出 warning annotation
   - 每周重新构建：`scheduled-deploy.yml`（每周一 03:23 UTC）调用 `deploy.yml`，让关于页定期拿到新数据
   - 更新仓库内快照：在 GitHub Actions 中手动运行 "Sync GitHub Stats Data"（`.github/workflows/sync-data.yml`，仅 `workflow_dispatch`，同步后提交数据文件；该提交不会自动触发部署），或本地运行 `GITHUB_TOKEN=... npm run sync:github:daily`（Node 原生 TypeScript 类型擦除直接运行）
   - 数据无实质变化时不改写文件
-- **GitHubStats** (`src/components/about/GitHubStats.astro`): 统计展示组件，构建时读取静态 JSON
+- **GitHubStats** (`src/components/about/GitHubStats.astro`): 构建时读取静态 JSON，浏览时不调用 API
   - 编程语言使用分析（带颜色编码和百分比）
-  - 热门仓库展示（Star/Fork 排序）
-  - 贡献统计概览 + 响应式设计
-  - 支持配置显示项：语言统计、仓库列表、贡献图
+  - 精选仓库：名称、描述、标签和角色写在组件内，Star/Fork 数取自同步数据
+  - 贡献活动概览（今年估算提交数、月均、周均）
+  - Props 控制显示项：语言统计、仓库列表、贡献活动、仓库数量上限
 
-#### 搜索功能增强
-- **Pagefind 集成优化**：解决构建兼容性问题
-  - 构建时自动生成搜索索引：`npm run build:search`
-  - 只索引带 `data-pagefind-body` 的博客文章和 Notebook 详情页（当前 3 个页面，663 个词）
-  - 智能加载检测 + 优雅降级机制
-- **搜索组件增强** (`src/components/search/SearchBox.astro`):
-  - 动态加载检测 + 错误处理改进
-  - Pagefind 不可用时显示错误提示和重试按钮
-  - 键盘导航支持 + 搜索结果高亮
+#### 搜索
+- `npm run build` 在 Astro 构建后运行 `pagefind --site dist` 生成索引
+- 只索引带 `data-pagefind-body` 的博客文章和 Notebook 详情页（当前 3 个页面，663 个词）
+- `src/components/search/SearchBox.astro`：动态加载 Pagefind，不可用时显示错误提示和重试按钮；方向键导航；摘要中高亮匹配词
 
-#### 环境配置和工具
-- **环境变量模板** (`.env.example`): API 密钥配置指南
-  - GitHub（仅同步脚本使用）: GITHUB_USERNAME, GITHUB_TOKEN（CI 中来自仓库 Secret `_GITHUB_TOKEN` / Variable `_GITHUB_USERNAME`）
-  - 站点配置：不使用环境变量或仓库 Variables，标题、描述和 URL 写在 `src/config/site.ts`
-- **构建脚本优化** (`package.json`):
-  - 集成 Pagefind 搜索索引生成到构建流程
-  - 新增数据同步命令和类型检查
+#### 环境配置
+- **环境变量模板** (`.env.example`)：只有 GitHub 同步脚本使用 GITHUB_USERNAME、GITHUB_TOKEN（CI 中来自仓库 Secret `_GITHUB_TOKEN` / Variable `_GITHUB_USERNAME`）
+- 站点配置不使用环境变量或仓库 Variables，标题、描述和 URL 写在 `src/config/site.ts`
 
-#### Astro v5 升级（2025-06-17）
-- **成功升级到 Astro 5.9.4**：从 v4.16.18 无缝升级
-  - 完整兼容性测试通过，无破坏性变更
-  - 构建时间保持稳定（~12秒）
-  - 开发体验提升，性能优化
-- **依赖同步更新**：
-  - @astrojs/mdx: 3.1.8 → 4.3.0
-  - esbuild: 0.21.5 → 0.25.5
-  - 解决了所有 Dependabot 安全警告
-- **GitHub Pages 部署验证**：升级后部署流程正常
-
-#### AstroWind 设计主题集成（2025-06-26）
-- **设计系统升级**：从基础 Tailwind 升级到 AstroWind 风格
-  - 统一的颜色系统：主色调（蓝色）、辅助色（紫色）、暗色主题
-  - Inter Variable 字体集成，提升视觉层次和可读性
-  - 完整的暗色模式支持，CSS 变量驱动的主题切换
-- **UI 组件库扩展**：
-  - Button.astro：多变体按钮组件（primary, secondary, tertiary, link）
-  - Headline.astro：标题组件，支持多级标题和副标题
-  - WidgetWrapper.astro：通用包装器组件，统一间距和布局
-- **样式系统优化**：
-  - 自定义 CSS 变量系统（astrowind.css）
-  - 增强的 Typography 插件配置，支持暗色模式
-  - 响应式设计改进，smooth scroll 和字体优化
+#### 设计系统（AstroWind 风格）
+- 颜色系统：主色调（蓝色）、辅助色（紫色），`darkMode: 'class'` 驱动的亮/暗主题切换
+- 自定义 CSS 变量与主题样式在 `src/assets/styles/astrowind.css`，Typography 插件支持暗色模式
+- UI 组件：Button（primary / secondary / tertiary / link 变体）、Headline、WidgetWrapper
 
 ### 📊 构建统计
 - **页面数量**：17 个静态页面（含标签页和 404 页）
 - **文章数量**：4 篇博客文章（其中 2 篇渲染测试为草稿，生产构建只发布 2 篇）+ 1 个 Notebook
 - **组件数量**：28 个 `.astro` 组件
 - **构建时间**：数秒（Astro 7 静态生成 + Pagefind 索引）
-- **搜索索引**：自动生成 Pagefind 全文搜索
-- **设计系统**：AstroWind 主题，支持亮色/暗色模式切换
-
-## 技术栈总结
-- **前端框架**：Astro 7.x + TypeScript
-- **设计系统**：AstroWind 主题 + Tailwind CSS + @tailwindcss/typography
-- **字体系统**：Inter Variable + JetBrains Mono Variable（@fontsource-variable 自托管，不依赖 Google Fonts）
-- **内容管理**：Astro Content Collections (Markdown + MDX)
-- **公式渲染**：KaTeX + remark-math + rehype-katex
-- **代码高亮**：Shiki (支持多主题)
-- **搜索引擎**：Pagefind (本地搜索)
-- **数据集成**：WandB iframe 嵌入 + GitHub 统计（部署时刷新的静态 JSON，仓库内快照兜底）
-- **部署平台**：GitHub Pages + GitHub Actions
-- **开发工具**：ESLint + TypeScript（`astro check`）+ Vitest
-- **性能优化**：静态生成 + 组件懒加载 + 响应式设计
 
 ## 下一步开发重点
 
 ### 🎯 Phase 4 优先任务
-1. **多平台导出工具**：知乎、微信公众号、Medium 等平台格式转换
-2. **图床管理系统**：统一图片存储和CDN加速
-3. **小红书多图生成**：文章自动切分为卡片式图片
-4. **内容自动化脚本**：一键发布到各个平台
+多平台导出工具、图床管理、小红书多图生成和一键发布脚本，条目见「开发计划」，细项见「待完成工作项清单」。
 
 ### 🔧 当前技术债务和优化项
 
-#### 紧急修复项
-1. **API 密钥配置**：设置真实的 WandB 和 GitHub API 密钥进行功能测试
-2. **网络错误处理**：改进 API 超时和连接失败时的用户体验
-3. **TypeScript 类型优化**：修复 API 客户端中的类型安全问题
-4. **构建时 API 调用**：避免构建时调用外部 API，改为客户端渲染
+#### 已知问题
+1. **Notebook 语法着色**：代码单元以纯文本输出；Markdown 单元里的代码块虽经 highlight.js 标记，但项目没有引入 highlight.js 主题 CSS，两者都没有语法颜色
+2. **表格溢出**：文章中的表格是 `w-full`，没有横向滚动容器或断词规则，含长的不可断文本时会在窄屏撑出页面
+3. **站内链接末尾斜杠**：`getPermalink` 和手写链接（如 `/tags`、`/notebooks`）都不带末尾斜杠，而构建输出是目录形式，GitHub Pages 会对这类链接做重定向；没有 `trailingSlash` 配置或检查来统一约束
+4. **`getPermalink` 缺少单元测试**：Vitest 没有配置 `@/` 别名，`src/utils/site-config.ts` 无法在测试中导入
+5. **关于页手写数据**：论文引用数和引用统计、精选仓库的描述和标签都写死在代码中，不随数据同步更新
 
 #### 中等优先级优化
 1. **组件代码重构**：
-   - 简化 GitHubStats 和 WandBStats 组件的复杂逻辑
-   - 提取共通的数据加载和错误处理逻辑
+   - GitHubStats：用明确的数据类型替换 `any`，删除固定仓库非空时不会执行的热门仓库分支
    - 统一组件 Props 接口设计
 2. **UI 组件库完善**：
    - 扩展 AstroWind UI 组件库（Card、Modal、Dropdown 等）
    - 创建组件文档和使用示例
    - 实现组件主题定制能力
-3. **缓存策略优化**：
-   - 实现更智能的缓存失效机制
-   - 添加缓存大小限制和清理策略
-   - 支持缓存预热和后台更新
 
 #### 长期性能优化
 1. **图片处理系统**：
@@ -310,12 +235,13 @@
 3. **SEO 和可访问性**：
    - 完善结构化数据标记
    - 改进页面加载性能和 Core Web Vitals
-   - 添加键盘导航和屏幕阅读器支持
+   - 完善键盘导航和屏幕阅读器支持
 
 ### 📈 内容和功能完善
 
 #### 内容丰富化
 1. **博客文章扩展**：
+   - 目前生产构建只有 2 篇文章，另外 2 篇是 `draft: true` 的渲染测试，需要正式内容
    - 添加更多 RLHF、DPO 技术深度文章
    - 创建算法实现和实验分析系列
    - 增加行业观察和技术趋势分析
@@ -324,31 +250,23 @@
    - DPO vs RLHF 对比实验
    - 数据预处理和分析 Pipeline
 3. **个人展示增强**：
-   - 添加发表论文和专利信息
+   - 添加专利信息
    - 创建技术演讲和会议参与记录
    - 完善职业发展时间轴
 
 #### 交互功能增强
 1. **搜索功能完善**：
-   - 实现标签和分类筛选
+   - 搜索结果按标签和分类筛选
    - 添加搜索历史和推荐
    - 支持高级搜索语法
 2. **用户体验优化**：
-   - 添加暗色主题支持
    - 实现阅读进度指示器
    - 优化移动端交互体验
 3. **社交功能**：
    - 集成社交媒体分享
    - 添加文章评论系统（基于 GitHub Issues）
-   - 实现 RSS 订阅功能
 
 ## 📋 待完成工作项清单
-
-### 🔧 紧急修复项
-- [ ] 配置真实 API 密钥（WandB_ENTITY, WANDB_API_KEY, GITHUB_USERNAME, GITHUB_TOKEN）
-- [ ] 修复构建时 API 调用问题，改为客户端渲染
-- [ ] 优化网络错误处理和超时机制
-- [ ] 修复 TypeScript 类型安全问题
 
 ### 📝 Phase 4: 多平台导出工具
 - [ ] **知乎导出器** (`src/scripts/export-zhihu.ts`)
@@ -425,10 +343,10 @@
   - [ ] 批量操作设置
   - [ ] 历史记录管理
 
-### 🔍 质量保证
+### 🔍 质量保证（导出工具）
 - [ ] **测试覆盖**
   - [ ] 单元测试（导出功能）
-  - [ ] 集成测试（API 调用）
+  - [ ] 集成测试（平台 API 调用）
   - [ ] 端到端测试（用户流程）
   - [ ] 性能测试（大文件处理）
 - [ ] **错误处理**
