@@ -5,6 +5,7 @@ import List from '@/components/blog/List.astro';
 import PageLayout from '@/components/layout/PageLayout.astro';
 import Headline from '@/components/ui/Headline.astro';
 import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
+import { getPermalink } from '@/utils/site-config';
 import { assertUniqueTagSlugs, getTagSlug, getUniqueTags } from '@/utils/tags';
 
 export async function getStaticPaths() {
@@ -51,7 +52,7 @@ const metadata = {
     />
     <List posts={posts} />
     <div class="mt-10 text-center">
-      <a href="/tags" class="font-medium text-primary hover:underline">查看全部标签</a>
+      <a href={getPermalink('tags')} class="font-medium text-primary hover:underline">查看全部标签</a>
     </div>
   </WidgetWrapper>
 </PageLayout>

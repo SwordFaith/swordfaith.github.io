@@ -218,6 +218,14 @@ export default {
               color: theme('colors.secondary.300'),
               backgroundColor: theme('colors.gray.800')
             },
+            // The strong/code colours above outrank the plugin's `a strong` / `a code` inherit rules,
+            // so restore inheritance to keep bold and code link labels in the link colour.
+            'a strong': {
+              color: 'inherit'
+            },
+            'a code': {
+              color: 'inherit'
+            },
             pre: {
               backgroundColor: theme('colors.dark.900'),
               color: theme('colors.gray.200'),

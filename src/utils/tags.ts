@@ -36,7 +36,8 @@ export const getTagSlug = (tag: string): string => {
 // Astro decodes route params with decodeURI, which leaves `%2B`, `%26`, etc.
 // encoded, so links must use encodeURI to round-trip to the registered slug.
 // The characters encodeURI leaves alone (`?`, `#`, `/`) never reach a slug.
-export const getTagPath = (tag: string): string => `/tags/${encodeURI(getTagSlug(tag))}`;
+// The trailing slash matches the /tags/<slug>/index.html output and the canonical URL.
+export const getTagPath = (tag: string): string => `/tags/${encodeURI(getTagSlug(tag))}/`;
 
 // Distinct tags must not share a page. Compared case-insensitively because the
 // build may run on a case-insensitive filesystem (macOS), where `LLM` and `llm`

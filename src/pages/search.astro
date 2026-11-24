@@ -7,7 +7,7 @@ import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
 const initialQuery = Astro.url.searchParams.get('q')?.trim() || '';
 
 const metadata = {
-  title: '全站搜索',
+  title: '站内搜索',
   description: '搜索博客文章和 Notebook',
   robots: { index: false, follow: true },
 };
@@ -17,7 +17,7 @@ const metadata = {
   <WidgetWrapper containerClass="max-w-4xl">
     <Headline
       tagline="Search"
-      title="全站搜索"
+      title="站内搜索"
       titleTag="h1"
       subtitle="搜索博客文章和 Notebook"
       class="mb-10"
@@ -28,7 +28,6 @@ const metadata = {
       limit={20}
       initialQuery={initialQuery}
       syncUrl
-      placeholder="输入关键词，搜索全站内容..."
     />
   </WidgetWrapper>
 </PageLayout>

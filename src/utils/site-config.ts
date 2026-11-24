@@ -18,14 +18,19 @@ export const siteConfig: SiteConfig = {
 
 export const trimSlash = (value: string) => value.trim().replace(/^\/+|\/+$/g, '');
 
+// Pages are built as <route>/index.html and served at <route>/, so page links
+// end in `/` to match canonicals and skip the GitHub Pages redirect.
+// File URLs (/rss.xml, assets, .ipynb downloads) must not go through this helper.
+const withTrailingSlash = (path: string) => (path.endsWith('/') ? path : `${path}/`);
+
 export const getPermalink = (slug = '', type = 'page'): string => {
   const cleanSlug = trimSlash(slug);
 
   if (type === 'home') return '/';
-  if (type === 'blog') return APP_BLOG.list.pathname;
-  if (type === 'post') return APP_BLOG.post.permalink.replace('%slug%', cleanSlug);
+  if (type === 'blog') return withTrailingSlash(APP_BLOG.list.pathname);
+  if (type === 'post') return withTrailingSlash(APP_BLOG.post.permalink.replace('%slug%', cleanSlug));
 
-  return `/${cleanSlug}`;
+  return withTrailingSlash(`/${cleanSlug}`);
 };
 
 export const getHomePermalink = () => getPermalink('', 'home');
