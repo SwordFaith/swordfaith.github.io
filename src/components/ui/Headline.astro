@@ -3,8 +3,8 @@ export interface Props {
   title?: string;
   subtitle?: string;
   tagline?: string;
-  titleTag?: 'h1' | 'h2' | 'h3';
-  align?: 'left' | 'center' | 'right';
+  titleTag?: 'h1' | 'h2';
+  align?: 'left' | 'center';
   class?: string;
 }
 
@@ -19,8 +19,7 @@ const {
 
 const alignClasses = {
   left: 'text-left',
-  center: 'text-center',
-  right: 'text-right'
+  center: 'text-center'
 };
 
 const containerClasses = [

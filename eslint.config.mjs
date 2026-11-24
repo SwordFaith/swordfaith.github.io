@@ -21,7 +21,6 @@ export default [
       'dist/**',
       'node_modules/**',
       'public/pagefind/**',
-      'src/components/notebook/NotebookViewer.astro',
     ],
   },
   ...astro.configs['flat/recommended'],

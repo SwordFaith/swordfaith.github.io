@@ -1,11 +1,9 @@
 ---
 export interface Props {
-  variant?: 'primary' | 'secondary' | 'tertiary' | 'link';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'tertiary';
+  size?: 'md' | 'lg';
   href?: string;
   target?: string;
-  class?: string;
-  [key: string]: any;
 }
 
 const { 
@@ -13,8 +11,6 @@ const {
   size = 'md', 
   href, 
   target, 
-  class: className = '', 
-  ...rest 
 } = Astro.props;
 
 const Element = href ? 'a' : 'button';
@@ -23,12 +19,10 @@ const baseClasses = 'btn';
 const variantClasses = {
   primary: 'btn-primary',
   secondary: 'btn-secondary', 
-  tertiary: 'btn-tertiary',
-  link: 'btn-link'
+  tertiary: 'btn-tertiary'
 };
 
 const sizeClasses = {
-  sm: 'py-2 px-4 md:px-6 text-sm',
   md: 'py-3.5 px-6 md:px-8 text-base',
   lg: 'py-4 px-8 md:px-10 text-lg'
 };
@@ -36,8 +30,7 @@ const sizeClasses = {
 const classes = [
   baseClasses,
   variantClasses[variant],
-  sizeClasses[size],
-  className
+  sizeClasses[size]
 ].filter(Boolean).join(' ');
 ---
 
@@ -47,7 +40,6 @@ const classes = [
   target={target}
   rel={target === '_blank' ? 'noopener noreferrer' : undefined}
   type={href ? undefined : 'button'}
-  {...rest}
 >
   <slot />
 </Element>

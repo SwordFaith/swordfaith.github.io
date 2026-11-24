@@ -14,13 +14,12 @@ export interface Props {
   tagline?: string;
   items: FeatureItem[];
   columns?: 2 | 3;
-  bg?: 'page' | 'transparent' | 'primary' | 'secondary';
 }
 
-const { title, subtitle, tagline, items, columns = 3, bg = 'transparent' } = Astro.props;
+const { title, subtitle, tagline, items, columns = 3 } = Astro.props;
 ---
 
-<WidgetWrapper bg={bg}>
+<WidgetWrapper bg="transparent">
   {(title || subtitle || tagline) && <Headline title={title} subtitle={subtitle} tagline={tagline} class="mb-12" />}
   <div class:list={['grid gap-6 md:grid-cols-2', columns === 3 && 'lg:grid-cols-3']}>
     {items.map((item) => (

@@ -5,20 +5,17 @@
 import { formatNumber } from '../../utils/number-formatter';
 
 export interface Props {
-  username?: string;
   showContributions?: boolean;
   showLanguages?: boolean;
   showRepositories?: boolean;
   maxRepos?: number;
-  className?: string;
 }
 
 const {
   showContributions = true,
   showLanguages = true,
   showRepositories = true,
-  maxRepos = 6,
-  className = ''
+  maxRepos = 6
 } = Astro.props;
 
 // 导入数据文件
@@ -112,9 +109,6 @@ if (showRepositories) {
       // 如果没有同步数据，使用固定值
       return pinnedRepo;
     }).slice(0, maxRepos);
-  } else {
-    // 备用：使用同步的热门仓库数据
-    displayRepos = data.topRepositories.slice(0, maxRepos);
   }
 }
 
@@ -123,7 +117,7 @@ const lastUpdateDate = new Date(data.lastUpdate);
 const isRecent = (Date.now() - lastUpdateDate.getTime()) < 7 * 24 * 60 * 60 * 1000; // 7天内
 ---
 
-<div class={`github-stats ${className}`} id="github-stats">
+<div class="github-stats" id="github-stats">
   <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 p-6">
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
