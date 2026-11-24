@@ -12,7 +12,10 @@ export default defineConfig({
   base: SITE.basePathname,
   integrations: [
     mdx(),
-    sitemap()
+    sitemap({
+      // /search is noindex; match the exact route so other paths containing "search" stay listed
+      filter: (page) => !/^\/search\/?$/.test(new URL(page).pathname),
+    })
   ],
   markdown: {
     processor: unified({

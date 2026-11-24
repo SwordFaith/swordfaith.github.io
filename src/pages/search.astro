@@ -8,7 +8,8 @@ const initialQuery = Astro.url.searchParams.get('q')?.trim() || '';
 
 const metadata = {
   title: '全站搜索',
-  description: '搜索博客文章、Notebook 和站内页面',
+  description: '搜索博客文章和 Notebook',
+  robots: { index: false, follow: true },
 };
 ---
 
@@ -18,7 +19,7 @@ const metadata = {
       tagline="Search"
       title="全站搜索"
       titleTag="h1"
-      subtitle="搜索博客文章、Notebook 和站内页面"
+      subtitle="搜索博客文章和 Notebook"
       class="mb-10"
     />
     <SearchBox
