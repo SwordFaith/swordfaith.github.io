@@ -109,23 +109,6 @@
   background-color: var(--aw-color-btn-hover);
 }
 
-/* AstroWind Typography Utilities */
-.text-page {
-  color: var(--aw-color-text-page);
-}
-
-.text-muted {
-  color: var(--aw-color-text-muted);
-}
-
-.text-primary {
-  color: var(--aw-color-primary);
-}
-
-.bg-page {
-  background-color: var(--aw-color-bg-page);
-}
-
 /* AstroWind Layout Utilities */
 .widget-bg {
   @apply bg-transparent dark:bg-transparent;
