@@ -20,5 +20,3 @@ jobs:
       pages: write
       id-token: write
     uses: ./.github/workflows/deploy.yml
-    # Passes secrets._GITHUB_TOKEN through for the stats refresh
-    secrets: inherit
