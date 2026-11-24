@@ -80,7 +80,7 @@ def train_reward_model(reward_model, preference_dataset):
 
 ### 3. PPO强化学习
 
-使用PPO算法优化语言模型（省略了价值模型、GAE 等细节）。注意 rollout 必须从策略分布中随机采样（不能用贪心解码），`old_log_probs` 也必须按同一个采样分布计算，这样 $\log \frac{\pi_\theta}{\pi_0}$ 在样本上的取值才是 KL 项的估计：
+使用PPO算法优化语言模型（省略了价值模型、GAE 等细节）。注意 rollout 必须从策略分布中随机采样（不能用贪心解码，也不能用 top-k/top-p 截断或 temperature 改变分布），采样所用的分布必须与计算 `old_log_probs` 和 `new_log_probs` 的分布完全一致，这样 $\log \frac{\pi_\theta}{\pi_0}$ 在样本上的取值才是 KL 项的估计：
 
 ```python
 def ppo_training(policy_model, ref_model, reward_model, dataset):
@@ -90,8 +90,9 @@ def ppo_training(policy_model, ref_model, reward_model, dataset):
             
             # 生成回答
             with torch.no_grad():
-                # Sample (no greedy decoding) so the log-ratio below estimates the KL term
-                old_responses = policy_model.generate(prompts, do_sample=True)
+                # Sample from the unfiltered policy (no greedy, top-k, top-p or temperature)
+                # so the log-ratio below estimates the KL term
+                old_responses = policy_model.generate(prompts, do_sample=True, top_k=0, top_p=1.0, temperature=1.0)
                 old_log_probs = policy_model.log_prob(prompts, old_responses)
                 ref_log_probs = ref_model.log_prob(prompts, old_responses)
                 # KL penalty against the SFT reference model, matching the objective above

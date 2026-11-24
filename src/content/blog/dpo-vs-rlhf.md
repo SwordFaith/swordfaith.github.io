@@ -8,7 +8,7 @@ author: "SwordFaith"
 katex: true
 ---
 
-直接偏好优化（Direct Preference Optimization, DPO）作为RLHF的替代方案，近期在学术界和工业界引起了广泛关注。本文将深入对比这两种方法的优缺点。文中引用的实验结论均来自 DPO 原论文（[Rafailov et al., 2023, arXiv:2305.18290](https://arxiv.org/abs/2305.18290)），并非笔者自己的实验。
+直接偏好优化（Direct Preference Optimization, DPO）作为RLHF的替代方案，近期在学术界和工业界引起了广泛关注。本文将深入对比这两种方法的优缺点。文中的实验结论都不是笔者自己的实验：“原论文的实验结果”一节总结的是 DPO 原论文（[Rafailov et al., 2023, arXiv:2305.18290](https://arxiv.org/abs/2305.18290)）的结果，其他观察在出现处注明来源。
 
 ## DPO算法原理
 
