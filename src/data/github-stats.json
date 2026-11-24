@@ -1,145 +1,178 @@
 {
-  "lastUpdate": "2025-07-28T03:39:50.099Z",
+  "lastUpdate": "2026-11-24T18:19:06.299Z",
   "user": {
-    "name": "Xiang Long",
+    "name": "Skyler Long",
     "login": "SwordFaith",
     "bio": "Learn fast, Think slow.",
     "avatar_url": "https://avatars.githubusercontent.com/u/18397468?v=4",
     "html_url": "https://github.com/SwordFaith",
-    "public_repos": 36,
-    "followers": 55,
-    "following": 123,
+    "public_repos": 46,
+    "followers": 69,
+    "following": 134,
     "created_at": "2016-04-11T12:20:39Z"
   },
   "summary": {
-    "totalStars": 14,
-    "totalForks": 4,
-    "totalRepos": 36,
-    "activeYears": 9
+    "totalStars": 21,
+    "totalForks": 5,
+    "totalRepos": 46,
+    "activeYears": 10
   },
   "languageStats": {
     "Python": {
-      "bytes": 26393021,
-      "percentage": 62.658347046438664
+      "bytes": 77923099,
+      "percentage": 40.533954625342915
     },
     "Jinja": {
-      "bytes": 13993,
-      "percentage": 0.03322007928614221
+      "bytes": 52678,
+      "percentage": 0.027401985921450767
     },
     "Shell": {
-      "bytes": 865078,
-      "percentage": 2.0537382797611183
+      "bytes": 5154946,
+      "percentage": 2.6814943186498903
     },
-    "Roff": {
-      "bytes": 43370,
-      "percentage": 0.10296254117344297
+    "TypeScript": {
+      "bytes": 85815279,
+      "percentage": 44.63930041010231
+    },
+    "JavaScript": {
+      "bytes": 3370690,
+      "percentage": 1.7533619333606987
+    },
+    "CSS": {
+      "bytes": 437993,
+      "percentage": 0.22783473214043784
+    },
+    "C": {
+      "bytes": 4674144,
+      "percentage": 2.4313912464944294
     },
     "HTML": {
-      "bytes": 131919,
-      "percentage": 0.31318227966473194
+      "bytes": 487127,
+      "percentage": 0.25339320391735726
+    },
+    "PowerShell": {
+      "bytes": 39128,
+      "percentage": 0.020353561356439606
+    },
+    "Batchfile": {
+      "bytes": 15535,
+      "percentage": 0.008080979750365194
+    },
+    "Rust": {
+      "bytes": 2867208,
+      "percentage": 1.4914612029665326
+    },
+    "Dockerfile": {
+      "bytes": 154810,
+      "percentage": 0.08052890087892085
+    },
+    "Roff": {
+      "bytes": 43382,
+      "percentage": 0.02256640254459883
+    },
+    "Swift": {
+      "bytes": 3622790,
+      "percentage": 1.884499042795334
+    },
+    "Kotlin": {
+      "bytes": 810752,
+      "percentage": 0.42173611165549285
+    },
+    "Go": {
+      "bytes": 612186,
+      "percentage": 0.31844626131040016
+    },
+    "Ruby": {
+      "bytes": 156191,
+      "percentage": 0.08124726798772385
     },
     "Cuda": {
-      "bytes": 777388,
-      "percentage": 1.8455578500747174
+      "bytes": 789154,
+      "percentage": 0.4105012870241193
+    },
+    "Just": {
+      "bytes": 1610,
+      "percentage": 0.0008374880848463444
+    },
+    "Makefile": {
+      "bytes": 67197,
+      "percentage": 0.034954463874173794
+    },
+    "Go Template": {
+      "bytes": 2462,
+      "percentage": 0.0012806805371998137
+    },
+    "Bicep": {
+      "bytes": 909,
+      "percentage": 0.0004728426516306379
+    },
+    "Jupyter Notebook": {
+      "bytes": 1337535,
+      "percentage": 0.6957575314068045
     },
     "Lean": {
       "bytes": 2571,
-      "percentage": 0.0061036821156772395
+      "percentage": 0.0013373800410807152
     },
     "C++": {
       "bytes": 2517207,
-      "percentage": 5.975974853114569
+      "percentage": 1.3093980556470883
     },
     "CMake": {
       "bytes": 12478,
-      "percentage": 0.029623393792073356
-    },
-    "Makefile": {
-      "bytes": 63116,
-      "percentage": 0.14984052913772256
-    },
-    "Go": {
-      "bytes": 546533,
-      "percentage": 1.2974965763233874
-    },
-    "JavaScript": {
-      "bytes": 1968074,
-      "percentage": 4.6723057472304035
-    },
-    "C": {
-      "bytes": 4667203,
-      "percentage": 11.080172493712626
-    },
-    "Dockerfile": {
-      "bytes": 109757,
-      "percentage": 0.2605685873085907
-    },
-    "Batchfile": {
-      "bytes": 15197,
-      "percentage": 0.03607843528274874
-    },
-    "Ruby": {
-      "bytes": 143097,
-      "percentage": 0.3397194086764162
-    },
-    "Jupyter Notebook": {
-      "bytes": 1306456,
-      "percentage": 3.1015916460984925
+      "percentage": 0.006490792747026513
     },
     "Starlark": {
       "bytes": 21603,
-      "percentage": 0.05128659850057387
+      "percentage": 0.011237425526046944
     },
     "Smarty": {
       "bytes": 8501,
-      "percentage": 0.020181797613913737
-    },
-    "CSS": {
-      "bytes": 31708,
-      "percentage": 0.07527637204352156
+      "percentage": 0.004422041123775636
     },
     "CodeQL": {
       "bytes": 6361,
-      "percentage": 0.01510133097542704
+      "percentage": 0.0033088582035450914
     },
     "Java": {
       "bytes": 875160,
-      "percentage": 2.0776734501579517
-    },
-    "TypeScript": {
-      "bytes": 1229113,
-      "percentage": 2.917975510014158
+      "percentage": 0.4552397964808241
     },
     "EJS": {
       "bytes": 38759,
-      "percentage": 0.0920157974023859
+      "percentage": 0.02016161532954004
     },
     "Lua": {
       "bytes": 16928,
-      "percentage": 0.0401879155403284
+      "percentage": 0.008805589006384422
     },
     "SCSS": {
       "bytes": 32218,
-      "percentage": 0.07648713745736652
-    },
-    "PowerShell": {
-      "bytes": 12356,
-      "percentage": 0.029333759712682993
+      "percentage": 0.016759124917751257
     },
     "Assembly": {
       "bytes": 221937,
-      "percentage": 0.5268894973578606
+      "percentage": 0.11544695222766654
     },
     "Objective-C": {
       "bytes": 49006,
-      "percentage": 0.11634268602134532
+      "percentage": 0.025491888873279474
     },
     "Jsonnet": {
       "bytes": 2007,
-      "percentage": 0.004764718010954578
+      "percentage": 0.001043999121917151
     }
   },
   "topRepositories": [
+    {
+      "name": "RAVine",
+      "description": "",
+      "html_url": "https://github.com/SwordFaith/RAVine",
+      "language": "Python",
+      "stargazers_count": 9,
+      "forks_count": 2,
+      "topics": []
+    },
     {
       "name": "homebrew-pentest",
       "description": "Homebrew Tap - Pen Test Tools",
@@ -150,12 +183,21 @@
       "topics": []
     },
     {
-      "name": "RAVine",
-      "description": "",
-      "html_url": "https://github.com/SwordFaith/RAVine",
+      "name": "miles-tito-tokenizer",
+      "description": "Standalone TITO (Token-In-Token-Out) tokenizers extracted from the miles project. Reuse miles'  chat-template and incremental tokenization logic across model families without importing the full  training framework or SGLang.",
+      "html_url": "https://github.com/SwordFaith/miles-tito-tokenizer",
       "language": "Python",
-      "stargazers_count": 4,
-      "forks_count": 1,
+      "stargazers_count": 1,
+      "forks_count": 0,
+      "topics": []
+    },
+    {
+      "name": "humanize-fm",
+      "description": "Extend formalization check, spec scheduling and more to https://github.com/PolyArch/humanize",
+      "html_url": "https://github.com/SwordFaith/humanize-fm",
+      "language": "Shell",
+      "stargazers_count": 1,
+      "forks_count": 0,
       "topics": []
     },
     {
@@ -199,16 +241,23 @@
     {
       "name": "MiniCPM",
       "full_name": "OpenBMB/MiniCPM",
-      "stargazers_count": 8118,
-      "forks_count": 505,
-      "updated_at": "2025-07-28T02:41:29Z"
+      "stargazers_count": 11918,
+      "forks_count": 829,
+      "updated_at": "2026-11-24T17:23:27Z"
+    },
+    {
+      "name": "verl",
+      "full_name": "verl-project/verl",
+      "stargazers_count": 24339,
+      "forks_count": 4957,
+      "updated_at": "2026-11-24T18:01:58Z"
     }
   ],
   "recentActivity": {
     "thisYear": {
-      "estimatedCommits": 89,
-      "monthlyAverage": 7,
-      "weeklyAverage": 2
+      "estimatedCommits": 60,
+      "monthlyAverage": 5,
+      "weeklyAverage": 1
     }
   }
 }
