@@ -3,6 +3,7 @@ import { type CollectionEntry, getCollection } from 'astro:content';
 import BaseLayout from '@/components/layout/BaseLayout.astro';
 import NotebookViewer from '@/components/notebook/NotebookViewer.astro';
 import { NotebookParser } from '@/utils/notebook-parser';
+import { getPermalink } from '@/utils/site-config';
 
 export async function getStaticPaths() {
   const notebooks = await getCollection('notebooks', ({ data }) => !data.draft);
@@ -50,7 +51,7 @@ const parsedNotebook = await NotebookParser.loadNotebook(notebook.data.notebookP
 
     <nav class="mt-12 pt-8 border-t border-gray-200 dark:border-slate-700">
       <div class="flex justify-between items-center">
-        <a href="/notebooks" class="link-primary flex items-center">
+        <a href={getPermalink('notebooks')} class="link-primary flex items-center">
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
