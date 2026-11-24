@@ -34,10 +34,12 @@
 - [ ] 一键发布自动化脚本
 
 ### 🔧 优化项目
-- [ ] API 密钥配置和功能测试
-- [ ] 构建时 API 调用优化
-- [ ] 组件代码重构和样式统一
-- [ ] 性能优化和缓存策略
+- [ ] 正式文章内容（目前只发布 2 篇，另 2 篇是草稿渲染测试）
+- [ ] Notebook 代码语法着色、窄屏表格溢出、站内链接末尾斜杠等已知问题
+- [ ] 组件代码重构（GitHubStats 类型化）和样式统一
+- [ ] 文章封面图经 `astro:assets` 做 WebP 转换和尺寸优化
+
+完整的已知问题和规划见 [CLAUDE.md](./CLAUDE.md)「下一步开发重点」。
 
 ## 🛠️ 本地开发
 
@@ -71,7 +73,7 @@ description: "文章描述"
 publishDate: 2024-01-01
 tags: ["标签1", "标签2"]
 author: "作者名"
-katex: true  # 启用数学公式
+katex: true  # 列表中显示 KaTeX 标记（公式无论是否设置都会渲染）
 ---
 
 # 文章内容
@@ -94,7 +96,7 @@ katex: true  # 启用数学公式
 
 ### 📝 内容创作
 - **数学公式支持**: 完整的 LaTeX 语法支持，行内和块级公式
-- **代码高亮**: 多语言语法高亮（Notebook 代码单元支持复制）
+- **代码高亮**: 文章代码块多语言语法高亮；Notebook 代码单元支持复制（暂无语法着色）
 - **Jupyter Notebook**: 原生支持 .ipynb 文件展示
 - **全文搜索**: Pagefind 索引已发布的博客文章和 Notebook 详情页；文章另可通过标签页按标签浏览（标签 URL 是由标签文本生成的 slug，规则见 `src/utils/tags.ts` 的 `getTagSlug()`：去掉 `/ \ ? # %` 和控制字符，去掉首尾的点和空白，内部连续空白变为 `-`，其余字符（包括大小写和中文）保持不变，如 `RLHF` → `/tags/RLHF`、`reward model` → `/tags/reward-model`、`C#` → `/tags/C`；slug 为空、以 `.html` 结尾、超过 200 字节，或两个标签的 slug 不区分大小写相同时，构建直接报错）
 
@@ -108,7 +110,7 @@ katex: true  # 启用数学公式
 
 ### 🚀 开发体验
 - **组件化架构**: 28 个 `.astro` 组件
-- **TypeScript 支持**: 完整的类型安全
+- **TypeScript 支持**: `astro check` 类型检查（`tsconfig.json` 继承非 strict 的 `astro/tsconfigs/base`）
 - **热重载开发**: 快速的开发反馈
 - **自动部署**: GitHub Actions 自动构建和部署；PR 只做检查
 - **404 页面**: 自定义 404 页（`src/pages/404.astro`）
