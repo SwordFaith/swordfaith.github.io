@@ -1,12 +1,7 @@
 ---
-import { Marked } from 'marked';
-import { markedHighlight } from 'marked-highlight';
-import hljs from 'highlight.js';
-import { serialize } from 'parse5';
-import { notebookMath, renderNotebookMath } from '@/utils/notebook-math';
 import {
-  sanitizeNotebookFragment,
-  type ParsedCell,
+  highlightNotebookCode,
+  renderNotebookMarkdown,
   type ParsedNotebook,
 } from '@/utils/notebook-parser';
 
@@ -26,21 +21,12 @@ const {
   showMetadata = false,
 } = Astro.props;
 
-const markdown = new Marked(notebookMath);
-markdown.use(markedHighlight({
-  langPrefix: 'hljs language-',
-  highlight(code, lang) {
-    const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext';
-    return hljs.highlight(code, { language }).value;
-  },
+// Build-time HTML per cell, index-aligned with notebook.cells.
+const renderedCells = await Promise.all(notebook.cells.map((cell) => {
+  if (cell.type === 'code') return highlightNotebookCode(cell.source, notebook.language);
+  if (cell.type === 'markdown') return renderNotebookMarkdown(cell.source);
+  return '';
 }));
-
-function renderMarkdown(cell: ParsedCell): string {
-  const html = markdown.parse(cell.source, { async: false });
-  const fragment = sanitizeNotebookFragment(html, cell.attachments);
-  renderNotebookMath(fragment);
-  return serialize(fragment);
-}
 
 const kernelName = notebook.metadata.kernelspec?.display_name
   || notebook.metadata.language_info?.name
@@ -65,7 +51,7 @@ const kernelName = notebook.metadata.kernelspec?.display_name
   </header>
 
   <div class="notebook-cells">
-    {notebook.cells.map((cell) => (
+    {notebook.cells.map((cell, index) => (
       <section class={`notebook-cell cell-${cell.type}`} id={cell.id}>
         {cell.type === 'code' && (
           <div class="code-cell">
@@ -78,7 +64,7 @@ const kernelName = notebook.metadata.kernelspec?.display_name
                   <span class="copy-label">Copy</span>
                 </button>
               </div>
-              <pre class="code-content"><code>{cell.source}</code></pre>
+              <div class="code-content" set:html={renderedCells[index]} />
             </div>
 
             {cell.outputs.length > 0 && (
@@ -124,7 +110,7 @@ const kernelName = notebook.metadata.kernelspec?.display_name
         {cell.type === 'markdown' && (
           <div
             class="markdown-content prose prose-lg max-w-none dark:prose-invert dark:prose-dark prose-pre:bg-slate-900 prose-pre:text-slate-100"
-            set:html={renderMarkdown(cell)}
+            set:html={renderedCells[index]}
           />
         )}
 
@@ -207,8 +193,10 @@ const kernelName = notebook.metadata.kernelspec?.display_name
     color: var(--aw-color-text-page);
   }
 
-  .code-content {
-    @apply p-4 bg-gray-50 text-sm font-mono leading-relaxed overflow-x-auto whitespace-pre dark:bg-slate-950;
+  /* The Shiki <pre> arrives via set:html, so it needs :global(). Its colours and overflow-x are inline;
+     the global html.dark .astro-code rule switches it to the dark theme. */
+  .code-content :global(pre) {
+    @apply m-0 p-4 text-sm leading-relaxed;
   }
 
   .output-content {
@@ -267,7 +255,7 @@ const kernelName = notebook.metadata.kernelspec?.display_name
   }
 
   @media (max-width: 768px) {
-    .code-content,
+    .code-content :global(pre),
     .output-item > .output-text,
     .output-item > .output-json,
     .output-item > .output-error {

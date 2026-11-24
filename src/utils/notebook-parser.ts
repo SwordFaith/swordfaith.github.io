@@ -1,4 +1,6 @@
 import { Buffer } from 'node:buffer';
+import { createShikiHighlighter } from '@astrojs/markdown-remark/shiki';
+import { Marked } from 'marked';
 import {
   parseFragment,
   serialize,
@@ -48,6 +50,8 @@ export interface ParsedNotebook {
   cells: ParsedCell[];
   metadata: NotebookData['metadata'];
   executionCount: number;
+  /** Code cell language for highlighting, from notebook metadata; 'plaintext' when unknown. */
+  language: string;
 }
 
 export interface ParsedCell {
@@ -218,6 +222,71 @@ export function sanitizeNotebookHtml(html: string): string {
   return serialize(sanitizeNotebookFragment(html));
 }
 
+// Same themes as markdown.shikiConfig in astro.config.mjs, so notebook code matches blog posts.
+// Shiki inlines the light colours; the global `html.dark .astro-code` rule in astrowind.css swaps in the dark ones.
+const SHIKI_THEMES = { light: 'github-light', dark: 'github-dark' } as const;
+
+const markdown = new Marked();
+
+function notebookLanguage(metadata: NotebookData['metadata']): string {
+  const name = [metadata.language_info?.name, metadata.kernelspec?.language]
+    .find((value): value is string => typeof value === 'string' && value.trim() !== '');
+  return name?.trim().toLowerCase() ?? 'plaintext';
+}
+
+/** Highlights code at build time; unknown languages fall back to plain text. Output is trusted HTML. */
+export async function highlightNotebookCode(code: string, language: string): Promise<string> {
+  const name = language.trim().toLowerCase();
+  // Shiki resolves names through plain-object lookups, and the highlighter is cached for the whole build:
+  // names like "constructor" or "__proto__" hit Object.prototype and break later language loads.
+  const lang = name && !(name in Object.prototype) ? name : 'plaintext';
+  const highlighter = await createShikiHighlighter({ themes: SHIKI_THEMES });
+  return highlighter.codeToHtml(code, lang, { defaultColor: 'light' });
+}
+
+function textContent(node: DefaultTreeAdapterTypes.ChildNode): string {
+  if (node.nodeName === '#text') return (node as DefaultTreeAdapterTypes.TextNode).value;
+  return 'childNodes' in node ? node.childNodes.map(textContent).join('') : '';
+}
+
+function collectPreElements(
+  node: DefaultTreeAdapterTypes.ParentNode,
+  found: DefaultTreeAdapterTypes.Element[],
+): DefaultTreeAdapterTypes.Element[] {
+  for (const child of node.childNodes) {
+    if (!('tagName' in child)) continue;
+    if (child.tagName === 'pre') found.push(child);
+    else collectPreElements(child, found);
+  }
+  return found;
+}
+
+/**
+ * Renders an untrusted Markdown cell. The HTML is sanitized first; afterwards every <pre><code> block is
+ * rebuilt by Shiki from its text content alone, so Shiki's inline styles never pass through the sanitizer
+ * (which keeps dropping style attributes) and markup inside a block, e.g. fake highlight spans, is discarded.
+ */
+export async function renderNotebookMarkdown(source: string): Promise<string> {
+  const fragment = parseFragment(sanitizeNotebookHtml(markdown.parse(source, { async: false })));
+  await Promise.all(collectPreElements(fragment, []).map(async (pre) => {
+    const code = pre.childNodes.find(
+      (child): child is DefaultTreeAdapterTypes.Element => 'tagName' in child && child.tagName === 'code',
+    );
+    if (!code) return;
+    const className = code.attrs.find((attribute) => attribute.name === 'class')?.value ?? '';
+    const language = className.match(/(?:^|\s)language-(\S+)/)?.[1] ?? 'plaintext';
+    const highlighted = parseFragment(await highlightNotebookCode(textContent(code), language));
+    const shikiPre = highlighted.childNodes.find(
+      (child): child is DefaultTreeAdapterTypes.Element => 'tagName' in child && child.tagName === 'pre',
+    );
+    if (!shikiPre) throw new Error('Shiki did not return a <pre> element.');
+    pre.attrs = shikiPre.attrs;
+    pre.childNodes = shikiPre.childNodes;
+    pre.childNodes.forEach((child) => { child.parentNode = pre; });
+  }));
+  return serialize(fragment);
+}
+
 export class NotebookParser {
   static parse(notebookJson: NotebookData): ParsedNotebook {
     const cells = notebookJson.cells.map((cell, index) => this.parseCell(cell, index));
@@ -226,6 +295,7 @@ export class NotebookParser {
       cells,
       metadata: notebookJson.metadata,
       executionCount: cells.filter((cell) => typeof cell.executionCount === 'number').length,
+      language: notebookLanguage(notebookJson.metadata),
     };
   }
 
