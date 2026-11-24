@@ -14,15 +14,14 @@
 
 **Phase 2: 核心功能实现** 
 - [x] 数学公式渲染（KaTeX）
-- [x] 代码高亮（Shiki）+ 复制功能
-- [x] Jupyter Notebook 展示功能
+- [x] 代码高亮（Shiki，亮/暗双主题）
+- [x] Jupyter Notebook 展示功能（代码单元支持复制）
 - [x] Pagefind 全文搜索
 
 **Phase 3: 数据集成**
-- [x] WandB API 集成和数据同步
-- [x] GitHub 统计数据获取和展示
+- [x] WandB 实验结果嵌入（文章 frontmatter `wandb` 字段 → iframe）
+- [x] GitHub 统计：仓库内静态 JSON 快照，手动同步更新，构建时渲染
 - [x] 个人展示页面完善
-- [x] 环境配置和 API 客户端
 
 ## 📋 下一步开发
 
@@ -77,13 +76,13 @@ katex: true  # 启用数学公式
 
 ## 🔧 技术栈
 
-- **前端框架**: Astro 5.x + TypeScript
+- **前端框架**: Astro 7.x + TypeScript
 - **样式系统**: Tailwind CSS + @tailwindcss/typography
 - **内容管理**: Astro Content Collections (Markdown + MDX)
 - **公式渲染**: KaTeX + remark-math + rehype-katex
 - **代码高亮**: Shiki (支持多主题)
 - **搜索引擎**: Pagefind (本地搜索)
-- **数据集成**: WandB API + GitHub API + 缓存机制
+- **数据集成**: WandB iframe 嵌入 + GitHub 统计（手动同步的静态 JSON 快照）
 - **部署平台**: GitHub Pages + GitHub Actions
 - **开发工具**: ESLint + TypeScript 严格模式
 
@@ -91,34 +90,29 @@ katex: true  # 启用数学公式
 
 ### 📝 内容创作
 - **数学公式支持**: 完整的 LaTeX 语法支持，行内和块级公式
-- **代码高亮**: 多语言语法高亮，支持复制功能
+- **代码高亮**: 多语言语法高亮（Notebook 代码单元支持复制）
 - **Jupyter Notebook**: 原生支持 .ipynb 文件展示
-- **全文搜索**: 中文内容全文搜索，支持标签筛选
+- **全文搜索**: Pagefind 中文内容全文搜索；文章另可通过标签页按标签浏览
 
 ### 📊 数据驱动展示
-- **WandB 集成**: 实验数据嵌入和统计展示
+- **WandB 集成**: 在文章 frontmatter 中配置 `wandb.projectId` / `wandb.runId`，文末嵌入对应运行页面
 - **GitHub 统计**: 个人代码统计、语言分析、项目展示
-- **智能缓存**: API 数据缓存机制，避免频繁请求
+- **静态数据**: GitHub 统计来自仓库中提交的 `src/data/github-stats.json` 快照，需手动刷新（在 GitHub Actions 中手动运行 "Sync GitHub Stats Data" workflow，或本地运行 `npm run sync:github:daily`）；构建和浏览时不调用 GitHub API
 
 ### 🚀 开发体验
-- **组件化架构**: 20+ 个可复用组件
+- **组件化架构**: 25+ 个可复用组件
 - **TypeScript 支持**: 完整的类型安全
 - **热重载开发**: 快速的开发反馈
 - **自动部署**: GitHub Actions 自动构建和部署
 
 ## 🔧 环境配置
 
-### API 密钥设置
+### 环境变量
 
-复制 `.env.example` 为 `.env` 并配置：
+可用变量见 `.env.example`。GitHub 统计同步脚本需要以下变量（不会自动读取 `.env`，需在 shell 中导出；CI 中由 `sync-data.yml` 注入）：
 
 ```bash
-# WandB 配置
-WANDB_ENTITY=your-wandb-entity
-WANDB_API_KEY=your-wandb-api-key
-
-# GitHub 配置  
-GITHUB_USERNAME=your-github-username
+GITHUB_USERNAME=your-github-username   # 可选，默认 SwordFaith
 GITHUB_TOKEN=your-github-personal-access-token
 ```
 
@@ -131,11 +125,12 @@ npm run dev
 # 构建 + 搜索索引
 npm run build
 
-# WandB 数据同步
-npm run sync:wandb
-
-# 类型检查
+# 代码检查 / 类型检查
+npm run lint
 npm run typecheck
+
+# 手动同步 GitHub 统计（覆盖 src/data/github-stats.json，直接用 Node 运行 TypeScript）
+GITHUB_TOKEN=... npm run sync:github:daily
 ```
 
 ## 📚 更多信息

@@ -4,11 +4,12 @@ import SinglePost from '@/components/blog/SinglePost.astro';
 import PageLayout from '@/components/layout/PageLayout.astro';
 
 export async function getStaticPaths() {
-  const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
-    (a, b) => a.data.publishDate.valueOf() - b.data.publishDate.valueOf() || a.id.localeCompare(b.id),
-  );
+  const allPosts = await getCollection('blog');
+  const posts = allPosts
+    .filter(({ data }) => !data.draft)
+    .sort((a, b) => a.data.publishDate.valueOf() - b.data.publishDate.valueOf() || a.id.localeCompare(b.id));
 
-  return posts.map((post, index) => ({
+  const publishedPaths = posts.map((post, index) => ({
     params: { slug: post.id },
     props: {
       post,
@@ -16,6 +17,15 @@ export async function getStaticPaths() {
       nextPost: posts[index + 1],
     },
   }));
+
+  // Drafts (e.g. rendering fixtures) are reachable by direct URL under `astro dev` only and never join prev/next
+  // navigation. Gate on import.meta.hot (Vite HMR, set only by the dev server, always undefined in builds), not
+  // import.meta.env.DEV, which follows NODE_ENV and is true in `NODE_ENV=development astro build`.
+  const draftPaths = import.meta.hot
+    ? allPosts.filter(({ data }) => data.draft).map((post) => ({ params: { slug: post.id }, props: { post } }))
+    : [];
+
+  return [...publishedPaths, ...draftPaths];
 }
 
 interface Props {
@@ -49,20 +59,37 @@ const metadata = {
   </SinglePost>
 </PageLayout>
 
-<style>
+<style is:global>
+  /* Global because markdown-rendered elements carry no Astro scope attribute; .prose keeps it post-only. */
   .prose :where(table):not(:where([class~='not-prose'] *)) {
     @apply w-full border-collapse border border-gray-300 dark:border-gray-600;
   }
 
-  .prose :where(th):not(:where([class~='not-prose'] *)) {
+  /* th/td sit outside :where() so these rules outrank typography's padding (incl. zero first/last-child padding), which loads later. */
+  .prose th:not(:where([class~='not-prose'] *)) {
     @apply border border-gray-300 bg-gray-50 p-2 text-left font-semibold dark:border-gray-600 dark:bg-gray-800;
   }
 
-  .prose :where(td):not(:where([class~='not-prose'] *)) {
+  .prose td:not(:where([class~='not-prose'] *)) {
     @apply border border-gray-300 p-2 dark:border-gray-600;
   }
 
-  .katex-display {
-    @apply my-6 overflow-x-auto;
+  /* Horizontal-only scroll (per KaTeX docs); vertical padding keeps glyphs that overshoot the strut from being clipped. */
+  .prose .katex-display {
+    @apply my-4 overflow-x-auto overflow-y-hidden py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500;
   }
 </style>
+
+<script>
+  // Give only overflowing display equations a tab stop so keyboard users can scroll them.
+  function updateEquationTabStops() {
+    document.querySelectorAll<HTMLElement>('.prose .katex-display').forEach((el) => {
+      if (el.scrollWidth > el.clientWidth) el.tabIndex = 0;
+      else el.removeAttribute('tabindex');
+    });
+  }
+
+  updateEquationTabStops();
+  document.fonts.ready.then(updateEquationTabStops);
+  window.addEventListener('resize', updateEquationTabStops);
+</script>
