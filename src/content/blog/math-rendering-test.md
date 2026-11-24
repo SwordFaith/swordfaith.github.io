@@ -5,9 +5,8 @@ publishDate: 2024-01-10
 tags: ["测试", "数学公式", "KaTeX"]
 author: "LLM Engineer"
 katex: true
+draft: true
 ---
-
-# 数学公式渲染测试
 
 本文测试各种数学公式的渲染效果，确保 KaTeX 集成正常工作。
 

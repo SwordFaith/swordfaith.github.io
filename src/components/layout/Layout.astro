@@ -16,9 +16,6 @@ const { metadata = {} } = Astro.props;
 <html lang={I18N.language} dir={I18N.textDirection} class="scroll-smooth" data-aw-theme={UI.theme}>
   <head>
     <Metadata {...metadata} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
     <script is:inline>
       (() => {
         const applyTheme = (theme) => {

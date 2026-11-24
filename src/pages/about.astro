@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+import avatar from '@/assets/images/avatar.jpg';
 import GitHubStats from '@/components/about/GitHubStats.astro';
 import PageLayout from '@/components/layout/PageLayout.astro';
 import Button from '@/components/ui/Button.astro';
@@ -98,9 +100,13 @@ const publications = [
       { text: 'GitHub', href: 'https://github.com/SwordFaith', variant: 'secondary', target: '_blank' },
     ]}
   >
-    <img
+    <Image
       slot="image"
-      src="https://scholar.googleusercontent.com/citations?view_op=medium_photo&user=Fz855UwAAAAJ&citpid=1"
+      src={avatar}
+      width={128}
+      height={128}
+      densities={[1, 2]}
+      loading="eager"
       alt="Xiang Long Profile Photo"
       class="mx-auto mb-6 h-32 w-32 rounded-full border-4 border-white object-cover shadow-lg dark:border-slate-700"
     />
