@@ -107,6 +107,11 @@ jobs:
         env:
           NODE_ENV: production
 
+      # Every event: a broken internal link or a slash-less page link (a 301 on GitHub
+      # Pages) blocks the PR or the deploy. Runs after the full build so /pagefind/ exists.
+      - name: Check internal links
+        run: npm run check:links
+
       - name: Upload artifact
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
