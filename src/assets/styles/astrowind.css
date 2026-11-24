@@ -167,58 +167,6 @@
   color: var(--aw-color-text-page);
 }
 
-/* AstroWind Animation Utilities */
-.fade-in-up {
-  opacity: 0;
-  transform: translateY(2rem);
-  transition: all 0.6s ease-out;
-}
-
-.fade-in-up.intersect {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.animate-fade-in {
-  opacity: 0;
-  transition: opacity 0.6s ease-out;
-}
-
-.animate-slide-left {
-  opacity: 0;
-  transform: translateX(-2rem);
-  transition: all 0.6s ease-out;
-}
-
-.animate-slide-right {
-  opacity: 0;
-  transform: translateX(2rem);
-  transition: all 0.6s ease-out;
-}
-
-/* Motion safe preferences */
-@media (prefers-reduced-motion: reduce) {
-  .fade-in-up,
-  .animate-fade-in,
-  .animate-slide-left,
-  .animate-slide-right {
-    transition: none;
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* Animation on medium+ screens only */
-@media (max-width: 768px) {
-    .md\:fade-in-up,
-    .md\:animate-fade-in,
-    .md\:animate-slide-left,
-    .md\:animate-slide-right {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* AstroWind Layout Utilities */
 .widget-bg {
   @apply bg-transparent dark:bg-transparent;

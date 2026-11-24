@@ -1,7 +1,6 @@
 ---
 import { I18N, UI, type MetaData } from '@/config/site';
 import Metadata from '@/components/layout/Metadata.astro';
-import BasicScripts from '@/components/layout/BasicScripts.astro';
 import '@/assets/styles/astrowind.css';
 import 'katex/dist/katex.min.css';
 
@@ -39,6 +38,5 @@ const { metadata = {} } = Astro.props;
       跳转到主要内容
     </a>
     <slot />
-    <BasicScripts />
   </body>
 </html>
