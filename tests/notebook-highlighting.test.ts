@@ -4,6 +4,7 @@ import {
   highlightNotebookCode,
   NotebookParser,
   renderNotebookMarkdown,
+  sanitizeNotebookHtml,
   type NotebookData,
 } from '../src/utils/notebook-parser';
 
@@ -89,6 +90,36 @@ describe('renderNotebookMarkdown: highlighting', () => {
     expect(textOf(first(html, 'code'))).toBe('x < 1');
   });
 
+  it('keeps diff +/- markers selectable, so a copied selection is still a valid patch', async () => {
+    // Markdown cells have no Copy button: selecting the block is the only way to copy it.
+    const patch = '--- a/x.py\n+++ b/x.py\n-old = 1\n+new = 2\n context';
+    const markdownHtml = await renderNotebookMarkdown(`\`\`\`diff\n${patch}\n\`\`\``);
+    const cellHtml = await highlightNotebookCode(patch, 'diff');
+    for (const html of [markdownHtml, cellHtml]) {
+      expect(attr(first(html, 'pre'), 'data-language')).toBe('diff');
+      expect(html).not.toMatch(/user-select/i);
+    }
+    expect(textOf(first(markdownHtml, 'code'))).toBe(`${patch}\n`);
+    expect(textOf(first(cellHtml, 'code'))).toBe(patch);
+  });
+
+  it('leaves raw code blocks with allowed annotations untouched instead of dropping them', async () => {
+    for (const block of [
+      '<pre><code class="language-python" aria-label="example" title="t">x = 1</code></pre>',
+      '<pre title="t"><code>x = 1</code></pre>',
+    ]) {
+      expect(await renderNotebookMarkdown(block)).toBe(sanitizeNotebookHtml(block));
+      expect(sanitizeNotebookHtml(block)).toBe(block);
+    }
+  });
+
+  it('keeps leading newlines of raw <pre> blocks exactly as the sanitizer emits them', async () => {
+    // Each extra HTML parse drops one newline right after <pre>; sanitizing and highlighting share one parse.
+    const block = '<pre>\n\n\nx</pre>';
+    expect(await renderNotebookMarkdown(block)).toBe(sanitizeNotebookHtml(block));
+    expect(sanitizeNotebookHtml(block)).toBe('<pre>\n\nx</pre>');
+  });
+
   it('keeps <br> line breaks inside a raw <pre><code> block', async () => {
     const html = await renderNotebookMarkdown('<pre><code>a = 1<br>b = 2</code></pre>');
     expect(html).toBe('<pre><code>a = 1<br>b = 2</code></pre>');
@@ -116,26 +147,28 @@ describe('renderNotebookMarkdown: highlighting', () => {
 });
 
 describe('renderNotebookMarkdown: security', () => {
-  it('rebuilds a text-only fake Shiki block from its text, dropping its style and class payloads', async () => {
-    const fake = await renderNotebookMarkdown(
-      '<pre class="astro-code" style="position:fixed;inset:0;z-index:99">'
-      + '<code class="language-python fixed inset-0 evil-class">x = 1\n</code></pre>',
+  it('rebuilds a fence-shaped raw block from its text, dropping its style payload', async () => {
+    // Once the sanitizer strips style this block is exactly fence-shaped, so it must come out as Shiki output.
+    const raw = await renderNotebookMarkdown(
+      '<pre style="position:fixed;inset:0;z-index:99"><code class="language-python">x = 1\n</code></pre>',
     );
     const genuine = await renderNotebookMarkdown('```python\nx = 1\n```');
-    expect(fake.trim()).toBe(genuine.trim());
-    expect(fake).not.toMatch(/position:fixed|evil|z-index|inset-0/);
+    expect(raw.trim()).toBe(genuine.trim());
+    expect(raw).not.toMatch(/position:fixed|z-index/);
   });
 
-  it('leaves a fake block with markup inside as sanitized HTML, with no style attributes at all', async () => {
-    // Not rebuilt (that would change its content), so it gets no Shiki styles and keeps none of its own.
+  it.each([
+    ['carrying fake Shiki classes',
+      '<pre class="astro-code" style="position:fixed;inset:0"><code class="language-python fixed evil-class">x = 1\n</code></pre>'],
+    ['with styled highlight spans inside',
+      '<pre style="position:fixed"><code class="language-python"><span style="background:url(https://evil.example/x)">x = 1</span></code></pre>'],
+  ])('leaves a fake pre-highlighted block %s as sanitized HTML, with no style attributes', async (_label, block) => {
+    // Not fence-shaped, so it is not rebuilt: it gets no Shiki styles and keeps none of its own.
     // Its classes survive like any notebook HTML class: a known, separately tracked sanitizer gap.
-    const html = await renderNotebookMarkdown(
-      '<pre class="astro-code" style="position:fixed;inset:0">'
-      + '<code class="language-python"><span style="color:red;background:url(https://evil.example/x)">x = 1</span></code></pre>',
-    );
+    const html = await renderNotebookMarkdown(block);
+    expect(html).toBe(sanitizeNotebookHtml(block));
     expect(elementsOf(html).filter((element) => attr(element, 'style') !== undefined)).toEqual([]);
     expect(html).not.toMatch(/position:fixed|evil\.example/);
-    expect(textOf(first(html, 'code'))).toBe('x = 1');
   });
 
   it('still strips style attributes from notebook HTML outside code blocks', async () => {
@@ -194,7 +227,9 @@ describe('highlightNotebookCode: languages and failures', () => {
     expect(attr(first(await highlightNotebookCode('library(dplyr)', 'r'), 'pre'), 'data-language')).toBe('r');
   });
 
-  it.each([['R', 'r'], ['  Python  ', 'python'], ['python extra', 'plaintext'], ['<script>', 'plaintext']])(
+  it.each([
+    ['R', 'r'], ['  Python  ', 'python'], ['python extra', 'plaintext'], ['<script>', 'plaintext'], ['ANSI', 'plaintext'],
+  ])(
     'normalizes the language name %j to %j',
     async (language, expected) => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -202,22 +237,21 @@ describe('highlightNotebookCode: languages and failures', () => {
     },
   );
 
-  it('renders malformed ANSI escape sequences as escaped plain text instead of failing the build', async () => {
-    // Shiki's ansi mode throws on a dimmed out-of-range 256-colour index.
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const source = '\u001b[2;38;5;999m<b>x</b> & y';
+  it.each([
+    ['valid', '\u001b[31mred\u001b[0m <b>x</b> & y'],
+    // Shiki's ansi mode would throw on a dimmed out-of-range 256-colour index and fail the build.
+    ['malformed', '\u001b[2;38;5;999m<b>x</b> & y'],
+  ])('shows %s ANSI escape sequences verbatim as escaped plain text', async (_label, source) => {
     const html = await highlightNotebookCode(source, 'ansi');
     expect(attr(first(html, 'pre'), 'data-language')).toBe('plaintext');
     expect(textOf(first(html, 'code'))).toBe(source);
     expect(elementsOf(html).map((element) => element.tagName)).not.toContain('b');
-    expect(warn).toHaveBeenCalledOnce();
 
-    // The same failure inside a Markdown cell must not reject either.
     const markdownHtml = await renderNotebookMarkdown(`\`\`\`ansi\n${source}\n\`\`\``);
     expect(textOf(first(markdownHtml, 'code'))).toBe(`${source}\n`);
   });
 
-  it('falls back to plain text when the highlighter fails for any other reason', async () => {
+  it('falls back to plain text instead of failing the build when the highlighter throws', async () => {
     vi.resetModules();
     vi.doMock('@astrojs/markdown-remark/shiki', async (importOriginal) => {
       const actual = await importOriginal<typeof import('@astrojs/markdown-remark/shiki')>();

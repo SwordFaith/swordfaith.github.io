@@ -1,11 +1,12 @@
 import { Buffer } from 'node:buffer';
-import { createShikiHighlighter } from '@astrojs/markdown-remark/shiki';
+import { createShikiHighlighter, type ShikiHighlighterHighlightOptions } from '@astrojs/markdown-remark/shiki';
 import { Marked } from 'marked';
 import {
   parseFragment,
   serialize,
   type DefaultTreeAdapterTypes,
 } from 'parse5';
+import { notebookMath, renderNotebookMath } from './notebook-math';
 import { readNotebookSource } from './notebook-source';
 
 export interface NotebookCell {
@@ -226,7 +227,25 @@ export function sanitizeNotebookHtml(html: string): string {
 // Shiki inlines the light colours; the global `html.dark .astro-code` rule in astrowind.css swaps in the dark ones.
 const SHIKI_THEMES = { light: 'github-light', dark: 'github-dark' } as const;
 
-const markdown = new Marked();
+const HIGHLIGHT_OPTIONS: ShikiHighlighterHighlightOptions = {
+  defaultColor: 'light',
+  transformers: [{
+    // Astro's helper wraps the +/- of diff lines in `user-select: none` spans; drop that style so a copied
+    // selection always equals the source.
+    line(node) {
+      for (const token of node.children) {
+        if (token.type !== 'element') continue;
+        for (const marker of token.children) {
+          if (marker.type === 'element' && marker.properties.style === 'user-select: none;') {
+            delete marker.properties.style;
+          }
+        }
+      }
+    },
+  }],
+};
+
+const markdown = new Marked(notebookMath);
 
 function notebookLanguage(metadata: NotebookData['metadata']): string {
   const name = [metadata.language_info?.name, metadata.kernelspec?.language]
@@ -243,24 +262,26 @@ export async function highlightNotebookCode(code: string, language: string): Pro
   const name = language.trim().toLowerCase();
   // Shiki resolves names through plain-object lookups, and the highlighter is cached for the whole build:
   // names like "constructor" or "__proto__" hit Object.prototype and break later language loads.
-  const lang = name && !(name in Object.prototype) ? name : 'plaintext';
+  // Shiki's `ansi` mode interprets escape sequences instead of showing them, so it would alter the text.
+  const lang = name && name !== 'ansi' && !(name in Object.prototype) ? name : 'plaintext';
   const highlighter = await createShikiHighlighter({ themes: SHIKI_THEMES });
   // Astro's helper strips one trailing newline; add one so the rendered text keeps every newline of the source.
   const source = `${code}\n`;
   try {
-    return await highlighter.codeToHtml(source, lang, { defaultColor: 'light' });
+    return await highlighter.codeToHtml(source, lang, HIGHLIGHT_OPTIONS);
   } catch (error) {
-    // e.g. Shiki's `ansi` mode throws on some malformed escape sequences.
     console.warn(`[notebook] Highlighting as "${lang}" failed, rendering plain text: ${errorMessage(error)}`);
-    return highlighter.codeToHtml(source, 'plaintext', { defaultColor: 'light' });
+    return highlighter.codeToHtml(source, 'plaintext', HIGHLIGHT_OPTIONS);
   }
 }
 
-// Only blocks shaped like Markdown code tokens can be rebuilt without changing what the reader sees.
-function plainCodeChild(pre: DefaultTreeAdapterTypes.Element): DefaultTreeAdapterTypes.Element | null {
+// Only blocks exactly as Markdown fences produce them can be rebuilt without losing content or attributes:
+// an attribute-less <pre> whose single child is a <code> with at most a `language-*` class, holding only text.
+function fencedCode(pre: DefaultTreeAdapterTypes.Element): DefaultTreeAdapterTypes.Element | null {
   const [code, ...rest] = pre.childNodes;
-  if (rest.length > 0 || !code || !('tagName' in code) || code.tagName !== 'code') return null;
-  return code.childNodes.every((child) => child.nodeName === '#text') ? code : null;
+  if (pre.attrs.length > 0 || rest.length > 0 || !code || !('tagName' in code) || code.tagName !== 'code') return null;
+  const onlyLanguageClass = code.attrs.every(({ name, value }) => name === 'class' && /^language-\S+$/.test(value));
+  return onlyLanguageClass && code.childNodes.every((child) => child.nodeName === '#text') ? code : null;
 }
 
 function collectPreElements(
@@ -276,15 +297,16 @@ function collectPreElements(
 }
 
 /**
- * Renders an untrusted Markdown cell. The HTML is sanitized first; afterwards each <pre> holding only a
- * text-only <code> (the shape of Markdown code blocks) is rebuilt by Shiki from that text, so Shiki's inline
- * styles never pass through the sanitizer, which keeps dropping style attributes. Any other <pre> stays as
- * sanitized, unhighlighted HTML.
+ * Renders an untrusted Markdown cell. The HTML is sanitized first; afterwards each fenced code block (see
+ * fencedCode) is rebuilt by Shiki from its text, so Shiki's inline styles never pass through the sanitizer,
+ * which keeps dropping style attributes. Any other <pre> stays as sanitized, unhighlighted HTML. Both steps
+ * work on one parsed tree: re-parsing would drop one more newline at the start of every <pre>.
  */
-export async function renderNotebookMarkdown(source: string): Promise<string> {
-  const fragment = parseFragment(sanitizeNotebookHtml(markdown.parse(source, { async: false })));
+export async function renderNotebookMarkdown(source: string, attachments?: ParsedCell['attachments']): Promise<string> {
+  const fragment = sanitizeNotebookFragment(markdown.parse(source, { async: false }), attachments);
+  renderNotebookMath(fragment);
   await Promise.all(collectPreElements(fragment, []).map(async (pre) => {
-    const code = plainCodeChild(pre);
+    const code = fencedCode(pre);
     if (!code) return;
     const text = code.childNodes.map((child) => (child as DefaultTreeAdapterTypes.TextNode).value).join('');
     const className = code.attrs.find((attribute) => attribute.name === 'class')?.value ?? '';
