@@ -59,15 +59,18 @@ jobs:
 
       # Deploy path only (PR checks build from the committed JSON to stay deterministic).
       # Best-effort: the refreshed file is used for this build only and never committed.
-      # On a missing token, sync failure (the script exits non-zero if any sub-request
-      # failed), timeout, or invalid output, fall back to the committed JSON and emit a
-      # warning annotation so the deploy still goes through. The timeout keeps a slow API
-      # from holding the shared 'pages' concurrency slot.
+      # On sync failure (the script exits non-zero if any sub-request failed), timeout, or
+      # invalid output, fall back to the committed JSON and emit a warning annotation so
+      # the deploy still goes through. The timeout keeps a slow API from holding the shared
+      # 'pages' concurrency slot.
+      # The script only reads public data (user profile, public repos and their languages,
+      # two public pinned repos), so the job's built-in token is enough: nothing to expire,
+      # and its own rate limit (1,000 requests/hour per repository) covers its at most 55 requests.
       - name: Refresh GitHub stats (best-effort)
         if: github.event_name != 'pull_request'
         env:
           GITHUB_USERNAME: ${{ vars._GITHUB_USERNAME || 'SwordFaith' }}
-          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           STATS_FILE: src/data/github-stats.json
         run: |
           # Fails unless the file parses and every field GitHubStats.astro renders has the right type
@@ -91,9 +94,7 @@ jobs:
             ' "$STATS_FILE"
           }
 
-          if [ -z "$GITHUB_TOKEN" ]; then
-            echo "::warning title=GitHub stats not refreshed::Secret _GITHUB_TOKEN is not set; using committed $STATS_FILE"
-          elif ! timeout 120 npm run sync:github:daily || ! validate; then
+          if ! timeout 120 npm run sync:github:daily || ! validate; then
             echo "::warning title=GitHub stats not refreshed::Sync failed, timed out, or produced invalid data (see log); using committed $STATS_FILE"
             git checkout -- "$STATS_FILE"
           fi

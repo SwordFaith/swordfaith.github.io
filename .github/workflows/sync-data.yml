@@ -80,7 +80,8 @@ jobs:
         if: steps.check-sync.outputs.sync_needed == 'true'
         env:
           GITHUB_USERNAME: ${{ vars._GITHUB_USERNAME || 'SwordFaith' }}
-          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          # Built-in token: the script only reads public data (see deploy.yml)
+          GITHUB_TOKEN: ${{ github.token }}
           NODE_ENV: production
         run: npm run sync:github:daily
 
