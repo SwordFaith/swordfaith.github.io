@@ -3,11 +3,9 @@ title: "RLHF: 从人类反馈中学习的强化学习方法"
 description: "深入解析RLHF算法原理、实现细节和在大语言模型训练中的应用"
 publishDate: 2024-01-15
 tags: ["RLHF", "强化学习", "LLM", "后训练"]
-author: "LLM Engineer"
+author: "SwordFaith"
 katex: true
 ---
-
-# RLHF: 从人类反馈中学习的强化学习方法
 
 强化学习从人类反馈（Reinforcement Learning from Human Feedback, RLHF）是当前大语言模型后训练的核心技术之一。本文将深入探讨RLHF的算法原理、实现细节以及在实际应用中的挑战。
 
@@ -137,36 +135,11 @@ RLHF训练需要同时维护多个模型，计算开销较大。
 
 ## 实际应用效果
 
-根据我们的实验结果，RLHF在以下方面表现出显著改善：
+已有研究表明，RLHF通常能在以下方面带来改善：
 
 1. **有用性**：模型回答更加贴合用户意图
 2. **无害性**：减少有害内容的生成
 3. **诚实性**：降低幻觉和虚假信息
-
-## 实验数据展示
-
-以下是我们在 RLHF 实验中收集的实时数据：
-
-<WandBEmbed 
-  entity="llm-research-lab" 
-  project="rlhf-experiments" 
-  type="project"
-  height="500px"
-  title="RLHF 实验项目概览"
-/>
-
-### 关键指标趋势
-
-我们重点监控了以下几个关键指标的变化：
-
-<WandBEmbed 
-  entity="llm-research-lab" 
-  project="rlhf-experiments" 
-  runId="rlhf-run-001"
-  type="run"
-  height="400px"
-  title="RLHF 训练关键指标"
-/>
 
 ## 总结
 

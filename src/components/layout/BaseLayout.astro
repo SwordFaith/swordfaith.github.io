@@ -9,9 +9,10 @@ export interface Props {
   keywords?: string[];
   image?: string;
   metadata?: MetaData;
+  searchable?: boolean;
 }
 
-const { title, description = SITE_DESCRIPTION, keywords, image, metadata = {} } = Astro.props;
+const { title, description = SITE_DESCRIPTION, keywords, image, metadata = {}, searchable } = Astro.props;
 const mergedMetadata: MetaData = {
   title,
   description,
@@ -21,6 +22,6 @@ const mergedMetadata: MetaData = {
 };
 ---
 
-<PageLayout metadata={mergedMetadata}>
+<PageLayout metadata={mergedMetadata} searchable={searchable}>
   <slot />
 </PageLayout>

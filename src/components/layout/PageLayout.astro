@@ -6,16 +6,19 @@ import Footer from '@/components/widgets/Footer.astro';
 
 export interface Props {
   metadata?: MetaData;
+  // Marks <main> as the Pagefind content region. Once any page opts in,
+  // Pagefind drops every page that does not, so only content pages should set it.
+  searchable?: boolean;
 }
 
-const { metadata = {} } = Astro.props;
+const { metadata = {}, searchable = false } = Astro.props;
 ---
 
 <Layout metadata={metadata}>
   <slot name="header">
     <Header />
   </slot>
-  <main id="main-content" class="min-h-[60vh]">
+  <main id="main-content" class="min-h-[60vh]" data-pagefind-body={searchable ? '' : undefined}>
     <slot />
   </main>
   <slot name="footer">

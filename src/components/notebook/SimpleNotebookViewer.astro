@@ -43,7 +43,7 @@ const kernelName = notebook.metadata.kernelspec?.display_name
 
 <div class="notebook-viewer">
   <header class="notebook-header">
-    <h1 class="text-3xl font-bold text-gray-900 mb-3">{title}</h1>
+    <h1 class="text-3xl font-bold text-page mb-3">{title}</h1>
     <div class="notebook-summary">
       <span>Jupyter Notebook</span>
       <span>{notebook.cells.length} cells</span>
@@ -85,7 +85,10 @@ const kernelName = notebook.metadata.kernelspec?.display_name
                         <pre class="output-text" data-stream={output.streamName}>{output.content}</pre>
                       )}
                       {output.type === 'html' && (
-                        <div class="output-html" set:html={output.content} />
+                        <div
+                          class="output-html prose prose-sm max-w-none dark:prose-invert dark:prose-dark"
+                          set:html={output.content}
+                        />
                       )}
                       {output.type === 'image' && (
                         <img
@@ -114,7 +117,7 @@ const kernelName = notebook.metadata.kernelspec?.display_name
 
         {cell.type === 'markdown' && (
           <div
-            class="markdown-content prose prose-lg max-w-none"
+            class="markdown-content prose prose-lg max-w-none dark:prose-invert dark:prose-dark prose-pre:bg-slate-900 prose-pre:text-slate-100"
             set:html={renderMarkdown(cell.source)}
           />
         )}
@@ -142,7 +145,8 @@ const kernelName = notebook.metadata.kernelspec?.display_name
   }
 
   .notebook-summary {
-    @apply flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-600;
+    @apply flex flex-wrap gap-x-4 gap-y-2 text-sm;
+    color: var(--aw-color-text-muted);
   }
 
   .source-actions {
@@ -150,7 +154,12 @@ const kernelName = notebook.metadata.kernelspec?.display_name
   }
 
   .source-actions a {
-    @apply text-blue-600 hover:text-blue-800 underline underline-offset-4;
+    @apply underline underline-offset-4;
+    color: var(--aw-color-link);
+  }
+
+  .source-actions a:hover {
+    color: var(--aw-color-link-hover);
   }
 
   .notebook-cells {
@@ -158,74 +167,89 @@ const kernelName = notebook.metadata.kernelspec?.display_name
   }
 
   .notebook-cell {
-    @apply border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm;
+    @apply border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900;
   }
 
   .cell-code {
-    @apply border-l-4 border-l-blue-500;
+    @apply border-l-4 border-l-blue-500 dark:border-l-blue-400;
   }
 
   .cell-markdown {
-    @apply border-l-4 border-l-green-500;
+    @apply border-l-4 border-l-green-500 dark:border-l-green-400;
   }
 
   .cell-raw {
-    @apply border-l-4 border-l-gray-500;
+    @apply border-l-4 border-l-gray-500 dark:border-l-slate-500;
   }
 
   .input-header,
   .output-header {
-    @apply flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200;
+    @apply flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 dark:bg-slate-800 dark:border-slate-700;
   }
 
   .execution-count,
   .output-header {
-    @apply text-sm font-mono text-blue-600;
+    @apply text-sm font-mono text-blue-600 dark:text-blue-400;
   }
 
   .copy-button {
-    @apply px-2 py-1 text-xs text-gray-500 hover:text-gray-800;
+    @apply px-2 py-1 text-xs;
+    color: var(--aw-color-text-muted);
+  }
+
+  .copy-button:hover {
+    color: var(--aw-color-text-page);
   }
 
   .code-content {
-    @apply p-4 bg-gray-50 text-sm font-mono leading-relaxed overflow-x-auto whitespace-pre;
+    @apply p-4 bg-gray-50 text-sm font-mono leading-relaxed overflow-x-auto whitespace-pre dark:bg-slate-950;
   }
 
   .output-content {
     @apply p-4 space-y-3;
   }
 
-  .output-text,
-  .output-json {
-    @apply text-sm font-mono bg-gray-100 p-3 rounded whitespace-pre-wrap overflow-x-auto;
+  /* Wrapper divs carry the same output-<type> class, so target only the inner element. */
+  .output-item > .output-text,
+  .output-item > .output-json {
+    @apply text-sm font-mono bg-gray-100 p-3 rounded whitespace-pre-wrap overflow-x-auto dark:bg-slate-800;
   }
 
-  .output-html {
-    @apply prose prose-sm max-w-none overflow-x-auto;
+  /* Prose classes live in the template: scoped @apply rules cannot reach set:html descendants.
+     prose-dark carries the site's dark overrides for colors the typography config hard-codes. */
+  .output-item > .output-html {
+    @apply overflow-x-auto;
   }
 
-  .output-image {
-    @apply max-w-full h-auto rounded border border-gray-200;
+  /* Plots are often rendered with transparent backgrounds and dark axes; keep them on white. */
+  .output-item > .output-image {
+    @apply max-w-full h-auto rounded border border-gray-200 bg-white dark:border-slate-700;
   }
 
-  .output-error {
-    @apply text-sm font-mono text-red-800 bg-red-50 border border-red-200 rounded p-3 whitespace-pre-wrap overflow-x-auto;
+  /* Same backdrop for images inside set:html content, which lacks the scoping attribute. */
+  :global(.dark) .markdown-content :global(img),
+  :global(.dark) .output-html :global(img) {
+    background-color: rgb(255 255 255);
   }
 
-  .output-unsupported {
-    @apply text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-3;
+  .output-item > .output-error {
+    @apply text-sm font-mono text-red-800 bg-red-50 border border-red-200 rounded p-3 whitespace-pre-wrap overflow-x-auto dark:text-red-300 dark:bg-red-950/40 dark:border-red-900;
+  }
+
+  .output-item > .output-unsupported {
+    @apply text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-3 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-900;
   }
 
   .markdown-content {
-    @apply p-6 text-gray-800;
+    @apply p-6 text-gray-800 dark:text-gray-300;
   }
 
   .raw-content {
-    @apply p-4 bg-gray-50 text-sm font-mono text-gray-700 whitespace-pre-wrap overflow-x-auto;
+    @apply p-4 bg-gray-50 text-sm font-mono text-gray-700 whitespace-pre-wrap overflow-x-auto dark:bg-slate-950 dark:text-slate-300;
   }
 
   .notebook-metadata {
-    @apply mt-8 p-4 bg-gray-50 rounded-lg text-sm;
+    @apply mt-8 p-4 bg-gray-50 rounded-lg text-sm dark:bg-slate-900;
   }
 
   .notebook-metadata pre {
@@ -234,9 +258,9 @@ const kernelName = notebook.metadata.kernelspec?.display_name
 
   @media (max-width: 768px) {
     .code-content,
-    .output-text,
-    .output-json,
-    .output-error {
+    .output-item > .output-text,
+    .output-item > .output-json,
+    .output-item > .output-error {
       @apply text-xs;
     }
 
