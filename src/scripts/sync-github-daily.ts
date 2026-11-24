@@ -263,6 +263,7 @@ class GitHubDailySync {
     const topRepos = repositories
       .filter(repo => !repo.name.includes('.github.io'))
       .slice(0, 50);
+    let fetchedCount = 0;
 
     for (const repo of topRepos) {
       try {
@@ -274,6 +275,7 @@ class GitHubDailySync {
           for (const [language, bytes] of Object.entries(languages)) {
             languageStats[language] = (languageStats[language] || 0) + (bytes as number);
           }
+          fetchedCount++;
         }
 
         // 防止 API 限制
@@ -284,6 +286,10 @@ class GitHubDailySync {
     }
 
     console.log(`  Found ${Object.keys(languageStats).length} programming languages`);
+    // Fail instead of saving partial language stats
+    if (fetchedCount < topRepos.length) {
+      throw new Error(`Failed to fetch languages for ${topRepos.length - fetchedCount} of ${topRepos.length} repositories`);
+    }
     return languageStats;
   }
 
@@ -299,7 +305,7 @@ class GitHubDailySync {
   }>> {
     const pinnedRepos = [
       { owner: 'OpenBMB', repo: 'MiniCPM' },
-      { owner: 'volcengine', repo: 'verl' }
+      { owner: 'verl-project', repo: 'verl' }
     ];
 
     const pinnedData = [];
@@ -330,6 +336,10 @@ class GitHubDailySync {
     }
 
     console.log(`  Found ${pinnedData.length} pinned repositories`);
+    // Fail instead of saving partial pinned repository data
+    if (pinnedData.length < pinnedRepos.length) {
+      throw new Error(`Failed to fetch ${pinnedRepos.length - pinnedData.length} of ${pinnedRepos.length} pinned repositories`);
+    }
     return pinnedData;
   }
 
