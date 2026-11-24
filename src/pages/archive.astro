@@ -1,13 +1,12 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import { getCollection } from 'astro:content';
+import { getPublishedPosts } from '@/utils/posts';
 import PageLayout from '@/components/layout/PageLayout.astro';
 import Headline from '@/components/ui/Headline.astro';
 import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
 import { getPermalink } from '@/utils/site-config';
 
-const allPosts = await getCollection('blog', ({ data }) => !data.draft);
-const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+const sortedPosts = await getPublishedPosts();
 const postsByYear = new Map<number, CollectionEntry<'blog'>[]>();
 
 for (const post of sortedPosts) {
