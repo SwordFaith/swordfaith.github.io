@@ -27,32 +27,3 @@ export function formatNumber(num: number): string {
   // If the decimal part is 0, don't show it (e.g., 2.0k → 2k)
   return rounded % 1 === 0 ? `${Math.floor(rounded)}k` : `${rounded}k`;
 }
-
-/**
- * Formats a number with appropriate suffix (k, M, B)
- * For larger numbers that might exceed thousands
- * 
- * @param num - The number to format
- * @returns Formatted number string
- */
-export function formatLargeNumber(num: number): string {
-  if (num < 1000) {
-    return num.toString();
-  }
-  
-  if (num < 1000000) {
-    const thousands = num / 1000;
-    const rounded = Math.round(thousands * 10) / 10;
-    return rounded % 1 === 0 ? `${Math.floor(rounded)}k` : `${rounded}k`;
-  }
-  
-  if (num < 1000000000) {
-    const millions = num / 1000000;
-    const rounded = Math.round(millions * 10) / 10;
-    return rounded % 1 === 0 ? `${Math.floor(rounded)}M` : `${rounded}M`;
-  }
-  
-  const billions = num / 1000000000;
-  const rounded = Math.round(billions * 10) / 10;
-  return rounded % 1 === 0 ? `${Math.floor(rounded)}B` : `${rounded}B`;
-}

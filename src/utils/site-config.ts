@@ -1,7 +1,6 @@
 import { APP_BLOG, METADATA, SITE } from '@/config/site';
 
 export interface SiteConfig {
-  name: string;
   title: string;
   description: string;
   url: string;
@@ -10,7 +9,6 @@ export interface SiteConfig {
 }
 
 export const siteConfig: SiteConfig = {
-  name: SITE.name,
   title: METADATA.title.default,
   description: METADATA.description,
   url: SITE.origin,
@@ -36,7 +34,6 @@ export const getBlogPermalink = () => getPermalink('', 'blog');
 export const {
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
-  url: SITE_URL,
   author: SITE_AUTHOR,
   logo: SITE_LOGO,
 } = siteConfig;

@@ -11,12 +11,9 @@ const {
   ignoreTitleTemplate = false,
   description = siteConfig.description,
   keywords = METADATA.keywords,
-  canonical,
   robots = METADATA.robots,
   image = defaultImage,
-  imageAlt,
   openGraph = {},
-  twitter = {},
   article,
 } = Astro.props;
 
@@ -38,18 +35,16 @@ const toAbsoluteUrl = (value: string | URL, includeBase = true) => {
   return new URL(value, siteUrl);
 };
 const currentPathname = Astro.url.pathname === baseWithoutTrailingSlash ? basePath : Astro.url.pathname;
-const canonicalUrl = toAbsoluteUrl(canonical ?? currentPathname, canonical !== undefined);
+const canonicalUrl = toAbsoluteUrl(currentPathname, false);
 canonicalUrl.search = '';
 canonicalUrl.hash = '';
 const imageUrl = image ? toAbsoluteUrl(image) : undefined;
-const resolvedImageAlt = imageAlt ?? (image === defaultImage ? defaultImageAlt : `${title}：${description}`);
+const resolvedImageAlt = image === defaultImage ? defaultImageAlt : `${title}：${description}`;
 const seoTitle = ignoreTitleTemplate || title === siteConfig.title
   ? title
   : METADATA.title.template.replace('%s', title);
 const robotsContent = [robots.index ? 'index' : 'noindex', robots.follow ? 'follow' : 'nofollow'].join(', ');
 const openGraphData = { ...METADATA.openGraph, ...openGraph };
-const openGraphUrl = openGraphData.url ? toAbsoluteUrl(openGraphData.url) : canonicalUrl;
-const twitterData = { ...METADATA.twitter, ...twitter };
 const rssUrl = toAbsoluteUrl('/rss.xml');
 const articleJsonLd = article && {
   '@context': 'https://schema.org',
@@ -83,7 +78,7 @@ const serializeJsonLd = (data: object) =>
 <link rel="alternate" type="application/rss+xml" title={siteConfig.title} href={rssUrl} />
 
 <meta property="og:type" content={openGraphData.type} />
-<meta property="og:url" content={openGraphUrl} />
+<meta property="og:url" content={canonicalUrl} />
 <meta property="og:site_name" content={openGraphData.siteName} />
 <meta property="og:locale" content={openGraphData.locale} />
 <meta property="og:title" content={seoTitle} />
@@ -102,12 +97,10 @@ const serializeJsonLd = (data: object) =>
   </>
 )}
 
-<meta name="twitter:card" content={twitterData.cardType} />
+<meta name="twitter:card" content={METADATA.twitter.cardType} />
 <meta name="twitter:url" content={canonicalUrl} />
 <meta name="twitter:title" content={seoTitle} />
 <meta name="twitter:description" content={description} />
-{twitterData.handle && <meta name="twitter:creator" content={twitterData.handle} />}
-{twitterData.site && <meta name="twitter:site" content={twitterData.site} />}
 {imageUrl && (
   <>
     <meta name="twitter:image" content={imageUrl} />
