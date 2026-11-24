@@ -87,15 +87,7 @@ jobs:
 
       - name: Verify data file
         if: steps.check-sync.outputs.sync_needed == 'true'
-        run: |
-          if [ -f "src/data/github-stats.json" ]; then
-            echo "✅ Data file created successfully"
-            echo "File size: $(wc -c < src/data/github-stats.json) bytes"
-            echo "Last update: $(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/github-stats.json', 'utf8')).lastUpdate)")"
-          else
-            echo "❌ Data file not found"
-            exit 1
-          fi
+        run: node src/scripts/validate-github-stats.mjs src/data/github-stats.json
 
       - name: Commit and push data updates
         if: steps.check-sync.outputs.sync_needed == 'true'

@@ -1,3 +1,7 @@
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkPath, extractLinks, internalPath, pagePathOf } from '../src/scripts/check-links';
 
@@ -140,5 +144,24 @@ describe('extractLinks', () => {
       <button formaction="/ignored">x</button>
       </body></html>`;
     expect(extractLinks(html)).toEqual(['/assets/a.css', '/blog/', '/search/']);
+  });
+});
+
+describe('link checker CLI', () => {
+  it('requires a built homepage and scans it', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'check-links-'));
+    const run = () => spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });
+    try {
+      const empty = run();
+      expect(empty.status).toBe(1);
+      expect(empty.stderr).toContain(join(dir, 'index.html'));
+
+      writeFileSync(join(dir, 'index.html'), '<a href="/">Home</a>');
+      const built = run();
+      expect(built.status).toBe(0);
+      expect(built.stdout).toContain('1 internal links in 1 HTML files');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

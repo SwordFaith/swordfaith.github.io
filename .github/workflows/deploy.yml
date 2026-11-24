@@ -73,34 +73,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           STATS_FILE: src/data/github-stats.json
         run: |
-          # Fails unless the file parses and every field GitHubStats.astro renders has the right type
-          validate() {
-            node -e '
-              const d = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-              const num = (v) => typeof v === "number" && Number.isFinite(v);
-              const str = (v) => typeof v === "string";
-              const s = d.summary || {};
-              const a = d.recentActivity?.thisYear || {};
-              const ok = str(d.lastUpdate) && str(d.user?.html_url)
-                && [s.totalStars, s.totalRepos, s.totalForks, s.activeYears,
-                    a.estimatedCommits, a.monthlyAverage, a.weeklyAverage].every(num)
-                && typeof d.languageStats === "object" && d.languageStats !== null
-                && Object.values(d.languageStats).every((l) => num(l?.percentage))
-                && Array.isArray(d.topRepositories)
-                && Array.isArray(d.pinnedRepositoriesData)
-                && d.pinnedRepositoriesData.every((r) => str(r?.full_name) && num(r.stargazers_count) && num(r.forks_count));
-              if (!ok) throw new Error("unexpected data shape");
-              console.log("GitHub stats lastUpdate: " + d.lastUpdate);
-            ' "$STATS_FILE"
-          }
-
-          if ! timeout 120 npm run sync:github:daily || ! validate; then
+          if ! timeout 120 npm run sync:github:daily || ! node src/scripts/validate-github-stats.mjs "$STATS_FILE"; then
             echo "::warning title=GitHub stats not refreshed::Sync failed, timed out, or produced invalid data (see log); using committed $STATS_FILE"
             git checkout -- "$STATS_FILE"
           fi
 
           # Whatever is in place now must be valid, otherwise fail before building
-          validate
+          node src/scripts/validate-github-stats.mjs "$STATS_FILE"
 
       - name: Build with Astro
         run: npm run build

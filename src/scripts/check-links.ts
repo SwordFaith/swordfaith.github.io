@@ -113,6 +113,10 @@ function main(): void {
   }
 
   const files = new Set(listFiles(distDir));
+  if (!files.has('index.html')) {
+    console.error(`Link check: missing ${path.join(distDir, 'index.html')}; check the build output directory`);
+    process.exit(1);
+  }
   const pages = [...files].filter((file) => file.endsWith('.html') && !file.startsWith('pagefind/')).sort();
   const problems: string[] = [];
   const unseenKnownIssues = new Set(KNOWN_ISSUES);

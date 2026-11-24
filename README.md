@@ -102,7 +102,7 @@ katex: true  # 启用数学公式
 - **WandB 集成**: 在文章 frontmatter 中配置 `wandb.projectId` / `wandb.runId`，文末嵌入对应运行页面
 - **GitHub 统计**: 个人代码统计、语言分析、项目展示
 - **静态数据**: GitHub 统计在构建时从 `src/data/github-stats.json` 静态渲染，浏览时不调用 GitHub API。该文件的来源：
-  - 部署（push 到 `main`、手动运行、每周定时）在构建前尽力运行 `npm run sync:github:daily` 刷新数据，只用于本次构建、不提交；需要仓库 Secret `_GITHUB_TOKEN`，缺失、失败、超时或数据无效时回退到仓库内的快照并输出 warning
+  - 部署（push 到 `main`、手动运行、每周定时）在构建前尽力运行 `npm run sync:github:daily` 刷新数据，只用于本次构建、不提交；使用内置 `github.token`，同步失败、超时或数据无效时回退到仓库内的快照并输出 warning
   - `scheduled-deploy.yml` 每周一 03:23 UTC 重新构建并部署一次，让关于页拿到新数据
   - 仓库内提交的快照是兜底（PR 检查也用它构建），通过手动运行 "Sync GitHub Stats Data" workflow 或本地 `npm run sync:github:daily` 更新
 
@@ -119,7 +119,7 @@ katex: true  # 启用数学公式
 
 构建本身不需要任何环境变量：站点标题、描述和 URL 写在 `src/config/site.ts`（`SITE` 对象），不再使用 `SITE_URL` / `SITE_TITLE` / `SITE_DESCRIPTION` 环境变量或仓库 Variables。
 
-可用变量见 `.env.example`。只有 GitHub 统计同步脚本需要以下变量（不会自动读取 `.env`，需在 shell 中导出；CI 中由 `deploy.yml` 和 `sync-data.yml` 从仓库 Secret `_GITHUB_TOKEN`、Variable `_GITHUB_USERNAME` 注入）：
+可用变量见 `.env.example`。只有 GitHub 统计同步脚本需要以下变量（不会自动读取 `.env`，需在 shell 中导出；CI 中由 `deploy.yml` 和 `sync-data.yml` 使用内置 `github.token` 和可选仓库变量 `_GITHUB_USERNAME`，用户名默认 `SwordFaith`）：
 
 ```bash
 GITHUB_USERNAME=your-github-username   # 可选，默认 SwordFaith
