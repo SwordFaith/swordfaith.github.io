@@ -5,7 +5,7 @@ import List from '@/components/blog/List.astro';
 import PageLayout from '@/components/layout/PageLayout.astro';
 import Headline from '@/components/ui/Headline.astro';
 import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
-import { getTagSlug, getUniqueTags } from '@/utils/tags';
+import { assertUniqueTagSlugs, getTagSlug, getUniqueTags } from '@/utils/tags';
 
 export async function getStaticPaths() {
   const allPosts = await getCollection('blog', ({ data }) => !data.draft);
@@ -20,19 +20,12 @@ export async function getStaticPaths() {
     }
   }
 
-  const slugOwners = new Map<string, string>();
+  assertUniqueTagSlugs(postsByTag.keys());
 
-  return [...postsByTag.entries()].map(([tag, posts]) => {
-    const slug = getTagSlug(tag);
-    const existingTag = slugOwners.get(slug);
-
-    if (existingTag !== undefined) {
-      throw new Error(`标签 slug 冲突：${JSON.stringify(existingTag)} 与 ${JSON.stringify(tag)} 都生成了 ${slug}`);
-    }
-
-    slugOwners.set(slug, tag);
-    return { params: { tag: slug }, props: { tag, posts } };
-  });
+  return [...postsByTag.entries()].map(([tag, posts]) => ({
+    params: { tag: getTagSlug(tag) },
+    props: { tag, posts },
+  }));
 }
 
 interface Props {
