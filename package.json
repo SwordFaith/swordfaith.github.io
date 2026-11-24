@@ -10,6 +10,7 @@
     "start": "astro dev",
     "build": "astro build && npm run build:search",
     "build:search": "pagefind --site dist",
+    "check:links": "node src/scripts/check-links.ts --require-trailing-slash",
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint .",

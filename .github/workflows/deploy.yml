@@ -59,52 +59,37 @@ jobs:
 
       # Deploy path only (PR checks build from the committed JSON to stay deterministic).
       # Best-effort: the refreshed file is used for this build only and never committed.
-      # On a missing token, sync failure (the script exits non-zero if any sub-request
-      # failed), timeout, or invalid output, fall back to the committed JSON and emit a
-      # warning annotation so the deploy still goes through. The timeout keeps a slow API
-      # from holding the shared 'pages' concurrency slot.
+      # On sync failure (the script exits non-zero if any sub-request failed), timeout, or
+      # invalid output, fall back to the committed JSON and emit a warning annotation so
+      # the deploy still goes through. The timeout keeps a slow API from holding the shared
+      # 'pages' concurrency slot.
+      # The script only reads public data (user profile, public repos and their languages,
+      # two public pinned repos), so the job's built-in token is enough: nothing to expire,
+      # and its own rate limit (1,000 requests/hour per repository) covers its at most 55 requests.
       - name: Refresh GitHub stats (best-effort)
         if: github.event_name != 'pull_request'
         env:
           GITHUB_USERNAME: ${{ vars._GITHUB_USERNAME || 'SwordFaith' }}
-          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           STATS_FILE: src/data/github-stats.json
         run: |
-          # Fails unless the file parses and every field GitHubStats.astro renders has the right type
-          validate() {
-            node -e '
-              const d = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
-              const num = (v) => typeof v === "number" && Number.isFinite(v);
-              const str = (v) => typeof v === "string";
-              const s = d.summary || {};
-              const a = d.recentActivity?.thisYear || {};
-              const ok = str(d.lastUpdate) && str(d.user?.html_url)
-                && [s.totalStars, s.totalRepos, s.totalForks, s.activeYears,
-                    a.estimatedCommits, a.monthlyAverage, a.weeklyAverage].every(num)
-                && typeof d.languageStats === "object" && d.languageStats !== null
-                && Object.values(d.languageStats).every((l) => num(l?.percentage))
-                && Array.isArray(d.topRepositories)
-                && Array.isArray(d.pinnedRepositoriesData)
-                && d.pinnedRepositoriesData.every((r) => str(r?.full_name) && num(r.stargazers_count) && num(r.forks_count));
-              if (!ok) throw new Error("unexpected data shape");
-              console.log("GitHub stats lastUpdate: " + d.lastUpdate);
-            ' "$STATS_FILE"
-          }
-
-          if [ -z "$GITHUB_TOKEN" ]; then
-            echo "::warning title=GitHub stats not refreshed::Secret _GITHUB_TOKEN is not set; using committed $STATS_FILE"
-          elif ! timeout 120 npm run sync:github:daily || ! validate; then
+          if ! timeout 120 npm run sync:github:daily || ! node src/scripts/validate-github-stats.mjs "$STATS_FILE"; then
             echo "::warning title=GitHub stats not refreshed::Sync failed, timed out, or produced invalid data (see log); using committed $STATS_FILE"
             git checkout -- "$STATS_FILE"
           fi
 
           # Whatever is in place now must be valid, otherwise fail before building
-          validate
+          node src/scripts/validate-github-stats.mjs "$STATS_FILE"
 
       - name: Build with Astro
         run: npm run build
         env:
           NODE_ENV: production
+
+      # Every event: a broken internal link or a slash-less page link (a 301 on GitHub
+      # Pages) blocks the PR or the deploy. Runs after the full build so /pagefind/ exists.
+      - name: Check internal links
+        run: npm run check:links
 
       - name: Upload artifact
         if: github.event_name != 'pull_request'

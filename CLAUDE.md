@@ -194,7 +194,7 @@
 
 #### GitHub 集成系统
 - **同步脚本** (`src/scripts/sync-github-daily.ts`): 调用 GitHub REST API 获取用户、仓库、语言统计，写入 `src/data/github-stats.json`
-  - 部署时刷新：`deploy.yml` 在非 PR 运行中、构建前尽力执行 `npm run sync:github:daily`（需要仓库 Secret `_GITHUB_TOKEN`，120 秒超时），结果只用于本次构建、不提交；Secret 缺失、同步失败、超时或数据结构无效时回退到已提交的 JSON，并输出 warning annotation
+  - 部署时刷新：`deploy.yml` 在非 PR 运行中、构建前尽力执行 `npm run sync:github:daily`（使用内置 `github.token`，120 秒超时），结果只用于本次构建、不提交；同步失败、超时或数据结构无效时回退到已提交的 JSON，并输出 warning annotation
   - 每周重新构建：`scheduled-deploy.yml`（每周一 03:23 UTC）调用 `deploy.yml`，让关于页定期拿到新数据
   - 更新仓库内快照：在 GitHub Actions 中手动运行 "Sync GitHub Stats Data"（`.github/workflows/sync-data.yml`，仅 `workflow_dispatch`，同步后提交数据文件；该提交不会自动触发部署），或本地运行 `GITHUB_TOKEN=... npm run sync:github:daily`（Node 原生 TypeScript 类型擦除直接运行）
   - 数据无实质变化时不改写文件
@@ -216,7 +216,7 @@
 
 #### 环境配置和工具
 - **环境变量模板** (`.env.example`): API 密钥配置指南
-  - GitHub（仅同步脚本使用）: GITHUB_USERNAME, GITHUB_TOKEN（CI 中来自仓库 Secret `_GITHUB_TOKEN` / Variable `_GITHUB_USERNAME`）
+  - GitHub（仅同步脚本使用）: GITHUB_USERNAME, GITHUB_TOKEN（Actions 使用内置 `github.token`，可选仓库变量 `_GITHUB_USERNAME` 默认为 `SwordFaith`）
   - 站点配置：不使用环境变量或仓库 Variables，标题、描述和 URL 写在 `src/config/site.ts`
 - **构建脚本优化** (`package.json`):
   - 集成 Pagefind 搜索索引生成到构建流程
