@@ -1,5 +1,13 @@
 name: Sync GitHub Stats Data
 
+# Manually refreshes the committed fallback copy of src/data/github-stats.json.
+# Deploys already refresh stats at build time (see deploy.yml); use this only to
+# update the committed copy that PR checks and failed refreshes fall back to.
+#
+# NOTE: a push made with the default GITHUB_TOKEN does not trigger other workflows,
+# so the commit below will not start a deploy. Run "Deploy to GitHub Pages" manually
+# (or wait for the next push / weekly scheduled run) to publish it.
+
 on:
   workflow_dispatch:
     # Allow manual trigger
@@ -9,6 +17,14 @@ on:
         required: false
         default: 'false'
 
+# Needed to push the data commit
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-github-stats
+  cancel-in-progress: false
+
 jobs:
   sync-github-stats:
     runs-on: ubuntu-latest
@@ -17,26 +33,22 @@ jobs:
         uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
           cache: 'npm'
-          
+
       - name: Install dependencies
         run: npm ci
-        
-      - name: Setup environment variables
-        run: |
-          echo "GITHUB_USERNAME=${{ vars._GITHUB_USERNAME || 'SwordFaith' }}" >> $GITHUB_ENV
-          echo "GITHUB_TOKEN=${{ secrets._GITHUB_TOKEN }}" >> $GITHUB_ENV
-          echo "NODE_ENV=production" >> $GITHUB_ENV
-          
+
       - name: Check if sync is needed
         id: check-sync
+        env:
+          FORCE_SYNC: ${{ inputs.force_sync }}
         run: |
-          if [ -f "src/data/github-stats.json" ] && [ "${{ github.event.inputs.force_sync }}" != "true" ]; then
+          if [ -f "src/data/github-stats.json" ] && [ "$FORCE_SYNC" != "true" ]; then
             LAST_UPDATE=$(node -e "
               const fs = require('fs');
               try {
@@ -46,28 +58,32 @@ jobs:
                 console.log('1970-01-01T00:00:00Z');
               }
             ")
-            
+
             # Check if last update was less than 20 hours ago
             CURRENT_TIME=$(date -u +%s)
             LAST_UPDATE_TIME=$(date -d "$LAST_UPDATE" +%s)
             TIME_DIFF=$((CURRENT_TIME - LAST_UPDATE_TIME))
-            
+
             if [ $TIME_DIFF -lt 72000 ]; then
-              echo "sync_needed=false" >> $GITHUB_OUTPUT
+              echo "sync_needed=false" >> "$GITHUB_OUTPUT"
               echo "Data is recent (last updated: $LAST_UPDATE), skipping sync"
             else
-              echo "sync_needed=true" >> $GITHUB_OUTPUT
+              echo "sync_needed=true" >> "$GITHUB_OUTPUT"
               echo "Data needs update (last updated: $LAST_UPDATE)"
             fi
           else
-            echo "sync_needed=true" >> $GITHUB_OUTPUT
+            echo "sync_needed=true" >> "$GITHUB_OUTPUT"
             echo "Force sync or no existing data found"
           fi
-          
+
       - name: Sync GitHub stats data
         if: steps.check-sync.outputs.sync_needed == 'true'
+        env:
+          GITHUB_USERNAME: ${{ vars._GITHUB_USERNAME || 'SwordFaith' }}
+          GITHUB_TOKEN: ${{ secrets._GITHUB_TOKEN }}
+          NODE_ENV: production
         run: npm run sync:github:daily
-        
+
       - name: Verify data file
         if: steps.check-sync.outputs.sync_needed == 'true'
         run: |
@@ -79,16 +95,16 @@ jobs:
             echo "❌ Data file not found"
             exit 1
           fi
-          
+
       - name: Commit and push data updates
         if: steps.check-sync.outputs.sync_needed == 'true'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           # Add data files
           git add src/data/github-stats.json
-          
+
           # Check if there are changes to commit
           if git diff --staged --quiet; then
             echo "No changes to commit"
@@ -97,10 +113,12 @@ jobs:
             git push
             echo "✅ Data updated and pushed to repository"
           fi
-          
+
       - name: Output sync status
+        env:
+          SYNC_NEEDED: ${{ steps.check-sync.outputs.sync_needed }}
         run: |
-          if [ "${{ steps.check-sync.outputs.sync_needed }}" == "true" ]; then
+          if [ "$SYNC_NEEDED" == "true" ]; then
             echo "🔄 GitHub stats data sync completed"
           else
             echo "⏭️ GitHub stats data sync skipped (data is recent)"
