@@ -88,6 +88,7 @@ interface GitHubStatsData {
   pinnedRepositoriesData: Array<{
     name: string;
     full_name: string;
+    description: string;
     stargazers_count: number;
     forks_count: number;
     updated_at: string;
@@ -279,6 +280,7 @@ class GitHubDailySync {
   private async fetchPinnedRepositoriesData(): Promise<Array<{
     name: string;
     full_name: string;
+    description: string;
     stargazers_count: number;
     forks_count: number;
     updated_at: string;
@@ -300,6 +302,7 @@ class GitHubDailySync {
           pinnedData.push({
             name: repoData.name,
             full_name: repoData.full_name,
+            description: repoData.description || '',
             stargazers_count: repoData.stargazers_count,
             forks_count: repoData.forks_count,
             updated_at: repoData.updated_at
@@ -333,6 +336,7 @@ class GitHubDailySync {
     pinnedRepositoriesData: Array<{
       name: string;
       full_name: string;
+      description: string;
       stargazers_count: number;
       forks_count: number;
       updated_at: string;
