@@ -50,6 +50,8 @@ tmp/
 temp/
 
 # WandB cache
+# Kept after removing the W&B sync script: protects leftover local caches
+# (fetched with an API key) from being committed and published via public/.
 public/data/wandb/
 
 # Search index (generated)
