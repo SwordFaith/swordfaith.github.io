@@ -2,6 +2,7 @@
 title: "RLHF: 从人类反馈中学习的强化学习方法"
 description: "深入解析RLHF算法原理、实现细节和在大语言模型训练中的应用"
 publishDate: 2024-01-15
+updateDate: 2026-11-24
 tags: ["RLHF", "强化学习", "LLM", "后训练"]
 author: "SwordFaith"
 katex: true
@@ -27,9 +28,11 @@ $$
 - $\beta$ 是KL散度的权重系数
 - $\mathbb{KL}$ 表示KL散度，用于防止模型偏离初始分布过远
 
+这一带 KL 惩罚的目标来自 [Ziegler et al. (2019)](https://arxiv.org/abs/1909.08593)，[InstructGPT](https://arxiv.org/abs/2203.02155) 等后续工作沿用了同样的做法。
+
 ## 实现步骤
 
-RLHF的实现通常包含以下三个阶段：
+RLHF的实现通常包含以下三个阶段（例如 [InstructGPT](https://arxiv.org/abs/2203.02155) 的 SFT → 奖励模型 → PPO 流程）。下面的代码均为简化示意，并非完整实现：
 
 ### 1. 监督微调（SFT）
 
@@ -64,7 +67,7 @@ def train_reward_model(reward_model, preference_dataset):
         rejected_reward = reward_model(rejected)
         
         # Bradley-Terry模型
-        loss = -torch.log(torch.sigmoid(chosen_reward - rejected_reward))
+        loss = -torch.log(torch.sigmoid(chosen_reward - rejected_reward)).mean()
         
         loss.backward()
         optimizer.step()
@@ -73,10 +76,10 @@ def train_reward_model(reward_model, preference_dataset):
 
 ### 3. PPO强化学习
 
-使用PPO算法优化语言模型：
+使用PPO算法优化语言模型（省略了价值模型、GAE 等细节）：
 
 ```python
-def ppo_training(policy_model, reward_model, dataset):
+def ppo_training(policy_model, ref_model, reward_model, dataset):
     for epoch in range(num_epochs):
         for batch in dataset:
             prompts = batch
@@ -85,7 +88,9 @@ def ppo_training(policy_model, reward_model, dataset):
             with torch.no_grad():
                 old_responses = policy_model.generate(prompts)
                 old_log_probs = policy_model.log_prob(prompts, old_responses)
-                rewards = reward_model(prompts, old_responses)
+                ref_log_probs = ref_model.log_prob(prompts, old_responses)
+                # KL penalty against the SFT reference model, matching the objective above
+                rewards = reward_model(prompts, old_responses) - beta * (old_log_probs - ref_log_probs)
             
             # PPO更新
             for _ in range(ppo_epochs):
@@ -111,8 +116,8 @@ def ppo_training(policy_model, reward_model, dataset):
 模型可能学会利用奖励模型的漏洞来获得高分，而不是真正改善输出质量。
 
 **解决方案**：
-- 定期更新奖励模型
-- 使用多个独立的奖励模型
+- 定期更新奖励模型（如 [Bai et al. (2022)](https://arxiv.org/abs/2204.05862) 按周用新的人类反馈迭代更新偏好模型和策略）
+- 使用多个独立的奖励模型（如 [Coste et al. (2023)](https://arxiv.org/abs/2310.02743) 的奖励模型集成）
 - 引入宪法AI等约束机制
 
 ### 2. 分布偏移
@@ -121,7 +126,7 @@ def ppo_training(policy_model, reward_model, dataset):
 
 **解决方案**：
 - 适当设置KL散度惩罚系数 $\beta$
-- 使用动态调整的 $\beta$ 值
+- 使用动态调整的 $\beta$ 值（如 [Ziegler et al. (2019)](https://arxiv.org/abs/1909.08593) 按目标 KL 自适应调节 $\beta$）
 - 定期与参考模型进行对齐
 
 ### 3. 计算复杂度
@@ -135,11 +140,13 @@ RLHF训练需要同时维护多个模型，计算开销较大。
 
 ## 实际应用效果
 
-已有研究表明，RLHF通常能在以下方面带来改善：
+以 [InstructGPT（Ouyang et al., 2022）](https://arxiv.org/abs/2203.02155) 为例，论文报告 RLHF 在以下方面带来了改善：
 
-1. **有用性**：模型回答更加贴合用户意图
-2. **无害性**：减少有害内容的生成
-3. **诚实性**：降低幻觉和虚假信息
+1. **有用性**：在人工评估中，1.3B 参数的 InstructGPT 的输出比 175B 的 GPT-3 更受偏好
+2. **无害性**：有害（toxic）内容的生成有小幅减少，但偏见没有改善
+3. **诚实性**：TruthfulQA 上的真实性有所提升，封闭域任务中的幻觉率从 GPT-3 的 41% 降到 21%
+
+[Bai et al. (2022)](https://arxiv.org/abs/2204.05862) 也用 RLHF 训练了有用且无害的对话助手。
 
 ## 总结
 

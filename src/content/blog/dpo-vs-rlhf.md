@@ -2,12 +2,13 @@
 title: "DPO vs RLHF: 直接偏好优化的优势与局限"
 description: "对比分析DPO和RLHF两种后训练方法的原理、实现和性能差异"
 publishDate: 2024-02-01
+updateDate: 2026-11-24
 tags: ["DPO", "RLHF", "对比分析", "后训练"]
 author: "SwordFaith"
 katex: true
 ---
 
-直接偏好优化（Direct Preference Optimization, DPO）作为RLHF的替代方案，近期在学术界和工业界引起了广泛关注。本文将深入对比这两种方法的优缺点。
+直接偏好优化（Direct Preference Optimization, DPO）作为RLHF的替代方案，近期在学术界和工业界引起了广泛关注。本文将深入对比这两种方法的优缺点。文中引用的实验结论均来自 DPO 原论文（[Rafailov et al., 2023, arXiv:2305.18290](https://arxiv.org/abs/2305.18290)），并非笔者自己的实验。
 
 ## DPO算法原理
 
@@ -15,13 +16,19 @@ DPO的核心创新在于直接从偏好数据优化语言模型，无需训练�
 
 ### 理论基础
 
-DPO基于一个重要观察：RLHF的最优策略有闭式解。设最优策略为 $\pi^*$，则：
+DPO基于一个重要观察：RLHF 中带 KL 约束的奖励最大化目标，其最优策略有闭式解。设最优策略为 $\pi^*$，则：
 
 $$
 \pi^*(y|x) = \frac{1}{Z(x)} \pi_0(y|x) \exp\left(\frac{1}{\beta} R^*(x,y)\right)
 $$
 
-通过重新参数化，DPO直接优化：
+其中 $\pi_0$ 是参考模型（通常是 SFT 模型，原论文记作 $\pi_{\text{ref}}$），$Z(x) = \sum_y \pi_0(y|x) \exp\left(\frac{1}{\beta} R^*(x,y)\right)$ 是配分函数，实际中很难计算。对上式取对数并整理，可以把奖励写成最优策略的函数：
+
+$$
+R^*(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_0(y|x)} + \beta \log Z(x)
+$$
+
+Bradley-Terry 偏好模型只依赖两个回答的奖励之差，$p^*(y_w \succ y_l \mid x) = \sigma\left(R^*(x,y_w) - R^*(x,y_l)\right)$，代入后 $Z(x)$ 恰好被消掉。用参数化策略 $\pi_\theta$ 代替 $\pi^*$ 并对偏好数据做最大似然，DPO直接优化：
 
 $$
 \mathcal{L}_{\text{DPO}}(\pi_\theta) = -\mathbb{E}_{(x,y_w,y_l) \sim \mathcal{D}} \left[ \log \sigma\left( \beta \log \frac{\pi_\theta(y_w|x)}{\pi_0(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_0(y_l|x)} \right) \right]
@@ -29,15 +36,17 @@ $$
 
 其中 $y_w$ 和 $y_l$ 分别表示偏好和非偏好回答。
 
+原论文把 $\hat{r}_\theta(x,y) = \beta \log \frac{\pi_\theta(y|x)}{\pi_0(y|x)}$ 称为由语言模型隐式定义的奖励，这也是论文副标题 "Your Language Model is Secretly a Reward Model" 的含义。这个损失的梯度会提高 $y_w$ 的似然、降低 $y_l$ 的似然，并按 $\sigma\left(\hat{r}_\theta(x,y_l) - \hat{r}_\theta(x,y_w)\right)$ 加权：隐式奖励把这对回答排得越错，权重越大。原论文报告，去掉这个权重的朴素版本可能导致语言模型退化。
+
 ## 关键差异对比
 
-| 维度 | RLHF | DPO |
+| 维度 | RLHF（PPO） | DPO |
 |------|------|-----|
 | **训练阶段** | 3阶段（SFT + RM + PPO） | 2阶段（SFT + DPO） |
-| **计算复杂度** | 高（需要多个模型） | 中等（只需一个模型） |
-| **训练稳定性** | 较不稳定（RL固有问题） | 更稳定（监督学习） |
-| **内存占用** | 大（策略模型+奖励模型+参考模型） | 小（策略模型+参考模型） |
-| **超参敏感度** | 高 | 中等 |
+| **计算复杂度** | 高（训练中需要用当前策略在线生成回答） | 较低（无需采样，只在离线偏好对上计算 log 概率） |
+| **训练稳定性** | 较难调稳（RL固有问题；DPO 原论文称 RLHF "complex and often unstable"） | 相对稳定（形式上是一个分类损失） |
+| **内存占用** | 大（策略模型+奖励模型+参考模型，PPO 通常还需要价值模型） | 较小（策略模型+参考模型，参考模型的 log 概率可预先算好） |
+| **超参敏感度** | 高（PPO 超参、KL 系数等） | 较低（主要超参是 $\beta$；原论文称几乎无需调参） |
 
 ## 实现细节对比
 
@@ -74,34 +83,34 @@ def dpo_loss(model, reference_model, batch):
 final_model = train_dpo(sft_model, preference_dataset)
 ```
 
-## 性能评估
+## 原论文的实验结果
+
+以下设置和结论均出自 DPO 原论文第 6 节（实验）和第 7 节（讨论），笔者没有复现。
 
 ### 实验设置
-- **数据集**: Anthropic HH, OpenAssistant
-- **模型**: LLaMA 7B/13B
-- **评估指标**: Win rate, Helpfulness, Harmlessness
+- **任务与数据**: IMDb 情感可控生成、Reddit TL;DR 摘要、Anthropic HH 单轮对话
+- **模型**: 情感任务用 GPT-2-large；摘要任务在 GPT-J 的 SFT 模型上微调；对话任务基于 Pythia-2.8B。论文评估的模型最大为 6B 参数
+- **评估方式**: 情感任务有真实奖励（情感分类器），比较奖励与 KL 的权衡前沿；摘要和对话任务用 GPT-4 计算相对参考回答的胜率，并通过人工评估检验了 GPT-4 判断与人类判断的一致性
 
 ### 结果分析
 
-1. **训练效率**
-   - DPO训练时间约为RLHF的60%
-   - 内存使用减少约40%
+1. **优化效率**
+   - 情感任务中，DPO 的奖励–KL 前沿优于 PPO，即使 PPO 能直接使用真实奖励（PPO-GT）
 
 2. **最终性能**
-   - 在有用性方面，两者相当
-   - RLHF在无害性方面略胜一筹
-   - DPO在训练稳定性上表现更好
+   - TL;DR 摘要：温度为 0 时，DPO 对参考摘要的胜率约 61%，PPO 在其最优温度（同为 0）下约 57%；DPO 对采样温度也更鲁棒
+   - Anthropic HH 对话：DPO 是唯一胜过数据集中偏好回答的计算高效方法，效果与计算开销大得多的 Best of 128 相当或更好。论文评估了一个公开的 PPO 模型，但在所试的 prompt 和采样温度下都没能超过 Pythia-2.8B 基座，因此这一任务上用 Best of 128 作为 PPO 水平的粗略代理，没有直接与 PPO 对比
 
-3. **可扩展性**
-   - DPO更容易扩展到大规模模型
-   - RLHF在超大模型上容易出现训练不稳定
+3. **适用范围**
+   - 论文只评估到 6B 参数，扩展到更大模型被列为未来工作
+   - GPT-4 计算的胜率受评估 prompt 影响；DPO 与基于显式奖励的方法在分布外的泛化比较，论文认为还需要更全面的研究
 
 ## 各自优势与局限
 
 ### RLHF优势
 1. **理论成熟**: 基于强化学习理论基础
 2. **灵活性强**: 可以使用复杂的奖励函数
-3. **工业验证**: 已在多个大模型中得到验证
+3. **工业验证**: 已在多个大模型中得到验证，如 [InstructGPT](https://arxiv.org/abs/2203.02155) 和 [Anthropic 的 HH 助手](https://arxiv.org/abs/2204.05862)
 
 ### RLHF局限
 1. **训练复杂**: 三阶段训练，超参数调优困难
@@ -114,14 +123,14 @@ final_model = train_dpo(sft_model, preference_dataset)
 3. **资源友好**: 内存和计算需求更低
 
 ### DPO局限
-1. **理论限制**: 基于特定假设，适用性可能有限
-2. **奖励建模**: 无法提供显式的奖励信号
+1. **理论限制**: 推导依赖 Bradley-Terry（或 Plackett-Luce）偏好模型假设，适用性可能有限
+2. **奖励建模**: 只有与策略绑定的隐式奖励，没有可单独使用的奖励模型
 3. **调优空间**: 超参数调优选择相对有限
 
 ## 选择建议
 
 ### 选择RLHF的场景
-- 对最终性能要求极高
+- 需要在训练中对策略自己的新生成结果持续打分（在线采样）
 - 有充足的计算资源
 - 需要复杂的奖励函数设计
 - 团队有丰富的RL经验
@@ -141,6 +150,6 @@ final_model = train_dpo(sft_model, preference_dataset)
 
 ## 结论
 
-DPO和RLHF各有优劣，选择哪种方法需要根据具体场景和需求来决定。对于大多数应用场景，DPO提供了一个更实用的解决方案，而RLHF在追求极致性能时仍有其价值。
+DPO和RLHF各有优劣，选择哪种方法需要根据具体场景和需求来决定。对于大多数应用场景，DPO提供了一个更实用的解决方案，而在需要显式奖励模型和在线采样的场景中，RLHF仍有其价值。
 
 随着技术的不断发展，我们期待看到更多创新的对齐算法，为构建更安全、更有用的AI系统提供支持。
