@@ -1,7 +1,6 @@
 ---
 import {
-  highlightNotebookCode,
-  renderNotebookMarkdown,
+  renderNotebookCells,
   type ParsedNotebook,
 } from '@/utils/notebook-parser';
 
@@ -21,12 +20,7 @@ const {
   showMetadata = false,
 } = Astro.props;
 
-// Build-time HTML per cell, index-aligned with notebook.cells.
-const renderedCells = await Promise.all(notebook.cells.map((cell) => {
-  if (cell.type === 'code') return highlightNotebookCode(cell.source, notebook.language);
-  if (cell.type === 'markdown') return renderNotebookMarkdown(cell.source);
-  return '';
-}));
+const renderedCells = await renderNotebookCells(notebook);
 
 const kernelName = notebook.metadata.kernelspec?.display_name
   || notebook.metadata.language_info?.name

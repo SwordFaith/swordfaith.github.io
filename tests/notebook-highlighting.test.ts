@@ -282,6 +282,97 @@ describe('highlightNotebookCode: languages and failures', () => {
   });
 });
 
+describe('highlightNotebookCode: size cap', () => {
+  // Highlighting costs ~0.2 <span> per character; data-heavy cells would put tens of thousands of nodes
+  // in the page. Above the cap the full source renders as one escaped text node instead.
+  const pythonLines = ['def f(x):', '    return {"k": x * 2}  # c', 'values = [1, 2, 3]'];
+  const python = (chars: number) => Array.from({ length: chars }, (_, i) => pythonLines[i % 3]).join('\n').slice(0, chars);
+  const plainOverhead = async () => (await highlightNotebookCode('x'.repeat(40_000), 'python')).length - 40_000;
+
+  it('still highlights code at exactly 32,000 characters', async () => {
+    const source = python(32_000);
+    expect(source).toHaveLength(32_000);
+    const html = await highlightNotebookCode(source, 'python');
+    expect(html).toMatch(/<span style="color:/);
+    expect(textOf(first(html, 'code'))).toBe(source);
+  });
+
+  it('renders 32,001 characters as plain text: no token spans, exact text, size proportional to input', async () => {
+    const source = python(32_001);
+    const html = await highlightNotebookCode(source, 'python');
+    expect(html).not.toContain('<span');
+    expect(attr(first(html, 'pre'), 'data-language')).toBe('plaintext');
+    expect(textOf(first(html, 'code'))).toBe(source);
+    // Only escaping adds bytes: here just the quotes, 5 extra bytes each for &quot;.
+    const quotes = source.split('"').length - 1;
+    expect(html.length).toBe(source.length + 5 * quotes + await plainOverhead());
+  });
+
+  it('caps the line count too: 2,000 lines are highlighted, 2,001 are not', async () => {
+    const lines = (count: number) => Array.from({ length: count }, (_, i) => String(i % 10)).join('\n');
+    expect(await highlightNotebookCode(lines(2_000), 'python')).toMatch(/<span style="color:/);
+    const over = await highlightNotebookCode(lines(2_001), 'python');
+    expect(over).not.toContain('<span');
+    expect(textOf(first(over, 'code'))).toBe(lines(2_001));
+  });
+
+  it('applies the cap to Markdown code blocks', async () => {
+    const source = python(40_000);
+    const html = await renderNotebookMarkdown(`\`\`\`python\n${source}\n\`\`\``);
+    expect(html).not.toContain('<span');
+    expect(textOf(first(html, 'code'))).toBe(`${source}\n`);
+  });
+
+  it('builds the plain-text block only from escaped text, never from notebook markup', async () => {
+    const source = `</code></pre><script>alert(1)</script><img src=x onerror=alert(2)> & "q" 'a'${' '.repeat(40_000)}`;
+    const html = await highlightNotebookCode(source, 'python');
+    expect(elementsOf(html).map((element) => element.tagName)).toEqual(['pre', 'code']);
+    expect(textOf(first(html, 'code'))).toBe(source);
+    expect(html).toContain('&lt;/code&gt;&lt;/pre&gt;&lt;script&gt;');
+    expect(html).toContain('&amp; &quot;q&quot; &#39;a&#39;');
+  });
+});
+
+describe('fallback when the highlighter cannot be created', () => {
+  it('still renders every cell, with escaped plain text for code cells and Markdown code blocks', async () => {
+    vi.resetModules();
+    vi.doMock('@astrojs/markdown-remark/shiki', async (importOriginal) => ({
+      ...await importOriginal<typeof import('@astrojs/markdown-remark/shiki')>(),
+      createShikiHighlighter: () => Promise.reject(new Error('simulated engine load failure')),
+    }));
+    try {
+      const isolated = await import('../src/utils/notebook-parser');
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const code = 'if a < b:\n    print("x & \'y\'")\n';
+      const notebook = isolated.NotebookParser.parse({
+        cells: [
+          { cell_type: 'code', source: code, outputs: [], execution_count: 1 },
+          { cell_type: 'markdown', source: 'Intro\n\n```python\nz = a < b\n```' },
+          { cell_type: 'raw', source: 'raw' },
+        ],
+        metadata: { language_info: { name: 'python' } },
+        nbformat: 4,
+        nbformat_minor: 5,
+      } as NotebookData);
+
+      const [codeHtml, markdownHtml, rawHtml] = await isolated.renderNotebookCells(notebook);
+      expect(codeHtml).not.toContain('<span');
+      expect(attr(first(codeHtml, 'pre'), 'data-language')).toBe('plaintext');
+      expect(textOf(first(codeHtml, 'code'))).toBe(code);
+      expect(codeHtml).toContain('&lt; b:\n    print(&quot;x &amp; &#39;y&#39;&quot;)');
+
+      expect(markdownHtml).toContain('<p>Intro</p>');
+      expect(markdownHtml).not.toContain('<span');
+      expect(textOf(first(markdownHtml, 'code'))).toBe('z = a < b\n');
+      expect(rawHtml).toBe('');
+      expect(warn.mock.calls.map((call) => String(call[0])).join('\n')).toContain('simulated engine load failure');
+    } finally {
+      vi.doUnmock('@astrojs/markdown-remark/shiki');
+      vi.resetModules();
+    }
+  });
+});
+
 describe('NotebookParser: code cell language', () => {
   const parse = (metadata: unknown) => NotebookParser.parse({
     cells: [],

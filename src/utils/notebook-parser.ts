@@ -253,25 +253,45 @@ function notebookLanguage(metadata: NotebookData['metadata']): string {
   return name?.trim().toLowerCase() ?? 'plaintext';
 }
 
+// Highlighted output costs ~9-12 bytes of HTML and ~0.2 <span> per source character (measured with Shiki on
+// Python code and numeric list literals). 32,000 characters keeps ~750 lines of typical code, or 300 lines of
+// 100 characters, highlighted while bounding a block to ~6,500 token spans and ~400 KB; data cells beyond that
+// (e.g. a 129 KB list literal: 1.6-3.1 MB and 26,000-53,000 spans) render as plain text. The line cap stops data made of many
+// short lines, which costs an extra span per line.
+const MAX_HIGHLIGHT_CHARS = 32_000;
+const MAX_HIGHLIGHT_LINES = 2_000;
+
+const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+/**
+ * Plain-text block shaped like Shiki's (same classes and theme colours, so the global dark-mode rule applies),
+ * built only from escaped text and fixed attributes. Needs no highlighter, so it is the one fallback path.
+ */
+function plainCodeHtml(code: string): string {
+  return '<pre class="astro-code astro-code-themes github-light github-dark" '
+    + 'style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" '
+    + `tabindex="0" data-language="plaintext"><code>${code.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char])}</code></pre>`;
+}
+
 /**
  * Highlights code at build time. The rendered text equals `code` (apart from CRLF becoming LF), unknown
- * languages render as plain text, and a highlighter failure falls back to plain text instead of failing
- * the build. Output is trusted HTML.
+ * languages render as plain text, and oversized input or any highlighter failure falls back to plain text
+ * instead of failing the build. Output is trusted HTML.
  */
 export async function highlightNotebookCode(code: string, language: string): Promise<string> {
+  if (code.length > MAX_HIGHLIGHT_CHARS || code.split('\n').length > MAX_HIGHLIGHT_LINES) return plainCodeHtml(code);
   const name = language.trim().toLowerCase();
   // Shiki resolves names through plain-object lookups, and the highlighter is cached for the whole build:
   // names like "constructor" or "__proto__" hit Object.prototype and break later language loads.
   // Shiki's `ansi` mode interprets escape sequences instead of showing them, so it would alter the text.
   const lang = name && name !== 'ansi' && !(name in Object.prototype) ? name : 'plaintext';
-  const highlighter = await createShikiHighlighter({ themes: SHIKI_THEMES });
-  // Astro's helper strips one trailing newline; add one so the rendered text keeps every newline of the source.
-  const source = `${code}\n`;
   try {
-    return await highlighter.codeToHtml(source, lang, HIGHLIGHT_OPTIONS);
+    const highlighter = await createShikiHighlighter({ themes: SHIKI_THEMES });
+    // Astro's helper strips one trailing newline; add one so the rendered text keeps every newline of the source.
+    return await highlighter.codeToHtml(`${code}\n`, lang, HIGHLIGHT_OPTIONS);
   } catch (error) {
     console.warn(`[notebook] Highlighting as "${lang}" failed, rendering plain text: ${errorMessage(error)}`);
-    return highlighter.codeToHtml(source, 'plaintext', HIGHLIGHT_OPTIONS);
+    return plainCodeHtml(code);
   }
 }
 
@@ -321,6 +341,15 @@ export async function renderNotebookMarkdown(source: string, attachments?: Parse
     pre.childNodes.forEach((child) => { child.parentNode = pre; });
   }));
   return serialize(fragment);
+}
+
+/** Build-time HTML for each cell, index-aligned with notebook.cells; raw cells get ''. */
+export function renderNotebookCells(notebook: ParsedNotebook): Promise<string[]> {
+  return Promise.all(notebook.cells.map((cell) => {
+    if (cell.type === 'code') return highlightNotebookCode(cell.source, notebook.language);
+    if (cell.type === 'markdown') return renderNotebookMarkdown(cell.source, cell.attachments);
+    return '';
+  }));
 }
 
 export class NotebookParser {
