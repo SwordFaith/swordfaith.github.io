@@ -44,14 +44,14 @@ export const METADATA = {
     template: `%s | ${SITE.name}`,
   },
   description: SITE.description,
-  keywords: ['LLM', '算法工程师', '强化学习', '后训练', '技术博客'],
+  keywords: ['SwordFaith', 'LLM', '后训练', '强化学习', '技术博客'],
   robots: {
     index: true,
     follow: true,
   },
   image: {
     src: '/og-image.png',
-    alt: 'SwordFaith：LLM 后训练与强化学习技术博客',
+    alt: 'SwordFaith 分享图：LLM × RL，Post-training & reinforcement learning，Algorithms, frameworks and data；右侧为 Prompt → Policy π → Reward 的对齐循环示意图',
   },
   openGraph: {
     siteName: SITE.name,
