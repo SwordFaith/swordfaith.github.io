@@ -1,5 +1,5 @@
 import { parseFragment, type DefaultTreeAdapterTypes } from 'parse5';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   highlightNotebookCode,
   NotebookParser,
@@ -10,6 +10,7 @@ import {
 // Markdown cells come from .ipynb files we do not control and are injected with set:html.
 // Highlighting needs inline style attributes, which the sanitizer must keep rejecting for
 // notebook-authored HTML, so styles may only appear on markup Shiki generated itself.
+// Highlighting must also never change what the reader sees, nor let notebook content fail the build.
 
 type Element = DefaultTreeAdapterTypes.Element;
 
@@ -35,14 +36,21 @@ function textOf(node: DefaultTreeAdapterTypes.ChildNode): string {
   return 'childNodes' in node ? node.childNodes.map(textOf).join('') : '';
 }
 
-// Every element carrying a style attribute must sit inside a Shiki-generated <pre class="astro-code">.
+function first(html: string, tag: string): Element {
+  const element = elementsOf(html).find((candidate) => candidate.tagName === tag);
+  if (!element) throw new Error(`No <${tag}> in ${html}`);
+  return element;
+}
+
+// Shiki's <pre> carries a style with --shiki-dark-bg; notebook HTML cannot forge one because the
+// sanitizer drops every style attribute. Every styled element must sit inside such a <pre>.
 function stylesOutsideShiki(html: string): string[] {
   const offenders: string[] = [];
   const walk = (nodes: DefaultTreeAdapterTypes.ChildNode[], insideShiki: boolean) => {
     for (const node of nodes) {
       if (!('tagName' in node)) continue;
-      const isShikiPre = node.tagName === 'pre' && /\bastro-code\b/.test(attr(node, 'class') ?? '');
       const style = attr(node, 'style');
+      const isShikiPre = node.tagName === 'pre' && (style ?? '').includes('--shiki-dark-bg');
       if (style !== undefined && !insideShiki && !isShikiPre) offenders.push(`${node.tagName}: ${style}`);
       walk(node.childNodes, insideShiki || isShikiPre);
     }
@@ -51,24 +59,44 @@ function stylesOutsideShiki(html: string): string[] {
   return offenders;
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('renderNotebookMarkdown: highlighting', () => {
   it('renders fenced code with the same dual-theme Shiki markup as blog posts', async () => {
     // The global `html.dark .astro-code` rule only switches themes for this exact markup shape.
     const html = await renderNotebookMarkdown('```python\n# note\ndef f():\n    return "s"\n```');
-    const pre = elementsOf(html).find((element) => element.tagName === 'pre');
-    expect(pre && attr(pre, 'class')).toMatch(/\bastro-code\b/);
-    expect(pre && attr(pre, 'data-language')).toBe('python');
-    expect(pre && attr(pre, 'style')).toContain('--shiki-dark-bg');
+    const pre = first(html, 'pre');
+    expect(attr(pre, 'class')).toMatch(/\bastro-code\b/);
+    expect(attr(pre, 'data-language')).toBe('python');
+    expect(attr(pre, 'style')).toContain('--shiki-dark-bg');
 
     const keyword = elementsOf(html).find((element) => element.tagName === 'span' && textOf(element) === 'def');
     expect(keyword && attr(keyword, 'style')).toMatch(/^color:#[0-9A-F]{6};--shiki-dark:#[0-9A-F]{6}$/i);
   });
 
-  it('shows exactly the fenced text, so highlighting never alters the code', async () => {
+  it('shows exactly the text the unhighlighted Markdown renderer showed', async () => {
+    // marked ends a code block's text with one newline of its own; it must survive highlighting too.
     const source = 'if a < b and c > d:\n    print("x & y")  # tail';
     const html = await renderNotebookMarkdown(`\`\`\`python\n${source}\n\`\`\``);
-    const code = elementsOf(html).find((element) => element.tagName === 'code');
-    expect(code && textOf(code)).toBe(source);
+    expect(textOf(first(html, 'code'))).toBe(`${source}\n`);
+  });
+
+  it('highlights a raw HTML block that has the shape of a Markdown code block', async () => {
+    const html = await renderNotebookMarkdown('<pre><code class="language-python">x &lt; 1</code></pre>');
+    expect(attr(first(html, 'pre'), 'data-language')).toBe('python');
+    expect(textOf(first(html, 'code'))).toBe('x < 1');
+  });
+
+  it('keeps <br> line breaks inside a raw <pre><code> block', async () => {
+    const html = await renderNotebookMarkdown('<pre><code>a = 1<br>b = 2</code></pre>');
+    expect(html).toBe('<pre><code>a = 1<br>b = 2</code></pre>');
+  });
+
+  it('keeps text and elements beside <code> inside a raw <pre>', async () => {
+    const html = await renderNotebookMarkdown('<pre>before <b>bold</b><code>x</code> after</pre>');
+    expect(html).toBe('<pre>before <b>bold</b><code>x</code> after</pre>');
   });
 
   it('leaves inline code and surrounding Markdown alone', async () => {
@@ -79,27 +107,35 @@ describe('renderNotebookMarkdown: highlighting', () => {
   it.each(['no-such-lang', 'constructor', '__proto__', ''])(
     'falls back to plain text for the unknown fence language %j instead of failing the build',
     async (language) => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
       const html = await renderNotebookMarkdown(`\`\`\`${language}\nx = 1\n\`\`\``);
-      const pre = elementsOf(html).find((element) => element.tagName === 'pre');
-      expect(pre && attr(pre, 'data-language')).toBe('plaintext');
-      expect(html).toContain('x = 1');
+      expect(attr(first(html, 'pre'), 'data-language')).toBe('plaintext');
+      expect(textOf(first(html, 'code'))).toBe('x = 1\n');
     },
   );
 });
 
 describe('renderNotebookMarkdown: security', () => {
-  it('cannot smuggle style or class payloads through a fake pre-highlighted block', async () => {
-    // Raw HTML in a Markdown cell posing as Shiki output must be rebuilt from its text,
-    // identical to a genuine fenced block holding the same code.
+  it('rebuilds a text-only fake Shiki block from its text, dropping its style and class payloads', async () => {
     const fake = await renderNotebookMarkdown(
       '<pre class="astro-code" style="position:fixed;inset:0;z-index:99">'
-      + '<code class="language-python fixed inset-0 evil-class">'
-      + '<span style="color:red;background:url(https://evil.example/x)" class="evil-span">x = 1</span>'
-      + '</code></pre>',
+      + '<code class="language-python fixed inset-0 evil-class">x = 1\n</code></pre>',
     );
     const genuine = await renderNotebookMarkdown('```python\nx = 1\n```');
     expect(fake.trim()).toBe(genuine.trim());
     expect(fake).not.toMatch(/position:fixed|evil|z-index|inset-0/);
+  });
+
+  it('leaves a fake block with markup inside as sanitized HTML, with no style attributes at all', async () => {
+    // Not rebuilt (that would change its content), so it gets no Shiki styles and keeps none of its own.
+    // Its classes survive like any notebook HTML class: a known, separately tracked sanitizer gap.
+    const html = await renderNotebookMarkdown(
+      '<pre class="astro-code" style="position:fixed;inset:0">'
+      + '<code class="language-python"><span style="color:red;background:url(https://evil.example/x)">x = 1</span></code></pre>',
+    );
+    expect(elementsOf(html).filter((element) => attr(element, 'style') !== undefined)).toEqual([]);
+    expect(html).not.toMatch(/position:fixed|evil\.example/);
+    expect(textOf(first(html, 'code'))).toBe('x = 1');
   });
 
   it('still strips style attributes from notebook HTML outside code blocks', async () => {
@@ -117,8 +153,7 @@ describe('renderNotebookMarkdown: security', () => {
     const tags = elementsOf(html).map((element) => element.tagName);
     expect(tags).not.toContain('script');
     expect(tags).not.toContain('img');
-    const code = elementsOf(html).find((element) => element.tagName === 'code');
-    expect(code && textOf(code)).toBe('<script>alert(1)</script><img src=x onerror=alert(2)>');
+    expect(textOf(first(html, 'code'))).toBe('<script>alert(1)</script><img src=x onerror=alert(2)>\n');
   });
 
   it('runs the sanitizer before highlighting, so dangerous elements around code blocks are dropped', async () => {
@@ -131,24 +166,85 @@ describe('renderNotebookMarkdown: security', () => {
   });
 });
 
-describe('highlightNotebookCode', () => {
-  it('keeps the exact source text, matching what the copy button copies', async () => {
-    const source = 'metrics = {\n    "kl": [0.08, 0.09],  # comment\n}\n\tprint(f"{metrics!r}")';
-    const html = await highlightNotebookCode(source, 'python');
-    const code = elementsOf(html).find((element) => element.tagName === 'code');
-    expect(code && textOf(code)).toBe(source);
+describe('highlightNotebookCode: source fidelity', () => {
+  // The Copy button copies cell.source verbatim, so the rendered text must match it exactly.
+  it.each([
+    ['ends with a newline', 'x = 1\n'],
+    ['ends with two newlines', 'x = 1\n\n'],
+    ['is empty', ''],
+    ['is only a newline', '\n'],
+    ['uses tabs and mixed indentation', 'def f():\n\tif x:\n\t    return "\\t"'],
+    ['has a lone surrogate', 'label = "\ud800"'],
+    ['has a very long line', `total = ${Array.from({ length: 5000 }, (_, i) => `v${i}`).join(' + ')}`],
+    ['mixes comments, strings and markup characters', 'metrics = {\n    "kl": [0.08],  # <b>c</b> & d\n}'],
+  ])('renders exactly the source when it %s', async (_label, source) => {
+    expect(textOf(first(await highlightNotebookCode(source, 'python'), 'code'))).toBe(source);
   });
 
+  it('renders CRLF line endings as LF lines (cell sources are already normalized to LF)', async () => {
+    expect(textOf(first(await highlightNotebookCode('a\r\nb\r\n', 'python'), 'code'))).toBe('a\nb\n');
+  });
+});
+
+describe('highlightNotebookCode: languages and failures', () => {
   it('does not let prototype-named fence languages break highlighting for the rest of the build', async () => {
     // The Shiki highlighter is cached and shared, so one bad name from a notebook must not poison it.
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     await renderNotebookMarkdown('```constructor\nx\n```\n\n```__proto__\ny\n```\n\n```toString\nz\n```');
-    const pre = elementsOf(await highlightNotebookCode('library(dplyr)', 'r')).find((element) => element.tagName === 'pre');
-    expect(pre && attr(pre, 'data-language')).toBe('r');
+    expect(attr(first(await highlightNotebookCode('library(dplyr)', 'r'), 'pre'), 'data-language')).toBe('r');
   });
 
-  it('accepts mixed-case kernel languages such as R', async () => {
-    const pre = elementsOf(await highlightNotebookCode('x <- 1', 'R')).find((element) => element.tagName === 'pre');
-    expect(pre && attr(pre, 'data-language')).toBe('r');
+  it.each([['R', 'r'], ['  Python  ', 'python'], ['python extra', 'plaintext'], ['<script>', 'plaintext']])(
+    'normalizes the language name %j to %j',
+    async (language, expected) => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      expect(attr(first(await highlightNotebookCode('x', language), 'pre'), 'data-language')).toBe(expected);
+    },
+  );
+
+  it('renders malformed ANSI escape sequences as escaped plain text instead of failing the build', async () => {
+    // Shiki's ansi mode throws on a dimmed out-of-range 256-colour index.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const source = '\u001b[2;38;5;999m<b>x</b> & y';
+    const html = await highlightNotebookCode(source, 'ansi');
+    expect(attr(first(html, 'pre'), 'data-language')).toBe('plaintext');
+    expect(textOf(first(html, 'code'))).toBe(source);
+    expect(elementsOf(html).map((element) => element.tagName)).not.toContain('b');
+    expect(warn).toHaveBeenCalledOnce();
+
+    // The same failure inside a Markdown cell must not reject either.
+    const markdownHtml = await renderNotebookMarkdown(`\`\`\`ansi\n${source}\n\`\`\``);
+    expect(textOf(first(markdownHtml, 'code'))).toBe(`${source}\n`);
+  });
+
+  it('falls back to plain text when the highlighter fails for any other reason', async () => {
+    vi.resetModules();
+    vi.doMock('@astrojs/markdown-remark/shiki', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@astrojs/markdown-remark/shiki')>();
+      return {
+        ...actual,
+        createShikiHighlighter: async (...args: Parameters<typeof actual.createShikiHighlighter>) => {
+          const real = await actual.createShikiHighlighter(...args);
+          return {
+            ...real,
+            codeToHtml: (...call: Parameters<typeof real.codeToHtml>) => (call[1] === 'plaintext'
+              ? real.codeToHtml(...call)
+              : Promise.reject(new Error('simulated tokenizer failure'))),
+          };
+        },
+      };
+    });
+    try {
+      const isolated = await import('../src/utils/notebook-parser');
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const html = await isolated.highlightNotebookCode('if a < b:\n    pass\n', 'python');
+      expect(attr(first(html, 'pre'), 'data-language')).toBe('plaintext');
+      expect(textOf(first(html, 'code'))).toBe('if a < b:\n    pass\n');
+      expect(warn.mock.calls[0]?.[0]).toContain('simulated tokenizer failure');
+    } finally {
+      vi.doUnmock('@astrojs/markdown-remark/shiki');
+      vi.resetModules();
+    }
   });
 });
 

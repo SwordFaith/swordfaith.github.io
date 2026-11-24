@@ -234,19 +234,33 @@ function notebookLanguage(metadata: NotebookData['metadata']): string {
   return name?.trim().toLowerCase() ?? 'plaintext';
 }
 
-/** Highlights code at build time; unknown languages fall back to plain text. Output is trusted HTML. */
+/**
+ * Highlights code at build time. The rendered text equals `code` (apart from CRLF becoming LF), unknown
+ * languages render as plain text, and a highlighter failure falls back to plain text instead of failing
+ * the build. Output is trusted HTML.
+ */
 export async function highlightNotebookCode(code: string, language: string): Promise<string> {
   const name = language.trim().toLowerCase();
   // Shiki resolves names through plain-object lookups, and the highlighter is cached for the whole build:
   // names like "constructor" or "__proto__" hit Object.prototype and break later language loads.
   const lang = name && !(name in Object.prototype) ? name : 'plaintext';
   const highlighter = await createShikiHighlighter({ themes: SHIKI_THEMES });
-  return highlighter.codeToHtml(code, lang, { defaultColor: 'light' });
+  // Astro's helper strips one trailing newline; add one so the rendered text keeps every newline of the source.
+  const source = `${code}\n`;
+  try {
+    return await highlighter.codeToHtml(source, lang, { defaultColor: 'light' });
+  } catch (error) {
+    // e.g. Shiki's `ansi` mode throws on some malformed escape sequences.
+    console.warn(`[notebook] Highlighting as "${lang}" failed, rendering plain text: ${errorMessage(error)}`);
+    return highlighter.codeToHtml(source, 'plaintext', { defaultColor: 'light' });
+  }
 }
 
-function textContent(node: DefaultTreeAdapterTypes.ChildNode): string {
-  if (node.nodeName === '#text') return (node as DefaultTreeAdapterTypes.TextNode).value;
-  return 'childNodes' in node ? node.childNodes.map(textContent).join('') : '';
+// Only blocks shaped like Markdown code tokens can be rebuilt without changing what the reader sees.
+function plainCodeChild(pre: DefaultTreeAdapterTypes.Element): DefaultTreeAdapterTypes.Element | null {
+  const [code, ...rest] = pre.childNodes;
+  if (rest.length > 0 || !code || !('tagName' in code) || code.tagName !== 'code') return null;
+  return code.childNodes.every((child) => child.nodeName === '#text') ? code : null;
 }
 
 function collectPreElements(
@@ -262,20 +276,20 @@ function collectPreElements(
 }
 
 /**
- * Renders an untrusted Markdown cell. The HTML is sanitized first; afterwards every <pre><code> block is
- * rebuilt by Shiki from its text content alone, so Shiki's inline styles never pass through the sanitizer
- * (which keeps dropping style attributes) and markup inside a block, e.g. fake highlight spans, is discarded.
+ * Renders an untrusted Markdown cell. The HTML is sanitized first; afterwards each <pre> holding only a
+ * text-only <code> (the shape of Markdown code blocks) is rebuilt by Shiki from that text, so Shiki's inline
+ * styles never pass through the sanitizer, which keeps dropping style attributes. Any other <pre> stays as
+ * sanitized, unhighlighted HTML.
  */
 export async function renderNotebookMarkdown(source: string): Promise<string> {
   const fragment = parseFragment(sanitizeNotebookHtml(markdown.parse(source, { async: false })));
   await Promise.all(collectPreElements(fragment, []).map(async (pre) => {
-    const code = pre.childNodes.find(
-      (child): child is DefaultTreeAdapterTypes.Element => 'tagName' in child && child.tagName === 'code',
-    );
+    const code = plainCodeChild(pre);
     if (!code) return;
+    const text = code.childNodes.map((child) => (child as DefaultTreeAdapterTypes.TextNode).value).join('');
     const className = code.attrs.find((attribute) => attribute.name === 'class')?.value ?? '';
     const language = className.match(/(?:^|\s)language-(\S+)/)?.[1] ?? 'plaintext';
-    const highlighted = parseFragment(await highlightNotebookCode(textContent(code), language));
+    const highlighted = parseFragment(await highlightNotebookCode(text, language));
     const shikiPre = highlighted.childNodes.find(
       (child): child is DefaultTreeAdapterTypes.Element => 'tagName' in child && child.tagName === 'pre',
     );
