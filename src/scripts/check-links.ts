@@ -5,6 +5,9 @@
  * `action` values and fails when a link points at nothing in dist/, or, with
  * --require-trailing-slash, when a link to a page lacks the trailing slash
  * (GitHub Pages answers those with a 301 and they disagree with the canonical URL).
+ * Absolute links on the site's own origin (SITE.origin) count as internal. <link>
+ * elements (canonical, RSS, sitemap, stylesheets) get the same rules as <a>: a
+ * canonical that 404s or redirects is a real defect even though it is metadata.
  *
  * Usage: node src/scripts/check-links.ts [--require-trailing-slash] [distDir]
  */
@@ -14,24 +17,39 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
 import type { DefaultTreeAdapterMap } from 'parse5';
+import { SITE } from '../config/site.ts';
 
 type HtmlNode = DefaultTreeAdapterMap['node'];
 
 export type LinkProblem = 'missing' | 'no-trailing-slash';
 
-// Placeholder origin used only to resolve relative links against the page URL
-const BASE = 'http://site.invalid';
+/**
+ * Known defects that are reported as warnings instead of failing the check.
+ * Keep each entry exact (page + raw link value) and remove it once fixed.
+ */
+const KNOWN_ISSUES = [
+  // The 404 page is emitted as 404.html, but its canonical points at /404/ (no such page).
+  { page: '404.html', link: `${SITE.origin}/404/` },
+];
 
 /**
  * Returns the decoded pathname a link points at, or null when the link is not
- * an internal page/file link (external, mailto:, protocol-relative, fragment-only, empty).
- * Query strings and fragments are dropped.
+ * internal. Internal means relative, root-relative, or absolute/protocol-relative
+ * on the site's own origin; other origins, mailto: and other schemes, fragment-only
+ * and empty values are ignored. Query strings and fragments are dropped.
  */
-export function internalPath(value: string, pagePath: string): string | null {
+export function internalPath(value: string, pagePath: string, origin: string = SITE.origin): string | null {
   const link = value.trim();
-  if (link === '' || link.startsWith('#') || link.startsWith('//')) return null;
-  if (/^[a-z][a-z\d+.-]*:/i.test(link)) return null;
-  const { pathname } = new URL(link, BASE + pagePath);
+  if (link === '' || link.startsWith('#')) return null;
+  let url: URL;
+  try {
+    url = new URL(link, origin + pagePath);
+  } catch {
+    // Only absolute URLs with an invalid host can fail to parse; none are on this site
+    return null;
+  }
+  if (url.origin !== origin) return null;
+  const { pathname } = url;
   try {
     return decodeURIComponent(pathname);
   } catch {
@@ -97,6 +115,7 @@ function main(): void {
   const files = new Set(listFiles(distDir));
   const pages = [...files].filter((file) => file.endsWith('.html') && !file.startsWith('pagefind/')).sort();
   const problems: string[] = [];
+  const unseenKnownIssues = new Set(KNOWN_ISSUES);
   let checked = 0;
 
   for (const page of pages) {
@@ -108,17 +127,29 @@ function main(): void {
       seen.add(value);
       checked++;
       const problem = checkPath(target, files, requireTrailingSlash);
-      if (problem === 'missing') {
-        problems.push(`  ${page}: ${value} -> target not found in dist (${target})`);
-      } else if (problem === 'no-trailing-slash') {
-        problems.push(`  ${page}: ${value} -> page link without trailing slash (use ${target}/)`);
+      if (problem === null) continue;
+      const message = problem === 'missing'
+        ? `${page}: ${value} -> target not found in dist (${target}); link to an existing page or file`
+        : `${page}: ${value} -> page link without trailing slash; use ${target}/`;
+      const known = KNOWN_ISSUES.find((issue) => issue.page === page && issue.link === value);
+      if (known) {
+        unseenKnownIssues.delete(known);
+        console.warn(`Known issue (not failing): ${message}`);
+      } else {
+        problems.push(`  ${message}`);
       }
     }
+  }
+  for (const issue of unseenKnownIssues) {
+    console.warn(`Known issue no longer found, remove it from KNOWN_ISSUES: ${issue.page}: ${issue.link}`);
   }
 
   const rules = requireTrailingSlash ? 'missing targets, trailing slashes' : 'missing targets';
   if (problems.length > 0) {
-    console.error(`Link check failed (${rules}): ${problems.length} problem(s) in ${pages.length} HTML files\n`);
+    console.error(
+      `Link check failed (${rules}): ${problems.length} problem(s) in ${pages.length} HTML files.`
+      + ' Fix the links in the source pages; reproduce locally with: npm run build && npm run check:links\n',
+    );
     console.error(problems.join('\n'));
     process.exit(1);
   }

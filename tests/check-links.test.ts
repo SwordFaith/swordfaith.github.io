@@ -57,17 +57,48 @@ describe('link classification', () => {
     expect(check('/tags/%E5%BC%BA%E5%8C%96/')).toBe('missing');
   });
 
-  it('ignores external, mailto, protocol-relative and fragment-only links', () => {
+  it('ignores other origins, other schemes and fragment-only links', () => {
     for (const href of [
       'https://github.com/SwordFaith',
-      'https://swordfaith.github.io/blog',
+      'http://swordfaith.github.io/blog/',
+      'https://swordfaith.github.io.evil.example/blog/',
       'mailto:someone@example.com',
+      'javascript:void(0)',
       '//cdn.example.com/x.js',
       '#main-content',
       '',
     ]) {
       expect(check(href), href).toBe('ignored');
     }
+  });
+
+  // Canonical/RSS links and pasted post URLs use the absolute site URL; they can
+  // break exactly like root-relative ones
+  describe('absolute links on the site origin', () => {
+    it('reports a missing page', () => {
+      expect(check('https://swordfaith.github.io/blog/deleted-post/')).toBe('missing');
+      expect(check('https://swordfaith.github.io/404/')).toBe('missing');
+    });
+
+    it('accepts an existing page or file', () => {
+      expect(check('https://swordfaith.github.io/blog/dpo-vs-rlhf/')).toBe('ok');
+      expect(check('https://swordfaith.github.io/')).toBe('ok');
+      expect(check('https://swordfaith.github.io/rss.xml')).toBe('ok');
+    });
+
+    it('applies the trailing-slash rule', () => {
+      expect(check('https://swordfaith.github.io/blog')).toBe('no-trailing-slash');
+    });
+
+    it('treats protocol-relative links to the same host as internal', () => {
+      expect(check('//swordfaith.github.io/blog/')).toBe('ok');
+      expect(check('//swordfaith.github.io/blog/deleted-post/')).toBe('missing');
+    });
+
+    it('uses the origin it is given', () => {
+      expect(internalPath('https://example.org/blog/', '/', 'https://example.org')).toBe('/blog/');
+      expect(internalPath('https://swordfaith.github.io/blog/', '/', 'https://example.org')).toBeNull();
+    });
   });
 
   it('strips query strings and fragments from internal links', () => {
