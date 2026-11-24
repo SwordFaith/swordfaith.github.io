@@ -55,7 +55,7 @@
 
 ### 5. 性能优化
 - **静态生成**：纯静态输出，不使用前端框架 island（无 `client:*` 指令），交互由少量内联脚本实现（已实现）
-- **图片优化**：关于页头像经 `astro:assets` 输出 WebP；文章封面等图片的 WebP 转换 + 懒加载（待实现）
+- **图片优化**：关于页头像经 `astro:assets` 输出 WebP；列表/卡片中的封面和 Notebook 输出图片已设 `loading="lazy"`；frontmatter `cover` 是字符串、以普通 `<img>` 输出，不经 `astro:assets`，封面的 WebP 转换和尺寸优化待实现
 - **搜索功能**：Pagefind 本地搜索引擎（已启用，`npm run build` 时生成索引）
 - **SEO 优化**：Meta、Open Graph、Twitter Card、文章页 BlogPosting JSON-LD、站点地图、RSS（已实现）
 
@@ -135,7 +135,7 @@
 7. **一键发布脚本**：自动化内容分发 + 平台 API 集成 + 发布状态追踪
 
 ### Phase 5: 高级功能和优化
-1. **性能优化**：文章图片懒加载 + WebP 转换 + Bundle 分析 + 缓存策略
+1. **性能优化**：文章封面 WebP 转换 + Bundle 分析 + 缓存策略
 2. **数据可视化增强**：Observable Plot + Plotly.js + 自定义图表组件
 3. **学术数据集成**：Google Scholar API + 论文信息同步 + 引用统计
 4. **Vercel 部署支持**：多平台部署选项 + 环境变量管理 + 自动部署
@@ -176,7 +176,7 @@
   - 数据无实质变化时不改写文件
 - **GitHubStats** (`src/components/about/GitHubStats.astro`): 构建时读取静态 JSON，浏览时不调用 API
   - 编程语言使用分析（带颜色编码和百分比）
-  - 精选仓库：名称、描述、标签和角色写在组件内，Star/Fork 数取自同步数据
+  - 精选仓库：名称、描述、标签、角色和一组 Star/Fork 数写在组件内；同步数据 `pinnedRepositoriesData` 中有同名 `full_name` 的条目时改用其 Star/Fork 数，否则显示写死的数字。已提交的快照只有 `OpenBMB/MiniCPM`、没有 `verl-project/verl`，所以本地构建、PR 构建和刷新失败回退快照的部署中 veRL 显示写死的数字（同步脚本自身的仓库列表另写在 `sync-github-daily.ts` 中，任一仓库获取失败即整体失败）
   - 贡献活动概览（今年估算提交数、月均、周均）
   - Props 控制显示项：语言统计、仓库列表、贡献活动、仓库数量上限
 
@@ -226,7 +226,7 @@
 #### 长期性能优化
 1. **图片处理系统**：
    - 实现 WebP 自动转换和多格式支持
-   - 添加图片懒加载和渐进式加载
+   - 添加图片渐进式加载
    - 集成图片压缩和 CDN 优化
 2. **Bundle 优化**：
    - 分析和优化 JavaScript 包大小
