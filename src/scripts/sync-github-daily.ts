@@ -126,26 +126,6 @@ function hasMeaningfulGitHubStatsChanges(previous: unknown, next: unknown): bool
     !== JSON.stringify(normalizeGitHubStatsForComparison(next));
 }
 
-// 语言颜色映射
-const LANGUAGE_COLORS: Record<string, string> = {
-  'TypeScript': '#3178c6',
-  'JavaScript': '#f1e05a',
-  'Python': '#3572A5',
-  'Java': '#b07219',
-  'C++': '#f34b7d',
-  'C': '#555555',
-  'Go': '#00ADD8',
-  'Rust': '#dea584',
-  'Vue': '#4FC08D',
-  'HTML': '#e34c26',
-  'CSS': '#1572B6',
-  'Shell': '#89e051',
-  'Dockerfile': '#384d54',
-  'Jupyter Notebook': '#DA5B0B',
-  'CUDA': '#3A4E3A',
-  'Makefile': '#427819'
-};
-
 class GitHubDailySync {
   private username: string;
   private token: string;
@@ -263,6 +243,7 @@ class GitHubDailySync {
     const topRepos = repositories
       .filter(repo => !repo.name.includes('.github.io'))
       .slice(0, 50);
+    let fetchedCount = 0;
 
     for (const repo of topRepos) {
       try {
@@ -274,16 +255,21 @@ class GitHubDailySync {
           for (const [language, bytes] of Object.entries(languages)) {
             languageStats[language] = (languageStats[language] || 0) + (bytes as number);
           }
+          fetchedCount++;
         }
 
         // 防止 API 限制
         await this.sleep(50);
-      } catch (error) {
+      } catch {
         console.warn(`  Warning: Failed to get languages for ${repo.name}`);
       }
     }
 
     console.log(`  Found ${Object.keys(languageStats).length} programming languages`);
+    // Fail instead of saving partial language stats
+    if (fetchedCount < topRepos.length) {
+      throw new Error(`Failed to fetch languages for ${topRepos.length - fetchedCount} of ${topRepos.length} repositories`);
+    }
     return languageStats;
   }
 
@@ -299,7 +285,7 @@ class GitHubDailySync {
   }>> {
     const pinnedRepos = [
       { owner: 'OpenBMB', repo: 'MiniCPM' },
-      { owner: 'volcengine', repo: 'verl' }
+      { owner: 'verl-project', repo: 'verl' }
     ];
 
     const pinnedData = [];
@@ -330,6 +316,10 @@ class GitHubDailySync {
     }
 
     console.log(`  Found ${pinnedData.length} pinned repositories`);
+    // Fail instead of saving partial pinned repository data
+    if (pinnedData.length < pinnedRepos.length) {
+      throw new Error(`Failed to fetch ${pinnedRepos.length - pinnedData.length} of ${pinnedRepos.length} pinned repositories`);
+    }
     return pinnedData;
   }
 
