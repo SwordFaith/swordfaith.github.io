@@ -22,7 +22,7 @@ $$
 \pi^*(y|x) = \frac{1}{Z(x)} \pi_0(y|x) \exp\left(\frac{1}{\beta} R^*(x,y)\right)
 $$
 
-其中 $\pi_0$ 是参考模型（通常是 SFT 模型，原论文记作 $\pi_{\text{ref}}$），$Z(x) = \sum_y \pi_0(y|x) \exp\left(\frac{1}{\beta} R^*(x,y)\right)$ 是配分函数，实际中很难计算。对上式取对数并整理，可以把奖励写成最优策略的函数：
+其中 $\pi_0$ 是参考模型（通常是 SFT 模型，原论文记作 $\pi_{\text{ref}}$），$Z(x) = \sum_y \pi_0(y|x) \exp\left(\frac{1}{\beta} R^*(x,y)\right)$ 是配分函数，实际中估计代价很高。对上式取对数并整理，可以把奖励写成最优策略的函数：
 
 $$
 R^*(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_0(y|x)} + \beta \log Z(x)
@@ -36,7 +36,7 @@ $$
 
 其中 $y_w$ 和 $y_l$ 分别表示偏好和非偏好回答。
 
-原论文把 $\hat{r}_\theta(x,y) = \beta \log \frac{\pi_\theta(y|x)}{\pi_0(y|x)}$ 称为由语言模型隐式定义的奖励，这也是论文副标题 "Your Language Model is Secretly a Reward Model" 的含义。这个损失的梯度会提高 $y_w$ 的似然、降低 $y_l$ 的似然，并按 $\sigma\left(\hat{r}_\theta(x,y_l) - \hat{r}_\theta(x,y_w)\right)$ 加权：隐式奖励把这对回答排得越错，权重越大。原论文报告，去掉这个权重的朴素版本可能导致语言模型退化。
+原论文把 $\hat{r}_\theta(x,y) = \beta \log \frac{\pi_\theta(y|x)}{\pi_0(y|x)}$ 称为由语言模型隐式定义的奖励，这也是论文标题后半句 "Your Language Model is Secretly a Reward Model" 的含义。这个损失的梯度包含方向相反的两项：沿 $\nabla_\theta \log \pi_\theta(y_w|x)$ 推高偏好回答、沿 $-\nabla_\theta \log \pi_\theta(y_l|x)$ 压低非偏好回答，合起来拉大两者 log 概率比之间的相对差距；整体按 $\sigma\left(\hat{r}_\theta(x,y_l) - \hat{r}_\theta(x,y_w)\right)$ 加权：隐式奖励把这对回答排得越错，权重越大。原论文报告，去掉这个权重的朴素版本可能导致语言模型退化。需要注意，损失只约束相对差距，并不保证 $y_w$ 的绝对似然上升：训练中偏好回答的似然也常常下降，[Razin et al. (2024)](https://arxiv.org/abs/2410.08847) 将这一现象称为 likelihood displacement。
 
 ## 关键差异对比
 
@@ -52,35 +52,44 @@ $$
 
 ### RLHF实现
 ```python
+import copy
+
 # 阶段1: SFT
 sft_model = train_sft(base_model, sft_dataset)
 
 # 阶段2: 奖励模型训练
-reward_model = train_reward_model(sft_model, preference_dataset)
+# Separate copy of the SFT model with a scalar reward head, so the policy is not overwritten
+reward_model = train_reward_model(add_scalar_head(copy.deepcopy(sft_model)), preference_dataset)
 
 # 阶段3: PPO训练
-final_model = ppo_training(sft_model, reward_model, prompts)
+# Frozen copy of the SFT model as the KL reference; sft_model itself is trained as the policy
+ref_model = copy.deepcopy(sft_model).eval().requires_grad_(False)
+final_model = ppo_training(sft_model, ref_model, reward_model, prompts)
 ```
 
 ### DPO实现
 ```python
+import copy
+
 # 阶段1: SFT
 sft_model = train_sft(base_model, sft_dataset)
 
 # 阶段2: DPO训练
 def dpo_loss(model, reference_model, batch):
-    chosen_logps = model.log_prob(batch.chosen)
-    rejected_logps = model.log_prob(batch.rejected)
+    chosen_logps = model.log_prob(batch.prompts, batch.chosen)
+    rejected_logps = model.log_prob(batch.prompts, batch.rejected)
     
-    chosen_ref_logps = reference_model.log_prob(batch.chosen)
-    rejected_ref_logps = reference_model.log_prob(batch.rejected)
+    chosen_ref_logps = reference_model.log_prob(batch.prompts, batch.chosen)
+    rejected_ref_logps = reference_model.log_prob(batch.prompts, batch.rejected)
     
     chosen_logits = beta * (chosen_logps - chosen_ref_logps)
     rejected_logits = beta * (rejected_logps - rejected_ref_logps)
     
     return -F.logsigmoid(chosen_logits - rejected_logits).mean()
 
-final_model = train_dpo(sft_model, preference_dataset)
+# Frozen copy of the SFT model as the reference; sft_model itself is trained as the policy
+reference_model = copy.deepcopy(sft_model).eval().requires_grad_(False)
+final_model = train_dpo(sft_model, reference_model, preference_dataset)
 ```
 
 ## 原论文的实验结果
@@ -90,7 +99,7 @@ final_model = train_dpo(sft_model, preference_dataset)
 ### 实验设置
 - **任务与数据**: IMDb 情感可控生成、Reddit TL;DR 摘要、Anthropic HH 单轮对话
 - **模型**: 情感任务用 GPT-2-large；摘要任务在 GPT-J 的 SFT 模型上微调；对话任务基于 Pythia-2.8B。论文评估的模型最大为 6B 参数
-- **评估方式**: 情感任务有真实奖励（情感分类器），比较奖励与 KL 的权衡前沿；摘要和对话任务用 GPT-4 计算相对参考回答的胜率，并通过人工评估检验了 GPT-4 判断与人类判断的一致性
+- **评估方式**: 情感任务有真实奖励（情感分类器），比较奖励与 KL 的权衡前沿；摘要和对话任务用 GPT-4 计算相对参考回答的胜率。论文只在 TL;DR 摘要上做了人工评估来检验 GPT-4 判断与人类判断的一致性，对话任务的胜率没有经过人工验证
 
 ### 结果分析
 

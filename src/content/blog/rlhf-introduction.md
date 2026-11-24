@@ -28,7 +28,7 @@ $$
 - $\beta$ 是KL散度的权重系数
 - $\mathbb{KL}$ 表示KL散度，用于防止模型偏离初始分布过远
 
-这一带 KL 惩罚的目标来自 [Ziegler et al. (2019)](https://arxiv.org/abs/1909.08593)，[InstructGPT](https://arxiv.org/abs/2203.02155) 等后续工作沿用了同样的做法。
+[Ziegler et al. (2019)](https://arxiv.org/abs/1909.08593) 将这一带 KL 惩罚的目标用于语言模型的偏好微调，[InstructGPT](https://arxiv.org/abs/2203.02155) 等后续工作沿用了同样的做法。
 
 ## 实现步骤
 
@@ -39,7 +39,7 @@ RLHF的实现通常包含以下三个阶段（例如 [InstructGPT](https://arxiv
 首先使用高质量的指令-回答对数据集对预训练模型进行监督微调：
 
 ```python
-def supervised_fine_tuning(model, dataset):
+def train_sft(model, dataset):
     optimizer = AdamW(model.parameters(), lr=5e-5)
     
     for batch in dataset:
@@ -50,6 +50,8 @@ def supervised_fine_tuning(model, dataset):
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
+    
+    return model
 ```
 
 ### 2. 奖励模型训练
@@ -61,10 +63,10 @@ def train_reward_model(reward_model, preference_dataset):
     optimizer = AdamW(reward_model.parameters(), lr=1e-5)
     
     for batch in preference_dataset:
-        chosen, rejected = batch
+        prompts, chosen, rejected = batch
         
-        chosen_reward = reward_model(chosen)
-        rejected_reward = reward_model(rejected)
+        chosen_reward = reward_model(prompts, chosen)
+        rejected_reward = reward_model(prompts, rejected)
         
         # Bradley-Terry模型
         loss = -torch.log(torch.sigmoid(chosen_reward - rejected_reward)).mean()
@@ -72,11 +74,13 @@ def train_reward_model(reward_model, preference_dataset):
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
+    
+    return reward_model
 ```
 
 ### 3. PPO强化学习
 
-使用PPO算法优化语言模型（省略了价值模型、GAE 等细节）：
+使用PPO算法优化语言模型（省略了价值模型、GAE 等细节）。注意 rollout 必须从策略分布中随机采样（不能用贪心解码），`old_log_probs` 也必须按同一个采样分布计算，这样 $\log \frac{\pi_\theta}{\pi_0}$ 在样本上的取值才是 KL 项的估计：
 
 ```python
 def ppo_training(policy_model, ref_model, reward_model, dataset):
@@ -86,7 +90,8 @@ def ppo_training(policy_model, ref_model, reward_model, dataset):
             
             # 生成回答
             with torch.no_grad():
-                old_responses = policy_model.generate(prompts)
+                # Sample (no greedy decoding) so the log-ratio below estimates the KL term
+                old_responses = policy_model.generate(prompts, do_sample=True)
                 old_log_probs = policy_model.log_prob(prompts, old_responses)
                 ref_log_probs = ref_model.log_prob(prompts, old_responses)
                 # KL penalty against the SFT reference model, matching the objective above
@@ -107,6 +112,8 @@ def ppo_training(policy_model, ref_model, reward_model, dataset):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+    
+    return policy_model
 ```
 
 ## 关键挑战
@@ -142,9 +149,9 @@ RLHF训练需要同时维护多个模型，计算开销较大。
 
 以 [InstructGPT（Ouyang et al., 2022）](https://arxiv.org/abs/2203.02155) 为例，论文报告 RLHF 在以下方面带来了改善：
 
-1. **有用性**：在人工评估中，1.3B 参数的 InstructGPT 的输出比 175B 的 GPT-3 更受偏好
-2. **无害性**：有害（toxic）内容的生成有小幅减少，但偏见没有改善
-3. **诚实性**：TruthfulQA 上的真实性有所提升，封闭域任务中的幻觉率从 GPT-3 的 41% 降到 21%
+1. **有用性**：在其 prompt 分布上的人工评估中，1.3B 参数的 InstructGPT 的输出比 175B 的 GPT-3 更受偏好
+2. **无害性**：在 RealToxicityPrompts 上，被要求以尊重的方式回答时，InstructGPT 比 GPT-3 生成更少的有害（toxic）内容；去掉这一要求后，这一优势消失。偏见方面没有改善
+3. **诚实性**：TruthfulQA 上的真实性有所提升；在其 API prompt 分布的封闭域任务中，幻觉率从 GPT-3 的 41% 降到 21%
 
 [Bai et al. (2022)](https://arxiv.org/abs/2204.05862) 也用 RLHF 训练了有用且无害的对话助手。
 
