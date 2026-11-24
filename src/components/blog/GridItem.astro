@@ -24,7 +24,7 @@ const permalink = getPermalink(post.id, 'post');
       <span>{post.data.author}</span>
     </div>
     <h3 class="mb-3 text-xl font-bold leading-snug text-page">
-      <a href={permalink} class="hover:text-primary">{post.data.title}</a>
+      <a href={permalink} class="hover:text-link">{post.data.title}</a>
     </h3>
     {post.data.description && <p class="mb-5 line-clamp-3 leading-relaxed text-muted">{post.data.description}</p>}
     <PostTags tags={post.data.tags.slice(0, 3)} class="mt-auto" />

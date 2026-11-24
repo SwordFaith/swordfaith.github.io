@@ -7,11 +7,11 @@ import { SITE_AUTHOR } from '@/utils/site-config';
   <div class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 md:items-end">
     <div>
       <nav class="flex flex-wrap gap-x-6 gap-y-3" aria-label="页脚导航">
-        {footerData.links.map(({ text, href }) => <a href={href} class="text-sm text-muted hover:text-primary">{text}</a>)}
+        {footerData.links.map(({ text, href }) => <a href={href} class="text-sm text-muted hover:text-link">{text}</a>)}
       </nav>
       <div class="mt-5 flex gap-5">
         {footerData.socialLinks.map(({ text, href, ariaLabel }) => (
-          <a href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel} class="text-sm font-medium text-muted hover:text-primary">{text}</a>
+          <a href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel} class="text-sm font-medium text-muted hover:text-link">{text}</a>
         ))}
       </div>
     </div>

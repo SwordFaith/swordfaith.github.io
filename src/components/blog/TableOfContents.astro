@@ -17,7 +17,7 @@ const tocHeadings = headings.filter((heading) => heading.depth === 2 || heading.
       <ol class="space-y-2 border-l border-gray-200 pl-4 text-sm dark:border-slate-700">
         {tocHeadings.map((heading) => (
           <li class:list={[{ 'ml-4': heading.depth === 3 }]}>
-            <a href={`#${heading.slug}`} class="text-muted hover:text-primary">{heading.text}</a>
+            <a href={`#${heading.slug}`} class="text-muted hover:text-link">{heading.text}</a>
           </li>
         ))}
       </ol>
@@ -31,7 +31,7 @@ const tocHeadings = headings.filter((heading) => heading.depth === 2 || heading.
     <ol class="space-y-2 border-l border-gray-200 pl-4 dark:border-slate-700">
       {tocHeadings.map((heading) => (
         <li class:list={[{ 'ml-3': heading.depth === 3 }]}>
-          <a href={`#${heading.slug}`} class="leading-relaxed text-muted hover:text-primary">{heading.text}</a>
+          <a href={`#${heading.slug}`} class="leading-relaxed text-muted hover:text-link">{heading.text}</a>
         </li>
       ))}
     </ol>

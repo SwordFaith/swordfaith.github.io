@@ -16,7 +16,7 @@ const { previousPost, nextPost } = Astro.props;
     {previousPost && (
       <a href={getPermalink(previousPost.id, 'post')} class="group rounded-xl border border-gray-200 p-4 transition-colors hover:border-primary dark:border-slate-700 dark:hover:border-primary" rel="prev">
         <span class="mb-1 block text-sm text-muted">上一篇</span>
-        <span class="font-medium text-page group-hover:text-primary">{previousPost.data.title}</span>
+        <span class="font-medium text-page group-hover:text-link">{previousPost.data.title}</span>
       </a>
     )}
     {nextPost && (
@@ -29,7 +29,7 @@ const { previousPost, nextPost } = Astro.props;
         rel="next"
       >
         <span class="mb-1 block text-sm text-muted">下一篇</span>
-        <span class="font-medium text-page group-hover:text-primary">{nextPost.data.title}</span>
+        <span class="font-medium text-page group-hover:text-link">{nextPost.data.title}</span>
       </a>
     )}
   </div>

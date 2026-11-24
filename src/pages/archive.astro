@@ -45,7 +45,7 @@ const metadata = {
               <time datetime={post.data.publishDate.toISOString()} class="shrink-0 text-sm tabular-nums text-muted sm:w-20">
                 {post.data.publishDate.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', timeZone: 'UTC' })}
               </time>
-              <a href={getPermalink(post.id, 'post')} class="text-lg font-medium leading-snug text-page hover:text-primary">
+              <a href={getPermalink(post.id, 'post')} class="text-lg font-medium leading-snug text-page hover:text-link">
                 {post.data.title}
               </a>
             </li>

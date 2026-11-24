@@ -52,7 +52,9 @@ export default {
       // they take no opacity modifier (e.g. text-muted/50 generates nothing).
       textColor: {
         page: 'var(--aw-color-text-page)',
-        muted: 'var(--aw-color-text-muted)'
+        muted: 'var(--aw-color-text-muted)',
+        // Theme-aware link blue (lighter in dark mode); use for hover text instead of `primary`
+        link: 'var(--aw-color-link)'
       },
       backgroundColor: {
         page: 'var(--aw-color-bg-page)'
