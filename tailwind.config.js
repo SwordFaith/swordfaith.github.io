@@ -6,6 +6,8 @@ export default {
     extend: {
       colors: {
         primary: {
+          // Bare `primary` (text-primary, hover:border-primary, ...) follows the theme variable
+          DEFAULT: 'var(--aw-color-primary)',
           50: '#eff6ff',
           100: '#dbeafe', 
           200: '#bfdbfe',
@@ -43,11 +45,19 @@ export default {
           800: '#1e293b',
           900: 'rgb(3 6 32)', // AstroWind exact dark background
           950: 'rgb(3 6 32)'
-        },
-        // AstroWind color system
-        page: {
-          DEFAULT: 'rgb(255 255 255)'
         }
+      },
+      // Semantic colours backed by the light/dark CSS variables in astrowind.css. Set per property
+      // because `page` means a different variable for text and background. Being var() values,
+      // they take no opacity modifier (e.g. text-muted/50 generates nothing).
+      textColor: {
+        page: 'var(--aw-color-text-page)',
+        muted: 'var(--aw-color-text-muted)',
+        // Theme-aware link blue (lighter in dark mode); use for hover text instead of `primary`
+        link: 'var(--aw-color-link)'
+      },
+      backgroundColor: {
+        page: 'var(--aw-color-bg-page)'
       },
       fontFamily: {
         // Latin glyphs come from self-hosted variable fonts (see astrowind.css);

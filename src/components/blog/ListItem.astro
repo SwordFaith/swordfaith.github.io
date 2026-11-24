@@ -28,7 +28,7 @@ const permalink = getPermalink(post.id, 'post');
         {post.data.katex && <span class="rounded bg-green-50 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/25 dark:text-green-300">KaTeX</span>}
       </div>
       <h2 class="mb-3 text-2xl font-bold leading-snug text-page">
-        <a href={permalink} class="hover:text-primary">{post.data.title}</a>
+        <a href={permalink} class="hover:text-link">{post.data.title}</a>
       </h2>
       {post.data.description && <p class="mb-4 leading-relaxed text-muted">{post.data.description}</p>}
       <PostTags tags={post.data.tags} />
