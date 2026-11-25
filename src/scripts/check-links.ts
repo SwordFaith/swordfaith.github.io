@@ -24,15 +24,6 @@ type HtmlNode = DefaultTreeAdapterMap['node'];
 
 export type LinkProblem = 'missing' | 'no-trailing-slash';
 
-/**
- * Known defects that are reported as warnings instead of failing the check.
- * Keep each entry exact (page + raw link value) and remove it once fixed.
- */
-const KNOWN_ISSUES = [
-  // The 404 page is emitted as 404.html, but its canonical points at /404/ (no such page).
-  { page: '404.html', link: `${SITE.origin}/404/` },
-];
-
 /** Resolve against the built page URL, skipping empty and off-site references. */
 export function internalUrl(value: string, pagePath: string, origin: string = SITE.origin): URL | null {
   if (!value.trim()) return null;
@@ -119,7 +110,6 @@ function main(): void {
   }
   const pages = [...files].filter((file) => file.endsWith('.html') && !file.startsWith('pagefind/')).sort();
   const problems: string[] = [];
-  const unseenKnownIssues = new Set(KNOWN_ISSUES);
   let checked = 0;
 
   const documents = new Map(pages.map((page) => [
@@ -153,17 +143,8 @@ function main(): void {
       const message = problem === 'missing'
         ? `${page}: ${value} -> target not found in dist (${target}); link to an existing page or file`
         : `${page}: ${value} -> page link without trailing slash; use ${target}/`;
-      const known = KNOWN_ISSUES.find((issue) => issue.page === page && issue.link === value);
-      if (known) {
-        unseenKnownIssues.delete(known);
-        console.warn(`Known issue (not failing): ${message}`);
-      } else {
-        problems.push(`  ${message}`);
-      }
+      problems.push(`  ${message}`);
     }
-  }
-  for (const issue of unseenKnownIssues) {
-    console.warn(`Known issue no longer found, remove it from KNOWN_ISSUES: ${issue.page}: ${issue.link}`);
   }
 
   const rules = requireTrailingSlash ? 'missing targets, trailing slashes' : 'missing targets';

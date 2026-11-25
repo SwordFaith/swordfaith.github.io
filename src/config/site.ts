@@ -4,6 +4,8 @@ export interface MetaData {
   description?: string;
   keywords?: string[];
   canonical?: string;
+  // GitHub Pages serves the 404 document at any missing URL.
+  noCanonical?: boolean;
   robots?: {
     index?: boolean;
     follow?: boolean;
