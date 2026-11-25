@@ -198,6 +198,19 @@ describe('link checker CLI', () => {
     }
   });
 
+  it('fails on a broken canonical even on the 404 page', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'check-404-canonical-'));
+    try {
+      writeFileSync(join(dir, 'index.html'), '<title>Home</title>');
+      writeFileSync(join(dir, '404.html'), '<link rel="canonical" href="https://swordfaith.github.io/404/">');
+      const result = spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('404.html: https://swordfaith.github.io/404/ -> target not found');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('requires a built homepage and scans it', () => {
     const dir = mkdtempSync(join(tmpdir(), 'check-links-'));
     const run = () => spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });
