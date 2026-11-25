@@ -2,8 +2,11 @@
 import { Marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
+import { serialize } from 'parse5';
+import { notebookMath, renderNotebookMath } from '@/utils/notebook-math';
 import {
-  sanitizeNotebookHtml,
+  sanitizeNotebookFragment,
+  type ParsedCell,
   type ParsedNotebook,
 } from '@/utils/notebook-parser';
 
@@ -23,7 +26,7 @@ const {
   showMetadata = false,
 } = Astro.props;
 
-const markdown = new Marked();
+const markdown = new Marked(notebookMath);
 markdown.use(markedHighlight({
   langPrefix: 'hljs language-',
   highlight(code, lang) {
@@ -32,8 +35,11 @@ markdown.use(markedHighlight({
   },
 }));
 
-function renderMarkdown(source: string): string {
-  return sanitizeNotebookHtml(markdown.parse(source, { async: false }));
+function renderMarkdown(cell: ParsedCell): string {
+  const html = markdown.parse(cell.source, { async: false });
+  const fragment = sanitizeNotebookFragment(html, cell.attachments);
+  renderNotebookMath(fragment);
+  return serialize(fragment);
 }
 
 const kernelName = notebook.metadata.kernelspec?.display_name
@@ -118,7 +124,7 @@ const kernelName = notebook.metadata.kernelspec?.display_name
         {cell.type === 'markdown' && (
           <div
             class="markdown-content prose prose-lg max-w-none dark:prose-invert dark:prose-dark prose-pre:bg-slate-900 prose-pre:text-slate-100"
-            set:html={renderMarkdown(cell.source)}
+            set:html={renderMarkdown(cell)}
           />
         )}
 
@@ -242,6 +248,10 @@ const kernelName = notebook.metadata.kernelspec?.display_name
 
   .markdown-content {
     @apply p-6 text-gray-800 dark:text-gray-300;
+  }
+
+  .markdown-content :global(.katex-display) {
+    @apply my-4 overflow-x-auto overflow-y-hidden py-2;
   }
 
   .raw-content {

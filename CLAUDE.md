@@ -90,7 +90,7 @@
     │   ├── search.astro         # 搜索
     │   ├── rss.xml.ts           # RSS
     │   ├── blog/                # 博客列表 + [...slug] 详情
-    │   ├── notebooks/           # Notebook 列表 + [...slug] 详情
+    │   ├── notebooks/           # Notebook 列表、详情和已发布源文件下载
     │   └── tags/                # 标签索引 + [tag] 列表（URL 为标签派生的 slug，见 utils/tags.ts：去掉 / \ ? # % 和控制字符，空白变 -，如 RLHF → /tags/RLHF、reward model → /tags/reward-model、C# → /tags/C）
     ├── components/
     │   ├── layout/              # BaseLayout / Layout / PageLayout / Metadata / BasicScripts
@@ -102,7 +102,7 @@
     │   └── about/GitHubStats.astro  # 读取 src/data/github-stats.json 静态渲染
     ├── content/
     │   ├── blog/                # 博客文章 Markdown（`draft: true` 不进入生产构建）
-    │   └── notebooks/           # Notebook 元数据（指向 public/notebooks/*.ipynb）
+    │   └── notebooks/           # Notebook 元数据和 .ipynb 源文件（draft: true 不发布详情和下载）
     ├── data/
     │   ├── github-stats.json    # 已提交的 GitHub 统计快照（PR 检查和部署刷新失败时的兜底）
     │   └── github-stats-default.json # 数据缺失时的兜底
