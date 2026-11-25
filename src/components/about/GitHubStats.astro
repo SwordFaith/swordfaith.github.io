@@ -158,7 +158,7 @@ const isRecent = (Date.now() - lastUpdateDate.getTime()) < 7 * 24 * 60 * 60 * 10
       </div>
       <div class="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
         <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{data.summary.activeYears}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">活跃年份</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">注册至今年数</div>
       </div>
     </div>
 
@@ -259,20 +259,21 @@ const isRecent = (Date.now() - lastUpdateDate.getTime()) < 7 * 24 * 60 * 60 * 10
 
     {showContributions && (
       <div class="mt-6">
-        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-4">贡献活动</h4>
+        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-4">提交活动估算</h4>
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">按今年有更新的公开仓库数估算，每个仓库计 5 次提交，上限为 300 次。月均和周均按全年折算。</p>
         <div class="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 p-6 rounded-lg">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div class="text-center">
               <div class="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">{data.recentActivity.thisYear.estimatedCommits}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">今年总贡献</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">今年估算提交数</div>
             </div>
             <div class="text-center">
               <div class="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">{data.recentActivity.thisYear.monthlyAverage}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">月均贡献</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">估算月均提交</div>
             </div>
             <div class="text-center">
               <div class="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-1">{data.recentActivity.thisYear.weeklyAverage}</div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">周均贡献</div>
+              <div class="text-sm text-gray-600 dark:text-gray-400">估算周均提交</div>
             </div>
           </div>
           
@@ -308,7 +309,7 @@ const isRecent = (Date.now() - lastUpdateDate.getTime()) < 7 * 24 * 60 * 60 * 10
     <div class="mt-6 pt-4 border-t border-gray-200 dark:border-slate-600">
       <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
         <span>
-          数据更新时间: {lastUpdateDate.toLocaleDateString('zh-CN')} {lastUpdateDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+          数据更新时间（UTC）: <time datetime={data.lastUpdate}>{lastUpdateDate.toISOString().slice(0, 16).replace('T', ' ')}</time>
         </span>
         <span class={`px-2 py-1 rounded text-xs ${isRecent ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'}`}>
           {isRecent ? '数据较新' : '可能需要更新'}
