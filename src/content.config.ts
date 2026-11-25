@@ -27,7 +27,6 @@ const notebooks = defineCollection({
     title: z.string(),
     description: z.string().optional(),
     publishDate: z.date(),
-    updateDate: z.date().optional(),
     tags: z.array(z.string()).default([]),
     author: z.string().default('Anonymous'),
     draft: z.boolean().default(false),

@@ -1,11 +1,11 @@
 ---
-import { getCollection } from 'astro:content';
+import { getPublishedPosts } from '@/utils/posts';
 import PageLayout from '@/components/layout/PageLayout.astro';
 import Headline from '@/components/ui/Headline.astro';
 import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
 import { getTagPath, getUniqueTags } from '@/utils/tags';
 
-const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const allPosts = await getPublishedPosts();
 const tagCounts = new Map<string, number>();
 
 for (const post of allPosts) {

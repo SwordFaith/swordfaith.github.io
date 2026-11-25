@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import { getCollection } from 'astro:content';
+import { getPublishedPosts } from '@/utils/posts';
 import List from '@/components/blog/List.astro';
 import PageLayout from '@/components/layout/PageLayout.astro';
 import Headline from '@/components/ui/Headline.astro';
@@ -9,8 +9,7 @@ import { getPermalink } from '@/utils/site-config';
 import { assertUniqueTagSlugs, getTagSlug, getUniqueTags } from '@/utils/tags';
 
 export async function getStaticPaths() {
-  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
-  const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+  const sortedPosts = await getPublishedPosts();
   const postsByTag = new Map<string, CollectionEntry<'blog'>[]>();
 
   for (const post of sortedPosts) {

@@ -1,5 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
+import { getPublishedPosts } from '@/utils/posts';
 import List from '@/components/blog/List.astro';
 import PostTags from '@/components/blog/PostTags.astro';
 import PageLayout from '@/components/layout/PageLayout.astro';
@@ -7,9 +7,8 @@ import SearchBox from '@/components/search/SearchBox.astro';
 import Headline from '@/components/ui/Headline.astro';
 import WidgetWrapper from '@/components/ui/WidgetWrapper.astro';
 
-const allPosts = await getCollection('blog', ({ data }) => !data.draft);
-const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
-const allTags = [...new Set(allPosts.flatMap((post) => post.data.tags))].sort();
+const sortedPosts = await getPublishedPosts();
+const allTags = [...new Set(sortedPosts.flatMap((post) => post.data.tags))].sort();
 
 const metadata = {
   title: '技术博客',

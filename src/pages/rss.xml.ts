@@ -1,12 +1,11 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
-import { getCollection } from 'astro:content';
+import { getPublishedPosts } from '@/utils/posts';
 import { SITE } from '@/config/site';
 import { getPermalink } from '@/utils/site-config';
 
 export async function GET(context: APIContext) {
-  const allPosts = await getCollection('blog', ({ data }) => !data.draft);
-  const sortedPosts = allPosts.sort((a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf());
+  const sortedPosts = await getPublishedPosts();
 
   return rss({
     title: SITE.title,

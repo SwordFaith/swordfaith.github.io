@@ -1,7 +1,7 @@
 ---
 import { type CollectionEntry, getCollection } from 'astro:content';
 import BaseLayout from '@/components/layout/BaseLayout.astro';
-import NotebookViewer from '@/components/notebook/NotebookViewer.astro';
+import SimpleNotebookViewer from '@/components/notebook/SimpleNotebookViewer.astro';
 import { NotebookParser } from '@/utils/notebook-parser';
 import { getPermalink } from '@/utils/site-config';
 
@@ -43,7 +43,7 @@ const parsedNotebook = await NotebookParser.loadNotebook(notebook.data.notebookP
       </div>
     </div>
 
-    <NotebookViewer
+    <SimpleNotebookViewer
       notebook={parsedNotebook}
       title={notebook.data.title}
       sourceUrl={notebook.data.notebookPath}

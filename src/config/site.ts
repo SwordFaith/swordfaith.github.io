@@ -3,23 +3,13 @@ export interface MetaData {
   ignoreTitleTemplate?: boolean;
   description?: string;
   keywords?: string[];
-  canonical?: string;
   robots?: {
     index?: boolean;
     follow?: boolean;
   };
   image?: string;
-  imageAlt?: string;
   openGraph?: {
-    url?: string;
-    siteName?: string;
-    locale?: string;
     type?: string;
-  };
-  twitter?: {
-    handle?: string;
-    site?: string;
-    cardType?: string;
   };
   // Article-level data; when set, emits article:* Open Graph tags and BlogPosting JSON-LD.
   article?: {
@@ -73,14 +63,10 @@ export const UI = {
 } as const;
 
 export const APP_BLOG = {
-  isEnabled: true,
-  postsPerPage: 6,
   post: {
     permalink: '/blog/%slug%',
-    robots: { index: true, follow: true },
   },
   list: {
     pathname: '/blog',
-    robots: { index: true, follow: true },
   },
 } as const;
