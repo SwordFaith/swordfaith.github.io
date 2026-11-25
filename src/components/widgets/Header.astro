@@ -100,11 +100,13 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
     searchButton?.addEventListener('click', () => setSearchOpen(searchButton.getAttribute('aria-expanded') !== 'true'));
     navigation.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setMenuOpen(false)));
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
         if (button.getAttribute('aria-expanded') === 'true') {
+          event.preventDefault();
           setMenuOpen(false);
           button.focus();
         } else if (searchButton?.getAttribute('aria-expanded') === 'true') {
+          event.preventDefault();
           setSearchOpen(false);
           searchButton.focus();
         }
