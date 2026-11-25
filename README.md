@@ -77,6 +77,20 @@ katex: true  # 启用数学公式
 # 文章内容
 ```
 
+## 📓 发布 Notebook
+
+将 `.ipynb` 源文件和对应的 Markdown 元数据放在 `src/content/notebooks/`。例如，源文件 `src/content/notebooks/experiments/example.ipynb` 对应以下 frontmatter：
+
+```yaml
+---
+title: "实验笔记"
+publishDate: 2024-01-01
+notebookPath: "/notebooks/experiments/example.ipynb"
+---
+```
+
+构建时只为已发布的条目生成详情页和 `.ipynb` 下载。设置 `draft: true` 可同时隐藏详情和源文件。Markdown 单元格支持 `$…$` 行内公式、独立的 `$$…$$` 公式块，以及 `![说明](attachment:plot.png)` 形式的同单元格 PNG 或 JPEG 附件。
+
 ## 🔧 技术栈
 
 - **前端框架**: Astro 7.x + TypeScript

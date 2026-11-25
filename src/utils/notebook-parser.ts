@@ -1,15 +1,15 @@
 import { Buffer } from 'node:buffer';
-import { readFile, realpath } from 'node:fs/promises';
-import path from 'node:path';
 import {
   parseFragment,
   serialize,
   type DefaultTreeAdapterTypes,
 } from 'parse5';
+import { readNotebookSource } from './notebook-source';
 
 export interface NotebookCell {
   cell_type: 'code' | 'markdown' | 'raw';
   source: string | string[];
+  attachments?: Record<string, unknown>;
   outputs?: NotebookOutput[];
   execution_count?: number | null;
   metadata?: Record<string, unknown>;
@@ -54,6 +54,7 @@ export interface ParsedCell {
   id: string;
   type: 'code' | 'markdown' | 'raw';
   source: string;
+  attachments?: ReadonlyMap<string, string>;
   outputs: ParsedOutput[];
   executionCount?: number | null;
 }
@@ -73,6 +74,9 @@ const ALLOWED_HTML_TAGS = new Set([
   'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
   'tr', 'u', 'ul', 'var',
 ]);
+
+const IMAGE_MIME_TYPES = ['image/png', 'image/jpeg'] as const;
+type ImageMimeType = (typeof IMAGE_MIME_TYPES)[number];
 
 const GLOBAL_HTML_ATTRIBUTES = new Set(['aria-label', 'class', 'title']);
 const TAG_HTML_ATTRIBUTES: Record<string, Set<string>> = {
@@ -95,14 +99,6 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function isWithinDirectory(root: string, candidate: string): boolean {
-  const relativePath = path.relative(root, candidate);
-  return relativePath !== ''
-    && relativePath !== '..'
-    && !relativePath.startsWith(`..${path.sep}`)
-    && !path.isAbsolute(relativePath);
-}
-
 function isSafeUrl(value: string, image = false): boolean {
   const url = value.trim();
   if (!url || /[\u0000-\u0020]/.test(url)) return false;
@@ -114,7 +110,7 @@ function isSafeUrl(value: string, image = false): boolean {
   return false;
 }
 
-function validImageBase64(value: unknown, mimeType: 'image/png' | 'image/jpeg'): string | null {
+function validImageBase64(value: unknown, mimeType: ImageMimeType): string | null {
   const base64 = textValue(value).replace(/\s/g, '');
   if (!base64 || base64.length % 4 === 1 || !/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) {
     return null;
@@ -131,6 +127,34 @@ function validImageBase64(value: unknown, mimeType: 'image/png' | 'image/jpeg'):
     : null;
 }
 
+function parseAttachments(attachments: unknown): ReadonlyMap<string, string> | undefined {
+  if (!attachments || typeof attachments !== 'object' || Array.isArray(attachments)) return undefined;
+
+  const images = new Map<string, string>();
+  for (const [name, bundle] of Object.entries(attachments)) {
+    if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) continue;
+    for (const mimeType of IMAGE_MIME_TYPES) {
+      const base64 = validImageBase64((bundle as Record<string, unknown>)[mimeType], mimeType);
+      if (!base64) continue;
+      images.set(name, `data:${mimeType};base64,${base64}`);
+      break;
+    }
+  }
+  return images;
+}
+
+function resolveAttachment(url: string, attachments: ReadonlyMap<string, string>): string | undefined {
+  const name = url.slice('attachment:'.length);
+  const image = attachments.get(name);
+  if (image) return image;
+
+  try {
+    return attachments.get(decodeURIComponent(name));
+  } catch {
+    return undefined;
+  }
+}
+
 function sanitizeAttribute(
   tagName: string,
   attribute: DefaultTreeAdapterTypes.Element['attrs'][number],
@@ -144,18 +168,26 @@ function sanitizeAttribute(
   if (name === 'src') {
     if (isSafeUrl(attribute.value, true)) return true;
     const match = /^data:(image\/(?:png|jpeg));base64,(.+)$/i.exec(attribute.value);
-    return Boolean(match && validImageBase64(match[2], match[1].toLowerCase() as 'image/png' | 'image/jpeg'));
+    return Boolean(match && validImageBase64(match[2], match[1].toLowerCase() as ImageMimeType));
   }
   return true;
 }
 
 function sanitizeNode(
   node: DefaultTreeAdapterTypes.ChildNode,
+  attachments?: ReadonlyMap<string, string>,
 ): DefaultTreeAdapterTypes.ChildNode | null {
   if (node.nodeName === '#text') return node;
   if (!('tagName' in node)) return null;
   if (node.namespaceURI !== 'http://www.w3.org/1999/xhtml' || !ALLOWED_HTML_TAGS.has(node.tagName)) {
     return null;
+  }
+
+  if (node.tagName === 'img' && attachments) {
+    const src = node.attrs.find((attribute) => attribute.name === 'src');
+    if (src && /^attachment:/i.test(src.value)) {
+      src.value = resolveAttachment(src.value, attachments) ?? '';
+    }
   }
 
   node.attrs = node.attrs.filter((attribute) => sanitizeAttribute(node.tagName, attribute));
@@ -166,17 +198,24 @@ function sanitizeNode(
     return null;
   }
   node.childNodes = node.childNodes
-    .map((child) => sanitizeNode(child))
+    .map((child) => sanitizeNode(child, attachments))
     .filter((child): child is DefaultTreeAdapterTypes.ChildNode => child !== null);
   return node;
 }
 
-export function sanitizeNotebookHtml(html: string): string {
+export function sanitizeNotebookFragment(
+  html: string,
+  attachments?: ReadonlyMap<string, string>,
+): DefaultTreeAdapterTypes.DocumentFragment {
   const fragment = parseFragment(html);
   fragment.childNodes = fragment.childNodes
-    .map((node) => sanitizeNode(node))
+    .map((node) => sanitizeNode(node, attachments))
     .filter((node): node is DefaultTreeAdapterTypes.ChildNode => node !== null);
-  return serialize(fragment);
+  return fragment;
+}
+
+export function sanitizeNotebookHtml(html: string): string {
+  return serialize(sanitizeNotebookFragment(html));
 }
 
 export class NotebookParser {
@@ -195,6 +234,7 @@ export class NotebookParser {
       id: `cell-${index}`,
       type: cell.cell_type,
       source: textValue(cell.source).replace(/\r\n?/g, '\n'),
+      attachments: cell.cell_type === 'markdown' ? parseAttachments(cell.attachments) : undefined,
       outputs: Array.isArray(cell.outputs)
         ? cell.outputs.map((output) => this.parseOutput(output))
         : [],
@@ -241,7 +281,7 @@ export class NotebookParser {
       return { type: 'unsupported', content: 'Output has no readable MIME data.' };
     }
 
-    for (const mimeType of ['image/png', 'image/jpeg'] as const) {
+    for (const mimeType of IMAGE_MIME_TYPES) {
       if (!(mimeType in data)) continue;
       const content = validImageBase64(data[mimeType], mimeType);
       if (content) return { type: 'image', content, mimeType };
@@ -288,70 +328,15 @@ export class NotebookParser {
   }
 
   static async loadNotebook(notebookPath: string): Promise<ParsedNotebook> {
-    const filePath = this.resolveNotebookPath(notebookPath);
-    const notebooksRoot = path.resolve(process.cwd(), 'public', 'notebooks');
-    let realFilePath: string;
-    let realNotebooksRoot: string;
-    try {
-      [realFilePath, realNotebooksRoot] = await Promise.all([
-        realpath(filePath),
-        realpath(notebooksRoot),
-      ]);
-    } catch (error) {
-      throw new Error(
-        `Unable to read notebook "${notebookPath}" at ${filePath}: ${errorMessage(error)}. `
-        + 'Check the content entry notebookPath and ensure the .ipynb file exists.',
-      );
-    }
-
-    if (!isWithinDirectory(realNotebooksRoot, realFilePath)) {
-      throw new Error(
-        `Invalid notebookPath "${notebookPath}": real file ${realFilePath} resolves outside `
-        + `the real public notebooks directory ${realNotebooksRoot}.`,
-      );
-    }
-    if (path.extname(realFilePath) !== '.ipynb') {
-      throw new Error(`Invalid notebookPath "${notebookPath}": real file must have an .ipynb extension.`);
-    }
-
-    let source: string;
-    try {
-      source = await readFile(realFilePath, 'utf8');
-    } catch (error) {
-      throw new Error(
-        `Unable to read notebook "${notebookPath}" at ${filePath}: ${errorMessage(error)}. `
-        + 'Check the content entry notebookPath and ensure the .ipynb file exists.',
-      );
-    }
-
+    const source = await readNotebookSource(notebookPath);
     let notebookJson: unknown;
     try {
       notebookJson = JSON.parse(source);
     } catch (error) {
-      throw new Error(
-        `Invalid notebook JSON in "${notebookPath}" at ${filePath}: ${errorMessage(error)}.`,
-      );
+      throw new Error(`Invalid notebook JSON in "${notebookPath}": ${errorMessage(error)}.`);
     }
 
     return this.parse(this.validateNotebook(notebookJson, notebookPath));
-  }
-
-  private static resolveNotebookPath(notebookPath: string): string {
-    if (!notebookPath.startsWith('/')) {
-      throw new Error(
-        `Invalid notebookPath "${notebookPath}": use a root-relative path such as "/notebooks/example.ipynb".`,
-      );
-    }
-    const publicRoot = path.resolve(process.cwd(), 'public');
-    const notebooksRoot = path.join(publicRoot, 'notebooks');
-    const filePath = path.resolve(publicRoot, `.${notebookPath}`);
-    if (!isWithinDirectory(notebooksRoot, filePath)) {
-      throw new Error(`Invalid notebookPath "${notebookPath}": path escapes the public notebooks directory.`);
-    }
-    if (path.extname(filePath) !== '.ipynb') {
-      throw new Error(`Invalid notebookPath "${notebookPath}": expected an .ipynb file.`);
-    }
-    return filePath;
   }
 
   private static validateNotebook(value: unknown, notebookPath: string): NotebookData {
