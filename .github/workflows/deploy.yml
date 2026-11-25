@@ -91,6 +91,9 @@ jobs:
       - name: Check internal links
         run: npm run check:links
 
+      - name: Check About page statistics
+        run: node src/scripts/check-about-stats.mjs
+
       - name: Install Chromium for browser tests
         if: github.event_name == 'pull_request'
         run: npx playwright-core install --with-deps --only-shell chromium
