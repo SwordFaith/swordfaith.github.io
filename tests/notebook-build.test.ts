@@ -22,6 +22,11 @@ const markdownCell = {
     '  $$\n',
     '  z^2\n',
     '  $$\n\n',
+    'Math after a hard line break\\\n',
+    '$$\n',
+    'w^2\n',
+    '$$\n\n',
+    'Literal double delimiters $$text$$ in prose.\n\n',
     'Markdown code `before\n$$\na+b\n$$\nafter`.\n\n',
     'Raw code <code>before\n$$\nc+d\n$$\nafter</code>.\n\n',
     '![Local plot](attachment:my%20plot.png)\n\n',
@@ -117,9 +122,12 @@ describe('built notebooks', () => {
 
   it('renders display math after prose and with indentation, while preserving multiline code', () => {
     const html = readFileSync(join(root, 'dist/notebooks/test-published/index.html'), 'utf8');
-    expect(html.match(/class="katex-display"/g)).toHaveLength(3);
+    expect(html.match(/class="katex-display"/g)).toHaveLength(4);
     expect(html).toContain('<annotation encoding="application/x-tex">y^2</annotation>');
     expect(html).toContain('<annotation encoding="application/x-tex">z^2</annotation>');
+    expect(html).toContain('Math after a hard line break<br><span class="katex-display">');
+    expect(html).toContain('<annotation encoding="application/x-tex">w^2</annotation>');
+    expect(html).toContain('Literal double delimiters $$text$$ in prose.');
     expect(html).toContain('<code>before $$ a+b $$ after</code>');
     expect(html).toContain('<code>before\n$$\nc+d\n$$\nafter</code>');
   });

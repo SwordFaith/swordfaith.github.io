@@ -46,11 +46,14 @@ export const notebookMath: MarkedExtension = {
         const index = source.search(/\n(?= {0,3}\$\$)|(?<!\\)\$/);
         return index < 0 ? undefined : index;
       },
-      tokenizer(source): MathToken | undefined {
+      tokenizer(source, tokens): MathToken | undefined {
         if (this.lexer.state.inRawBlock) return undefined;
         // Inside a paragraph, Marked can consume multiline code spans before
-        // reaching a line of display math.
-        if (source.startsWith('\n')) return displayToken(source, 'notebookInlineMath');
+        // reaching a line of display math. A hard break already consumed its newline.
+        if (source.startsWith('\n') || tokens.at(-1)?.type === 'br') {
+          const display = displayToken(source, 'notebookInlineMath');
+          if (display) return display;
+        }
         const match = INLINE.exec(source);
         if (!match || /\s$/.test(match[1])) return undefined;
         return { type: 'notebookInlineMath', raw: match[0], expression: match[1], display: false };
