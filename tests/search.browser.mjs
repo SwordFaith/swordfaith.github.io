@@ -163,6 +163,13 @@ test('dismissed results cannot reopen the blog dropdown when Pagefind finishes',
   assert.equal(await results.isVisible(), false);
   assert.equal(await renderedLinks.count(), 0);
 
+  await input.fill('slow blur');
+  await waitForPendingResult(page, 'slow blur');
+  await input.blur();
+  await releaseResult(page, 'slow blur');
+  assert.equal(await results.isVisible(), false);
+  assert.equal(await renderedLinks.count(), 0);
+
   // Advance the browser clock past the debounce without letting it expire before Escape.
   const now = new Date();
   await page.clock.install({ time: now });
@@ -197,6 +204,40 @@ test('an old result is discarded as soon as the query changes', async (t) => {
   await content.getByRole('link', { name: /new query/ }).waitFor();
 
   assert.deepEqual(await page.evaluate(() => globalThis.renderedTitles), ['new querySearch result']);
+});
+
+test('Escape dismisses a pending dropdown after clicking the loading text', async (t) => {
+  const page = await visit(t, '/blog/', { mockResults: 1 });
+  const input = page.locator('#site-search-input');
+  const results = page.locator('#site-search-results');
+
+  await input.fill('slow loading text');
+  await waitForPendingResult(page, 'slow loading text');
+  await results.getByText('正在搜索...').click();
+  await assertFocused(results);
+  await page.keyboard.press('Escape');
+  await releaseResult(page, 'slow loading text');
+
+  assert.equal(await results.isVisible(), false);
+  assert.equal(await results.locator('a').count(), 0);
+  await assertFocused(input);
+});
+
+test('resizing the header closes its search and discards in-flight results', async (t) => {
+  const page = await visit(t, '/', { mockResults: 1 });
+  const toggle = page.locator('[data-aw-toggle-search]');
+  const input = page.locator('#header-search-input');
+  const results = page.locator('#header-search-results');
+
+  await toggle.click();
+  await input.fill('slow resize');
+  await waitForPendingResult(page, 'slow resize');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await input.waitFor({ state: 'hidden' });
+  await releaseResult(page, 'slow resize');
+
+  assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(await results.locator('a').count(), 0);
 });
 
 test('inline results retain their query and stay visible when focus moves', async (t) => {
