@@ -9,8 +9,8 @@ import path from 'path';
 import { randomUUID } from 'node:crypto';
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { GITHUB_LANGUAGE_SAMPLE_SIZE, githubLanguageBytes, validateGitHubStats } from '../utils/github-stats.ts';
-import type { GitHubStatsData as GitHubStatsSnapshot } from '../utils/github-stats.ts';
+import { GITHUB_LANGUAGE_SAMPLE_SIZE, githubLanguageBytes, githubRepositoryPage, validateGitHubStats } from '../utils/github-stats.ts';
+import type { GitHubRepository, GitHubStatsData as GitHubStatsSnapshot } from '../utils/github-stats.ts';
 
 const defaultOutputFile = fileURLToPath(new URL('../data/github-stats.json', import.meta.url));
 
@@ -30,24 +30,6 @@ interface GitHubUser {
   public_gists: number;
   created_at: string;
   updated_at: string;
-}
-
-interface GitHubRepository {
-  id: number;
-  name: string;
-  full_name: string;
-  description: string;
-  html_url: string;
-  language: string;
-  stargazers_count: number;
-  forks_count: number;
-  watchers_count: number;
-  size: number;
-  created_at: string;
-  updated_at: string;
-  pushed_at: string;
-  topics: string[];
-  visibility: 'public' | 'private';
 }
 
 interface GitHubLanguageStats {
@@ -171,7 +153,7 @@ class GitHubDailySync {
         throw new Error(`Failed to fetch repositories: ${response.status} ${response.statusText}`);
       }
 
-      const repos: GitHubRepository[] = await response.json();
+      const repos = githubRepositoryPage.parse(await response.json());
       repositories.push(...repos);
       url = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
 
@@ -326,8 +308,8 @@ class GitHubDailySync {
 
     // 估算今年活动（基于仓库更新频率）
     const thisYear = new Date().getFullYear();
-    const thisYearRepos = repositories.filter(repo => 
-      new Date(repo.updated_at).getFullYear() === thisYear
+    const thisYearRepos = repositories.filter(repo =>
+      repo.updated_at !== null && new Date(repo.updated_at).getFullYear() === thisYear
     );
     const estimatedCommits = Math.min(300, thisYearRepos.length * 5);
 
@@ -374,6 +356,7 @@ class GitHubDailySync {
 
     try {
       existingData = JSON.parse(await fs.readFile(outputFile, 'utf8'));
+      validateGitHubStats(existingData, outputFile);
     } catch {
       existingData = undefined;
     }

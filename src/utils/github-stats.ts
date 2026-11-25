@@ -8,6 +8,14 @@ const repositoryCounts = {
   stargazers_count: count,
   forks_count: count,
 };
+const repositoryFields = {
+  name: z.string(),
+  description: z.string().nullish(),
+  html_url: z.httpUrl(),
+  language: z.string().nullish(),
+  topics: z.array(z.string()).nullish(),
+  ...repositoryCounts,
+};
 const activity = z.object({
   estimatedCommits: count,
   monthlyAverage: count,
@@ -15,6 +23,11 @@ const activity = z.object({
 });
 
 export const githubLanguageBytes = z.record(z.string(), count);
+export const githubRepositoryPage = z.array(z.object({
+  ...repositoryFields,
+  updated_at: timestamp.nullable(),
+}));
+export type GitHubRepository = z.infer<typeof githubRepositoryPage>[number];
 
 const githubStats = z.object({
   lastUpdate: timestamp,
@@ -40,13 +53,8 @@ const githubStats = z.object({
     percentage: z.number().min(0).max(100),
   })),
   topRepositories: z.array(z.object({
-    name: z.string(),
+    ...repositoryFields,
     full_name: z.string().optional(),
-    description: z.string().nullish(),
-    html_url: z.httpUrl(),
-    language: z.string().nullish(),
-    topics: z.array(z.string()).nullish(),
-    ...repositoryCounts,
   })),
   pinnedRepositoriesData: z.array(z.object({
     name: z.string(),

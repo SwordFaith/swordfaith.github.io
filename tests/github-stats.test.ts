@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import committedStats from '../src/data/github-stats.json';
 import { GitHubDailySync } from '../src/scripts/sync-github-daily';
 import { validateGitHubStats } from '../src/utils/github-stats';
+import type { GitHubStatsData } from '../src/utils/github-stats';
 
 const origin = 'https://api.github.com';
 const profile = { ...committedStats.user, login: 'example-user', public_repos: 203 };
@@ -12,7 +13,7 @@ const userPath = `/users/${profile.login}`;
 const reposPath = `${userPath}/repos`;
 const previousSnapshot = JSON.stringify(committedStats);
 
-function repository(name: string, overrides = {}) {
+function repository(name: string, overrides: Record<string, unknown> = {}) {
   return {
     name,
     html_url: `https://github.com/${profile.login}/${name}`,
@@ -103,6 +104,45 @@ describe('GitHub stats refresh', () => {
     await rejection;
 
     expect(fetch.mock.calls.map(([url]) => url)).toContain(`${origin}${failedRequest}`);
+    expect(await readFile(outputFile, 'utf8')).toBe(previousSnapshot);
+  });
+
+  it.each(['lastUpdate', 'updated_at'])('repairs an invalid %s when all other stats are unchanged', async field => {
+    mockGitHub([[repository('repo-1', { updated_at: null })]]);
+    const syncer = new GitHubDailySync();
+    const initialRefresh = syncer.sync(outputFile);
+    await vi.runAllTimersAsync();
+    await initialRefresh;
+
+    const original: GitHubStatsData = JSON.parse(await readFile(outputFile, 'utf8'));
+    const invalid = structuredClone(original);
+    if (field === 'lastUpdate') {
+      invalid.lastUpdate = 'invalid';
+    } else {
+      invalid.pinnedRepositoriesData[0].updated_at = 'invalid';
+    }
+    await writeFile(outputFile, JSON.stringify(invalid));
+
+    vi.setSystemTime(new Date('2026-11-26T00:00:00Z'));
+    const repair = syncer.sync(outputFile);
+    await vi.runAllTimersAsync();
+    await repair;
+
+    const repaired: GitHubStatsData = JSON.parse(await readFile(outputFile, 'utf8'));
+    expect(repaired.lastUpdate).toMatch(/^2026-11-26T/);
+    expect(repaired).toEqual({ ...original, lastUpdate: repaired.lastUpdate });
+  });
+
+  it.each([
+    [ 'stargazers_count', { stargazers_count: -1 } ],
+    [ 'forks_count', { stargazers_count: 0, forks_count: -1 } ],
+    [ 'forks_count', { stargazers_count: 0, forks_count: null } ],
+  ])('preserves the snapshot when a repo has an invalid %s', async (field, overrides) => {
+    mockGitHub([[repository('valid')], [repository('invalid', overrides)]]);
+    const rejection = expect(new GitHubDailySync().sync(outputFile)).rejects.toThrow(field);
+    await vi.runAllTimersAsync();
+    await rejection;
+
     expect(await readFile(outputFile, 'utf8')).toBe(previousSnapshot);
   });
 
