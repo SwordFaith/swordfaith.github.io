@@ -177,6 +177,27 @@ describe('link checker CLI', () => {
     }
   });
 
+  it('checks responsive image candidates and accepts literal percent escapes in IDs', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'check-image-candidates-'));
+    const run = () => spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });
+    try {
+      writeFileSync(join(dir, 'index.html'), `
+        <h2 id="a%20b">Heading</h2><a href="#a%20b">Heading</a>
+        <picture><source srcset="narrow.webp 300w, wide.webp 600w">
+        <img src="narrow.webp" srcset="data:image/png;base64,AA 1x, retina.png 2x"></picture>`);
+      writeFileSync(join(dir, 'narrow.webp'), '');
+      const broken = run();
+      expect(broken.status).toBe(1);
+      expect(broken.stderr).toContain('wide.webp -> target not found');
+      expect(broken.stderr).toContain('retina.png -> target not found');
+      writeFileSync(join(dir, 'wide.webp'), '');
+      writeFileSync(join(dir, 'retina.png'), '');
+      expect(run().status).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('requires a built homepage and scans it', () => {
     const dir = mkdtempSync(join(tmpdir(), 'check-links-'));
     const run = () => spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });

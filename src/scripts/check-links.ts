@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
+import parseSrcset from 'parse-srcset';
 import type { DefaultTreeAdapterMap } from 'parse5';
 import { SITE } from '../config/site.ts';
 
@@ -81,6 +82,9 @@ export function inspectHtml(html: string) {
   const walk = (node: HtmlNode): void => {
     if ('attrs' in node) {
       for (const { name, value } of node.attrs) {
+        if (name === 'srcset' && (node.nodeName === 'img' || node.nodeName === 'source')) {
+          for (const candidate of parseSrcset(value)) links.push(candidate.url);
+        }
         if (name === 'id' || (name === 'name' && node.nodeName === 'a')) anchors.add(value);
         if (name === 'href' || (name === 'action' && node.nodeName === 'form') ||
             (name === 'src' && node.nodeName === 'img')) links.push(value);
@@ -134,12 +138,13 @@ function main(): void {
       const problem = checkPath(target, files, requireTrailingSlash);
       if (problem === null) {
         // Browsers resolve any element fragment before the optional text directive.
-        const fragment = decode(url.hash.slice(1).split(':~:')[0]);
+        const rawFragment = url.hash.slice(1).split(':~:')[0];
+        const fragment = decode(rawFragment);
         if (fragment && fragment.toLowerCase() !== 'top') {
           const rel = target.slice(1);
           const file = files.has(rel) ? rel : path.posix.join(rel, 'index.html');
           const destination = documents.get(file);
-          if (destination && !destination.anchors.has(fragment)) {
+          if (destination && !destination.anchors.has(rawFragment) && !destination.anchors.has(fragment)) {
             problems.push(`  ${page}: ${value} -> missing HTML anchor in ${file}`);
           }
         }

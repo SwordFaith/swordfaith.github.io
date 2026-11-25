@@ -42,10 +42,12 @@
   },
   "devDependencies": {
     "@types/katex": "^0.16.7",
+    "@types/parse-srcset": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
     "eslint": "^9.14.0",
     "eslint-plugin-astro": "^1.7.0",
+    "parse-srcset": "^1.0.2",
     "vitest": "^5.1.1"
   },
   "overrides": {
