@@ -6,9 +6,13 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { randomUUID } from 'node:crypto';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { GITHUB_LANGUAGE_SAMPLE_SIZE, githubLanguageBytes, validateGitHubStats } from '../utils/github-stats.ts';
+import type { GitHubStatsData as GitHubStatsSnapshot } from '../utils/github-stats.ts';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const defaultOutputFile = fileURLToPath(new URL('../data/github-stats.json', import.meta.url));
 
 // GitHub API 接口定义
 interface GitHubUser {
@@ -50,41 +54,7 @@ interface GitHubLanguageStats {
   [language: string]: number;
 }
 
-// 输出数据结构
-interface GitHubStatsData {
-  lastUpdate: string;
-  user: {
-    name: string;
-    login: string;
-    bio: string;
-    avatar_url: string;
-    html_url: string;
-    public_repos: number;
-    followers: number;
-    following: number;
-    created_at: string;
-  };
-  summary: {
-    totalStars: number;
-    totalForks: number;
-    totalRepos: number;
-    activeYears: number;
-  };
-  languageStats: {
-    [language: string]: {
-      bytes: number;
-      percentage: number;
-    };
-  };
-  topRepositories: Array<{
-    name: string;
-    description: string;
-    html_url: string;
-    language: string;
-    stargazers_count: number;
-    forks_count: number;
-    topics: string[];
-  }>;
+interface GitHubStatsData extends GitHubStatsSnapshot {
   pinnedRepositoriesData: Array<{
     name: string;
     full_name: string;
@@ -92,13 +62,6 @@ interface GitHubStatsData {
     forks_count: number;
     updated_at: string;
   }>;
-  recentActivity: {
-    thisYear: {
-      estimatedCommits: number;
-      monthlyAverage: number;
-      weeklyAverage: number;
-    };
-  };
 }
 
 const COMPARISON_EXCLUDED_FIELDS = new Set(['lastUpdate', 'updated_at']);
@@ -143,7 +106,7 @@ class GitHubDailySync {
   /**
    * 执行完整的每日同步
    */
-  async sync(): Promise<void> {
+  async sync(outputFile = defaultOutputFile): Promise<void> {
     console.log(`🔄 Starting GitHub daily sync for user: ${this.username}`);
     console.log(`📅 Sync time: ${new Date().toISOString()}`);
 
@@ -170,7 +133,7 @@ class GitHubDailySync {
 
       // 6. 保存数据
       console.log('💾 Saving data...');
-      await this.saveData(stats);
+      await this.saveData(stats, outputFile);
 
       console.log('✅ GitHub daily sync completed successfully');
       console.log(`📈 Stats: ${stats.summary.totalRepos} repos, ${stats.summary.totalStars} stars`);
@@ -199,11 +162,9 @@ class GitHubDailySync {
    */
   private async fetchRepositories(): Promise<GitHubRepository[]> {
     const repositories: GitHubRepository[] = [];
-    let page = 1;
-    const perPage = 100;
+    let url: string | undefined = `${this.baseUrl}/users/${this.username}/repos?type=owner&sort=updated&direction=desc&per_page=100`;
 
-    while (true) {
-      const url = `${this.baseUrl}/users/${this.username}/repos?type=owner&sort=updated&direction=desc&per_page=${perPage}&page=${page}`;
+    while (url) {
       const response = await this.fetchWithAuth(url);
 
       if (!response.ok) {
@@ -211,22 +172,15 @@ class GitHubDailySync {
       }
 
       const repos: GitHubRepository[] = await response.json();
-      
-      if (repos.length === 0) {
-        break;
-      }
-
       repositories.push(...repos);
-      
-      // 限制获取数量避免过度消耗 API 配额
-      if (repositories.length >= 200 || repos.length < perPage) {
-        break;
-      }
+      url = response.headers.get('link')?.match(/<([^>]+)>;\s*rel="next"/)?.[1];
 
-      page++;
-      
-      // 防止 API 限制
-      await this.sleep(100);
+      if (url) {
+        if (new URL(url).origin !== this.baseUrl) {
+          throw new Error('Unexpected origin for the next GitHub repository page');
+        }
+        await this.sleep(100);
+      }
     }
 
     console.log(`  Found ${repositories.length} repositories`);
@@ -239,10 +193,10 @@ class GitHubDailySync {
   private async fetchLanguageStats(repositories: GitHubRepository[]): Promise<GitHubLanguageStats> {
     const languageStats: GitHubLanguageStats = {};
     
-    // 只处理前50个仓库以避免API限制
+    // 取最近更新的至多 50 个公开仓库，排除 .github.io 仓库。
     const topRepos = repositories
       .filter(repo => !repo.name.includes('.github.io'))
-      .slice(0, 50);
+      .slice(0, GITHUB_LANGUAGE_SAMPLE_SIZE);
     let fetchedCount = 0;
 
     for (const repo of topRepos) {
@@ -250,10 +204,10 @@ class GitHubDailySync {
         const response = await this.fetchWithAuth(`${this.baseUrl}/repos/${this.username}/${repo.name}/languages`);
         
         if (response.ok) {
-          const languages = await response.json();
+          const languages = githubLanguageBytes.parse(await response.json());
           
           for (const [language, bytes] of Object.entries(languages)) {
-            languageStats[language] = (languageStats[language] || 0) + (bytes as number);
+            languageStats[language] = (languageStats[language] || 0) + bytes;
           }
           fetchedCount++;
         }
@@ -393,7 +347,7 @@ class GitHubDailySync {
       summary: {
         totalStars,
         totalForks,
-        totalRepos: repositories.length,
+        totalRepos: user.public_repos,
         activeYears
       },
       languageStats: processedLanguageStats,
@@ -412,12 +366,9 @@ class GitHubDailySync {
   /**
    * 保存数据到文件
    */
-  private async saveData(data: GitHubStatsData): Promise<void> {
-    const dataDir = path.join(__dirname, '..', 'data');
-    const outputFile = path.join(dataDir, 'github-stats.json');
-
-    // 确保目录存在
-    await fs.mkdir(dataDir, { recursive: true });
+  private async saveData(data: GitHubStatsData, outputFile: string): Promise<void> {
+    validateGitHubStats(data, outputFile);
+    await fs.mkdir(path.dirname(outputFile), { recursive: true });
 
     let existingData: unknown;
 
@@ -432,11 +383,18 @@ class GitHubDailySync {
       return;
     }
 
-    // 保存数据
-    await fs.writeFile(outputFile, JSON.stringify(data, null, 2));
+    // 在同一目录原子替换快照，避免写入失败时留下不完整的 JSON。
+    const temporaryFile = `${outputFile}.${randomUUID()}.tmp`;
+    const json = JSON.stringify(data, null, 2);
+    try {
+      await fs.writeFile(temporaryFile, json);
+      await fs.rename(temporaryFile, outputFile);
+    } finally {
+      await fs.rm(temporaryFile, { force: true });
+    }
 
     console.log(`  Data saved to: ${outputFile}`);
-    console.log(`  File size: ${(await fs.stat(outputFile)).size} bytes`);
+    console.log(`  File size: ${Buffer.byteLength(json)} bytes`);
   }
 
   /**
@@ -482,8 +440,18 @@ async function main() {
   }
 }
 
-// 只在直接运行时执行
-if (import.meta.url === `file://${process.argv[1]}`) {
+function isDirectExecution(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  const modulePath = fileURLToPath(import.meta.url);
+  try {
+    return entry === modulePath || realpathSync(entry) === modulePath;
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectExecution()) {
   main();
 }
 
