@@ -75,7 +75,6 @@
 │   └── sync-data.yml            # 手动触发：同步 GitHub 统计数据并提交快照
 ├── tests/                       # Vitest 单元测试（tags / notebook HTML 清洗）
 ├── public/
-│   ├── notebooks/               # 原始 .ipynb 文件（Notebook 页面数据源）
 │   └── favicon.svg / og-image.* / robots.txt
 └── src/
     ├── content.config.ts        # 内容集合配置（blog / notebooks）

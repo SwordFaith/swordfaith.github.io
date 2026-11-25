@@ -15,6 +15,15 @@ const markdownCell = {
     '$$\n',
     '\\sum_{i=1}^{n} i\n',
     '$$\n\n',
+    'Math immediately after prose\n',
+    '$$\n',
+    'y^2\n',
+    '$$\n\n',
+    '  $$\n',
+    '  z^2\n',
+    '  $$\n\n',
+    'Markdown code `before\n$$\na+b\n$$\nafter`.\n\n',
+    'Raw code <code>before\n$$\nc+d\n$$\nafter</code>.\n\n',
     '![Local plot](attachment:my%20plot.png)\n\n',
     '![Unsupported](attachment:vector.svg)\n\n',
     '![Mislabeled](attachment:fake.png)\n\n',
@@ -104,5 +113,14 @@ describe('built notebooks', () => {
     expect(html).not.toMatch(/alt="(?:Unsupported|Mislabeled|Out of scope)"/);
     expect(html).not.toMatch(/fixtureHandler|style="color: red"/);
     expect(html).not.toContain('href="https://example.test/math-command"');
+  });
+
+  it('renders display math after prose and with indentation, while preserving multiline code', () => {
+    const html = readFileSync(join(root, 'dist/notebooks/test-published/index.html'), 'utf8');
+    expect(html.match(/class="katex-display"/g)).toHaveLength(3);
+    expect(html).toContain('<annotation encoding="application/x-tex">y^2</annotation>');
+    expect(html).toContain('<annotation encoding="application/x-tex">z^2</annotation>');
+    expect(html).toContain('<code>before $$ a+b $$ after</code>');
+    expect(html).toContain('<code>before\n$$\nc+d\n$$\nafter</code>');
   });
 });
