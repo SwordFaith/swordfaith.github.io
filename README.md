@@ -154,6 +154,10 @@ npm run lint
 npm run typecheck
 npm test
 
+# 构建后运行搜索交互测试
+npx playwright-core install --only-shell chromium
+npm run test:browser
+
 # 同步 GitHub 统计并改写 src/data/github-stats.json（提交后即更新兜底快照；直接用 Node 运行 TypeScript）
 GITHUB_TOKEN=... npm run sync:github:daily
 ```
