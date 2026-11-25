@@ -1,9 +1,12 @@
 import { Buffer } from 'node:buffer';
+import { createShikiHighlighter, type ShikiHighlighterHighlightOptions } from '@astrojs/markdown-remark/shiki';
+import { Marked } from 'marked';
 import {
   parseFragment,
   serialize,
   type DefaultTreeAdapterTypes,
 } from 'parse5';
+import { notebookMath, renderNotebookMath } from './notebook-math';
 import { readNotebookSource } from './notebook-source';
 
 export interface NotebookCell {
@@ -48,6 +51,8 @@ export interface ParsedNotebook {
   cells: ParsedCell[];
   metadata: NotebookData['metadata'];
   executionCount: number;
+  /** Code cell language for highlighting, from notebook metadata; 'plaintext' when unknown. */
+  language: string;
 }
 
 export interface ParsedCell {
@@ -218,6 +223,135 @@ export function sanitizeNotebookHtml(html: string): string {
   return serialize(sanitizeNotebookFragment(html));
 }
 
+// Same themes as markdown.shikiConfig in astro.config.mjs, so notebook code matches blog posts.
+// Shiki inlines the light colours; the global `html.dark .astro-code` rule in astrowind.css swaps in the dark ones.
+const SHIKI_THEMES = { light: 'github-light', dark: 'github-dark' } as const;
+
+const HIGHLIGHT_OPTIONS: ShikiHighlighterHighlightOptions = {
+  defaultColor: 'light',
+  transformers: [{
+    // Astro's helper wraps the +/- of diff lines in `user-select: none` spans; drop that style so a copied
+    // selection always equals the source.
+    line(node) {
+      for (const token of node.children) {
+        if (token.type !== 'element') continue;
+        for (const marker of token.children) {
+          if (marker.type === 'element' && marker.properties.style === 'user-select: none;') {
+            delete marker.properties.style;
+          }
+        }
+      }
+    },
+  }],
+};
+
+const markdown = new Marked(notebookMath);
+
+function notebookLanguage(metadata: NotebookData['metadata']): string {
+  const name = [metadata.language_info?.name, metadata.kernelspec?.language]
+    .find((value): value is string => typeof value === 'string' && value.trim() !== '');
+  return name?.trim().toLowerCase() ?? 'plaintext';
+}
+
+// Highlighted output costs ~9-12 bytes of HTML and ~0.2 <span> per source character (measured with Shiki on
+// Python code and numeric list literals). 32,000 characters keeps ~750 lines of typical code, or 300 lines of
+// 100 characters, highlighted while bounding a block to ~6,500 token spans and ~400 KB; data cells beyond that
+// (e.g. a 129 KB list literal: 1.6-3.1 MB and 26,000-53,000 spans) render as plain text. The line cap stops data made of many
+// short lines, which costs an extra span per line.
+const MAX_HIGHLIGHT_CHARS = 32_000;
+const MAX_HIGHLIGHT_LINES = 2_000;
+
+const HTML_ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+/**
+ * Plain-text block shaped like Shiki's (same classes and theme colours, so the global dark-mode rule applies),
+ * built only from escaped text and fixed attributes. Needs no highlighter, so it is the one fallback path.
+ */
+function plainCodeHtml(code: string): string {
+  return '<pre class="astro-code astro-code-themes github-light github-dark" '
+    + 'style="background-color:#fff;--shiki-dark-bg:#24292e;color:#24292e;--shiki-dark:#e1e4e8; overflow-x: auto;" '
+    + `tabindex="0" data-language="plaintext"><code>${code.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char])}</code></pre>`;
+}
+
+/**
+ * Highlights code at build time. The rendered text equals `code` (apart from CRLF becoming LF), unknown
+ * languages render as plain text, and oversized input or any highlighter failure falls back to plain text
+ * instead of failing the build. Output is trusted HTML.
+ */
+export async function highlightNotebookCode(code: string, language: string): Promise<string> {
+  if (code.length > MAX_HIGHLIGHT_CHARS || code.split('\n').length > MAX_HIGHLIGHT_LINES) return plainCodeHtml(code);
+  const name = language.trim().toLowerCase();
+  // Shiki resolves names through plain-object lookups, and the highlighter is cached for the whole build:
+  // names like "constructor" or "__proto__" hit Object.prototype and break later language loads.
+  // Shiki's `ansi` mode interprets escape sequences instead of showing them, so it would alter the text.
+  const lang = name && name !== 'ansi' && !(name in Object.prototype) ? name : 'plaintext';
+  try {
+    const highlighter = await createShikiHighlighter({ themes: SHIKI_THEMES });
+    // Astro's helper strips one trailing newline; add one so the rendered text keeps every newline of the source.
+    return await highlighter.codeToHtml(`${code}\n`, lang, HIGHLIGHT_OPTIONS);
+  } catch (error) {
+    console.warn(`[notebook] Highlighting as "${lang}" failed, rendering plain text: ${errorMessage(error)}`);
+    return plainCodeHtml(code);
+  }
+}
+
+// Only blocks exactly as Markdown fences produce them can be rebuilt without losing content or attributes:
+// an attribute-less <pre> whose single child is a <code> with at most a `language-*` class, holding only text.
+function fencedCode(pre: DefaultTreeAdapterTypes.Element): DefaultTreeAdapterTypes.Element | null {
+  const [code, ...rest] = pre.childNodes;
+  if (pre.attrs.length > 0 || rest.length > 0 || !code || !('tagName' in code) || code.tagName !== 'code') return null;
+  const onlyLanguageClass = code.attrs.every(({ name, value }) => name === 'class' && /^language-\S+$/.test(value));
+  return onlyLanguageClass && code.childNodes.every((child) => child.nodeName === '#text') ? code : null;
+}
+
+function collectPreElements(
+  node: DefaultTreeAdapterTypes.ParentNode,
+  found: DefaultTreeAdapterTypes.Element[],
+): DefaultTreeAdapterTypes.Element[] {
+  for (const child of node.childNodes) {
+    if (!('tagName' in child)) continue;
+    if (child.tagName === 'pre') found.push(child);
+    else collectPreElements(child, found);
+  }
+  return found;
+}
+
+/**
+ * Renders an untrusted Markdown cell. The HTML is sanitized first; afterwards each fenced code block (see
+ * fencedCode) is rebuilt by Shiki from its text, so Shiki's inline styles never pass through the sanitizer,
+ * which keeps dropping style attributes. Any other <pre> stays as sanitized, unhighlighted HTML. Both steps
+ * work on one parsed tree: re-parsing would drop one more newline at the start of every <pre>.
+ */
+export async function renderNotebookMarkdown(source: string, attachments?: ParsedCell['attachments']): Promise<string> {
+  const fragment = sanitizeNotebookFragment(markdown.parse(source, { async: false }), attachments);
+  renderNotebookMath(fragment);
+  await Promise.all(collectPreElements(fragment, []).map(async (pre) => {
+    const code = fencedCode(pre);
+    if (!code) return;
+    const text = code.childNodes.map((child) => (child as DefaultTreeAdapterTypes.TextNode).value).join('');
+    const className = code.attrs.find((attribute) => attribute.name === 'class')?.value ?? '';
+    const language = className.match(/(?:^|\s)language-(\S+)/)?.[1] ?? 'plaintext';
+    const highlighted = parseFragment(await highlightNotebookCode(text, language));
+    const shikiPre = highlighted.childNodes.find(
+      (child): child is DefaultTreeAdapterTypes.Element => 'tagName' in child && child.tagName === 'pre',
+    );
+    if (!shikiPre) throw new Error('Shiki did not return a <pre> element.');
+    pre.attrs = shikiPre.attrs;
+    pre.childNodes = shikiPre.childNodes;
+    pre.childNodes.forEach((child) => { child.parentNode = pre; });
+  }));
+  return serialize(fragment);
+}
+
+/** Build-time HTML for each cell, index-aligned with notebook.cells; raw cells get ''. */
+export function renderNotebookCells(notebook: ParsedNotebook): Promise<string[]> {
+  return Promise.all(notebook.cells.map((cell) => {
+    if (cell.type === 'code') return highlightNotebookCode(cell.source, notebook.language);
+    if (cell.type === 'markdown') return renderNotebookMarkdown(cell.source, cell.attachments);
+    return '';
+  }));
+}
+
 export class NotebookParser {
   static parse(notebookJson: NotebookData): ParsedNotebook {
     const cells = notebookJson.cells.map((cell, index) => this.parseCell(cell, index));
@@ -226,6 +360,7 @@ export class NotebookParser {
       cells,
       metadata: notebookJson.metadata,
       executionCount: cells.filter((cell) => typeof cell.executionCount === 'number').length,
+      language: notebookLanguage(notebookJson.metadata),
     };
   }
 
