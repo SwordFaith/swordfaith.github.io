@@ -3,6 +3,8 @@
 // 直接从数据文件导入，编译时完全渲染，无运行时开销
 
 import { formatNumber } from '../../utils/number-formatter';
+import { GITHUB_LANGUAGE_SAMPLE_SIZE } from '../../utils/github-stats';
+import type { GitHubStatsData } from '../../utils/github-stats';
 
 export interface Props {
   username?: string;
@@ -22,15 +24,13 @@ const {
 } = Astro.props;
 
 // 导入数据文件
-let githubStats: any;
+let data: GitHubStatsData;
 try {
-  githubStats = await import('../../data/github-stats.json');
+  data = (await import('../../data/github-stats.json')).default;
 } catch {
   console.warn('GitHub stats data not found, using default data');
-  githubStats = await import('../../data/github-stats-default.json');
+  data = (await import('../../data/github-stats-default.json')).default;
 }
-
-const data = githubStats.default;
 
 // 语言颜色映射
 const languageColors: Record<string, string> = {
@@ -54,12 +54,12 @@ const languageColors: Record<string, string> = {
 
 // 处理语言统计数据
 const topLanguages = Object.entries(data.languageStats)
-  .map(([name, stats]: [string, any]) => ({
+  .map(([name, stats]) => ({
     name,
     ...stats,
     color: languageColors[name] || '#6b7280'
   }))
-  .sort((a: any, b: any) => b.percentage - a.percentage)
+  .sort((a, b) => b.percentage - a.percentage)
   .slice(0, 8);
 
 // 固定展示的精选仓库（类似 GitHub Pin）
@@ -164,9 +164,10 @@ const isRecent = (Date.now() - lastUpdateDate.getTime()) < 7 * 24 * 60 * 60 * 10
 
     {showLanguages && (
       <div class="mb-6">
-        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-4">主要编程语言</h4>
+        <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-1">主要编程语言</h4>
+        <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">按最近更新的至多 {GITHUB_LANGUAGE_SAMPLE_SIZE} 个公开仓库的代码字节数计算，排除名称含 <code>.github.io</code> 的仓库。</p>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {topLanguages.map((lang: any) => (
+          {topLanguages.map(lang => (
             <div class="bg-gray-50 dark:bg-slate-700 p-3 rounded-lg">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center">

@@ -64,8 +64,8 @@ jobs:
       # the deploy still goes through. The timeout keeps a slow API from holding the shared
       # 'pages' concurrency slot.
       # The script only reads public data (user profile, public repos and their languages,
-      # two public pinned repos), so the job's built-in token is enough: nothing to expire,
-      # and its own rate limit (1,000 requests/hour per repository) covers its at most 55 requests.
+      # two public pinned repos), so the job's built-in token is enough. The sync fetches
+      # all repository pages and samples up to 50 repositories for language statistics.
       - name: Refresh GitHub stats (best-effort)
         if: github.event_name != 'pull_request'
         env:
@@ -78,8 +78,8 @@ jobs:
             git checkout -- "$STATS_FILE"
           fi
 
-          # Whatever is in place now must be valid, otherwise fail before building
-          node src/scripts/validate-github-stats.mjs "$STATS_FILE"
+      - name: Validate GitHub stats before build
+        run: node src/scripts/validate-github-stats.mjs src/data/github-stats.json
 
       - name: Build with Astro
         run: npm run build
