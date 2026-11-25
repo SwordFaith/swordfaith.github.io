@@ -16,6 +16,7 @@
     "lint": "eslint .",
     "typecheck": "astro check",
     "test": "vitest run",
+    "test:browser": "node --test tests/search.browser.mjs",
     "sync:github:daily": "node src/scripts/sync-github-daily.ts"
   },
   "dependencies": {
@@ -29,10 +30,8 @@
     "@tailwindcss/typography": "^0.5.15",
     "astro": "^7.4.13",
     "autoprefixer": "^10.7.0",
-    "highlight.js": "^11.10.0",
     "katex": "^0.19.1",
     "marked": "^14.1.2",
-    "marked-highlight": "^2.1.4",
     "pagefind": "^1.1.1",
     "parse5": "^7.3.0",
     "rehype-katex": "^7.0.1",
@@ -42,10 +41,13 @@
   },
   "devDependencies": {
     "@types/katex": "^0.16.7",
+    "@types/parse-srcset": "^1.0.0",
+    "parse-srcset": "^1.0.2",
     "@typescript-eslint/eslint-plugin": "^8.12.2",
     "@typescript-eslint/parser": "^8.12.2",
     "eslint": "^9.14.0",
     "eslint-plugin-astro": "^1.7.0",
+    "playwright-core": "^1.63.0",
     "vitest": "^5.1.1"
   },
   "overrides": {

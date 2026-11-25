@@ -114,11 +114,11 @@ notebookPath: "/notebooks/experiments/example.ipynb"
 
 ### 📊 数据驱动展示
 - **WandB 集成**: 在文章 frontmatter 中配置 `wandb.projectId` / `wandb.runId`，文末嵌入对应运行页面
-- **GitHub 统计**: 个人代码统计、语言分析、项目展示
+- **GitHub 统计**: 公开仓库数取自 GitHub 用户资料，Stars 和 Forks 汇总所有公开仓库。语言占比按最近更新的至多 50 个公开仓库的代码字节数计算，排除名称含 `.github.io` 的仓库。
 - **静态数据**: GitHub 统计在构建时从 `src/data/github-stats.json` 静态渲染，浏览时不调用 GitHub API。该文件的来源：
   - 部署（push 到 `main`、手动运行、每周定时）在构建前尽力运行 `npm run sync:github:daily` 刷新数据，只用于本次构建、不提交；使用内置 `github.token`，同步失败、超时或数据无效时回退到仓库内的快照并输出 warning
   - `scheduled-deploy.yml` 每周一 03:23 UTC 重新构建并部署一次，让关于页拿到新数据
-  - 仓库内提交的快照是兜底（PR 检查也用它构建），通过手动运行 "Sync GitHub Stats Data" workflow 或本地 `npm run sync:github:daily` 更新
+  - CI 在构建前校验实际使用的快照。PR 直接使用仓库内提交的快照，部署刷新失败时也会用它。通过手动运行 "Sync GitHub Stats Data" workflow 或本地 `npm run sync:github:daily` 更新快照
 
 ### 🚀 开发体验
 - **组件化架构**: 28 个 `.astro` 组件
@@ -153,6 +153,10 @@ npm run build
 npm run lint
 npm run typecheck
 npm test
+
+# 构建后运行搜索交互测试
+npx playwright-core install --only-shell chromium
+npm run test:browser
 
 # 同步 GitHub 统计并改写 src/data/github-stats.json（提交后即更新兜底快照；直接用 Node 运行 TypeScript）
 GITHUB_TOKEN=... npm run sync:github:daily

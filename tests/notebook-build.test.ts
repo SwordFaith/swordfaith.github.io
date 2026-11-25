@@ -110,8 +110,8 @@ describe('built notebooks', () => {
     expect(html).toContain('<span class="katex-display">');
     expect(html).toContain('<code>$leave_me$</code>');
     expect(html).toContain('<code>$keep_me$</code>');
-    expect(html).toMatch(/class="(?:hljs language-python|astro-code [^"]+)"/);
-    expect(html).toMatch(/(?:class="hljs-keyword"|style="[^"]*--shiki-dark:[^"]*")>def</);
+    expect(html).toMatch(/class="astro-code [^"]+"/);
+    expect(html).toMatch(/style="[^"]*--shiki-dark:[^"]*">def</);
     expect(html).toContain('$unrendered$');
     expect(html).toContain('src="data:image/png;base64,' + png + '"');
     expect(html).toContain('alt="Local plot"');

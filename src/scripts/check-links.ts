@@ -1,9 +1,9 @@
 /**
  * Build-output link check.
  *
- * Scans every HTML file in dist/ (except Pagefind's) for internal `href` and form
- * `action` values and fails when a link points at nothing in dist/, or, with
- * --require-trailing-slash, when a link to a page lacks the trailing slash
+ * Scans every HTML file in dist/ (except Pagefind's) for internal links, image
+ * sources and HTML fragment targets. With --require-trailing-slash, the check
+ * also fails when a link to a page lacks the trailing slash
  * (GitHub Pages answers those with a 301 and they disagree with the canonical URL).
  * Absolute links on the site's own origin (SITE.origin) count as internal. <link>
  * elements (canonical, RSS, sitemap, stylesheets) get the same rules as <a>: a
@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse } from 'parse5';
+import parseSrcset from 'parse-srcset';
 import type { DefaultTreeAdapterMap } from 'parse5';
 import { SITE } from '../config/site.ts';
 
@@ -32,29 +33,22 @@ const KNOWN_ISSUES = [
   { page: '404.html', link: `${SITE.origin}/404/` },
 ];
 
-/**
- * Returns the decoded pathname a link points at, or null when the link is not
- * internal. Internal means relative, root-relative, or absolute/protocol-relative
- * on the site's own origin; other origins, mailto: and other schemes, fragment-only
- * and empty values are ignored. Query strings and fragments are dropped.
- */
-export function internalPath(value: string, pagePath: string, origin: string = SITE.origin): string | null {
-  const link = value.trim();
-  if (link === '' || link.startsWith('#')) return null;
-  let url: URL;
+/** Resolve against the built page URL, skipping empty and off-site references. */
+export function internalUrl(value: string, pagePath: string, origin: string = SITE.origin): URL | null {
+  if (!value.trim()) return null;
   try {
-    url = new URL(link, origin + pagePath);
+    const url = new URL(value, origin + pagePath);
+    return url.origin === origin ? url : null;
   } catch {
-    // Only absolute URLs with an invalid host can fail to parse; none are on this site
     return null;
   }
-  if (url.origin !== origin) return null;
-  const { pathname } = url;
+}
+
+function decode(value: string): string {
   try {
-    return decodeURIComponent(pathname);
+    return decodeURIComponent(value);
   } catch {
-    // Malformed percent-encoding: keep it raw so it is reported as missing
-    return pathname;
+    return value;
   }
 }
 
@@ -81,19 +75,25 @@ export function pagePathOf(htmlFile: string): string {
   return `/${htmlFile.replace(/(^|\/)index\.html$/, '$1')}`;
 }
 
-/** Collects internal href/action values; script and template contents are never parsed as elements. */
-export function extractLinks(html: string): string[] {
+/** Collect URL references and fragment targets in one pass over the rendered document. */
+export function inspectHtml(html: string) {
+  const anchors = new Set<string>();
   const links: string[] = [];
   const walk = (node: HtmlNode): void => {
     if ('attrs' in node) {
       for (const { name, value } of node.attrs) {
-        if (name === 'href' || (name === 'action' && node.nodeName === 'form')) links.push(value);
+        if (name === 'srcset' && (node.nodeName === 'img' || node.nodeName === 'source')) {
+          for (const candidate of parseSrcset(value)) links.push(candidate.url);
+        }
+        if (name === 'id' || (name === 'name' && node.nodeName === 'a')) anchors.add(value);
+        if (name === 'href' || (name === 'action' && node.nodeName === 'form') ||
+            (name === 'src' && node.nodeName === 'img')) links.push(value);
       }
     }
     if ('childNodes' in node) node.childNodes.forEach(walk);
   };
   walk(parse(html));
-  return links;
+  return { links, anchors };
 }
 
 function listFiles(dir: string): string[] {
@@ -122,16 +122,34 @@ function main(): void {
   const unseenKnownIssues = new Set(KNOWN_ISSUES);
   let checked = 0;
 
-  for (const page of pages) {
+  const documents = new Map(pages.map((page) => [
+    page, inspectHtml(fs.readFileSync(path.join(distDir, page), 'utf8')),
+  ] as const));
+
+  for (const [page, document] of documents) {
     const pagePath = pagePathOf(page);
     const seen = new Set<string>();
-    for (const value of extractLinks(fs.readFileSync(path.join(distDir, page), 'utf8'))) {
-      const target = internalPath(value, pagePath);
-      if (target === null || seen.has(value)) continue;
+    for (const value of document.links) {
+      const url = internalUrl(value, pagePath);
+      if (!url || seen.has(value)) continue;
+      const target = decode(url.pathname);
       seen.add(value);
       checked++;
       const problem = checkPath(target, files, requireTrailingSlash);
-      if (problem === null) continue;
+      if (problem === null) {
+        // Browsers resolve any element fragment before the optional text directive.
+        const rawFragment = url.hash.slice(1).split(':~:')[0];
+        const fragment = decode(rawFragment);
+        if (fragment && fragment.toLowerCase() !== 'top') {
+          const rel = target.slice(1);
+          const file = files.has(rel) ? rel : path.posix.join(rel, 'index.html');
+          const destination = documents.get(file);
+          if (destination && !destination.anchors.has(rawFragment) && !destination.anchors.has(fragment)) {
+            problems.push(`  ${page}: ${value} -> missing HTML anchor in ${file}`);
+          }
+        }
+        continue;
+      }
       const message = problem === 'missing'
         ? `${page}: ${value} -> target not found in dist (${target}); link to an existing page or file`
         : `${page}: ${value} -> page link without trailing slash; use ${target}/`;

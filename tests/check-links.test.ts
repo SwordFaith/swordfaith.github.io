@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { checkPath, extractLinks, internalPath, pagePathOf } from '../src/scripts/check-links';
+import { checkPath, inspectHtml, internalUrl, pagePathOf } from '../src/scripts/check-links';
 
 // A miniature dist/: directory-style pages plus a few plain files
 const files = new Set([
@@ -17,6 +17,11 @@ const files = new Set([
   'rss.xml',
   'notebooks/rlhf_experiment.ipynb',
 ]);
+
+function internalPath(value: string, page: string, origin?: string) {
+  const url = internalUrl(value, page, origin);
+  return url ? decodeURIComponent(url.pathname) : null;
+}
 
 // Runs a raw href from a page through the same steps the CLI uses
 const check = (href: string, page = '/', requireTrailingSlash = true) => {
@@ -61,7 +66,7 @@ describe('link classification', () => {
     expect(check('/tags/%E5%BC%BA%E5%8C%96/')).toBe('missing');
   });
 
-  it('ignores other origins, other schemes and fragment-only links', () => {
+  it('ignores other origins, other schemes and empty references', () => {
     for (const href of [
       'https://github.com/SwordFaith',
       'http://swordfaith.github.io/blog/',
@@ -69,7 +74,6 @@ describe('link classification', () => {
       'mailto:someone@example.com',
       'javascript:void(0)',
       '//cdn.example.com/x.js',
-      '#main-content',
       '',
     ]) {
       expect(check(href), href).toBe('ignored');
@@ -131,7 +135,7 @@ describe('pagePathOf', () => {
   });
 });
 
-describe('extractLinks', () => {
+describe('inspectHtml', () => {
   // JSON-LD and inline scripts contain URLs that are not links; they must not be checked
   it('reads href and form action attributes but not script or JSON-LD contents', () => {
     const html = `<!doctype html><html><head>
@@ -143,11 +147,57 @@ describe('extractLinks', () => {
       <form action="/search/"><input name="q"></form>
       <button formaction="/ignored">x</button>
       </body></html>`;
-    expect(extractLinks(html)).toEqual(['/assets/a.css', '/blog/', '/search/']);
+    expect(inspectHtml(html).links).toEqual(['/assets/a.css', '/blog/', '/search/']);
   });
 });
 
 describe('link checker CLI', () => {
+  it('checks local images and same-page and cross-page HTML anchors', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'check-content-links-'));
+    const run = () => spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });
+    try {
+      writeFileSync(join(dir, 'index.html'), `
+        <a href="#contents">Contents</a><a href="notes.html#%E4%BE%8B">Example</a>
+        <a href="notes.html#legacy:~:text=example">Named anchor</a><a href="#top">Top</a>
+        <a href="figure.svg#shape">SVG</a><img src="diagram.png">
+        <img src="data:image/png;base64,AA"><img src="https://example.org/image.png">`);
+      writeFileSync(join(dir, 'figure.svg'), '<svg/>');
+      writeFileSync(join(dir, 'notes.html'), '<h2 id="例">Example</h2><a name="legacy"></a>');
+      const broken = run();
+      expect(broken.status).toBe(1);
+      expect(broken.stderr).toContain('missing HTML anchor');
+      expect(broken.stderr).toContain('diagram.png -> target not found');
+      writeFileSync(join(dir, 'index.html'), '<a id="contents" href="#contents">Contents</a><img src="diagram.png"><a href="notes.html#%E4%BE%8B">Example</a><a href="notes.html#legacy:~:text=example">Legacy</a>');
+      writeFileSync(join(dir, 'diagram.png'), '');
+      expect(run().status).toBe(0);
+      writeFileSync(join(dir, 'notes.html'), '<p>No headings</p>');
+      expect(run().stderr).toContain('notes.html#%E4%BE%8B -> missing HTML anchor');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('checks responsive image candidates and accepts literal percent escapes in IDs', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'check-image-candidates-'));
+    const run = () => spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });
+    try {
+      writeFileSync(join(dir, 'index.html'), `
+        <h2 id="a%20b">Heading</h2><a href="#a%20b">Heading</a>
+        <picture><source srcset="narrow.webp 300w, wide.webp 600w">
+        <img src="narrow.webp" srcset="data:image/png;base64,AA 1x, retina.png 2x"></picture>`);
+      writeFileSync(join(dir, 'narrow.webp'), '');
+      const broken = run();
+      expect(broken.status).toBe(1);
+      expect(broken.stderr).toContain('wide.webp -> target not found');
+      expect(broken.stderr).toContain('retina.png -> target not found');
+      writeFileSync(join(dir, 'wide.webp'), '');
+      writeFileSync(join(dir, 'retina.png'), '');
+      expect(run().status).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('requires a built homepage and scans it', () => {
     const dir = mkdtempSync(join(tmpdir(), 'check-links-'));
     const run = () => spawnSync(process.execPath, ['src/scripts/check-links.ts', dir], { encoding: 'utf8' });

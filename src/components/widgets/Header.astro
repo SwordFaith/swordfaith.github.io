@@ -76,9 +76,14 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
     const searchPanel = header.querySelector<HTMLElement>('[data-aw-search-panel]');
     if (!button || !navigation) return;
 
+    const dismissPanelSearch = (panel: HTMLElement) => {
+      panel.querySelector('[data-search-root]')?.dispatchEvent(new Event('search:dismiss'));
+    };
+
     const setMenuOpen = (open: boolean) => {
       button.setAttribute('aria-expanded', String(open));
       button.setAttribute('aria-label', open ? '关闭导航菜单' : '打开导航菜单');
+      if (!open) dismissPanelSearch(navigation);
       navigation.classList.toggle('hidden', !open);
     };
 
@@ -86,6 +91,7 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
       if (!searchButton || !searchPanel) return;
       searchButton.setAttribute('aria-expanded', String(open));
       searchButton.setAttribute('aria-label', open ? '关闭搜索' : '打开搜索');
+      if (!open) dismissPanelSearch(searchPanel);
       searchPanel.classList.toggle('hidden', !open);
       if (open) {
         setMenuOpen(false);
@@ -100,11 +106,13 @@ const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.st
     searchButton?.addEventListener('click', () => setSearchOpen(searchButton.getAttribute('aria-expanded') !== 'true'));
     navigation.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setMenuOpen(false)));
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
         if (button.getAttribute('aria-expanded') === 'true') {
+          event.preventDefault();
           setMenuOpen(false);
           button.focus();
         } else if (searchButton?.getAttribute('aria-expanded') === 'true') {
+          event.preventDefault();
           setSearchOpen(false);
           searchButton.focus();
         }

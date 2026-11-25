@@ -57,6 +57,7 @@ const statusId = `${id}-status`;
     id={resultsId}
     role="region"
     aria-label="搜索结果"
+    tabindex={layout === 'dropdown' ? -1 : undefined}
     class:list={[
       layout === 'dropdown'
         ? 'absolute left-0 right-0 z-[60] mt-2 hidden max-h-[70vh] overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900'
@@ -119,6 +120,12 @@ const statusId = `${id}-status`;
       results.classList.toggle('hidden', !(isInline || visible));
     };
 
+    const cancelSearch = () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = undefined;
+      return ++requestId;
+    };
+
     const setState = (state: 'idle' | 'loading' | 'results' | 'empty' | 'error', message = '') => {
       idle.classList.toggle('hidden', state !== 'idle');
       loading.classList.toggle('hidden', state !== 'loading');
@@ -165,53 +172,71 @@ const statusId = `${id}-status`;
           : `找到 ${total} 条结果`;
         setState('results', resultMessage);
       }
-      setResultsVisible(true);
     };
 
-    const performSearch = async (query: string) => {
-      const currentRequest = ++requestId;
-      content.replaceChildren();
-      setState('loading', `正在搜索“${query}”`);
-      setResultsVisible(true);
-
+    const performSearch = async (query: string, currentRequest: number) => {
       try {
         const pagefind = await loadPagefind();
+        if (currentRequest !== requestId) return;
         const search = await pagefind.search(query);
+        if (currentRequest !== requestId) return;
         const items = await Promise.all(search.results.slice(0, resultLimit).map((result) => result.data()));
         if (currentRequest === requestId) renderResults(items, search.results.length, query);
       } catch (searchError) {
+        if (currentRequest !== requestId) return;
         console.warn('Pagefind is unavailable. Run npm run build to create the search index.', searchError);
-        if (currentRequest === requestId) {
-          content.replaceChildren();
-          setState('error', '搜索服务暂时不可用，请稍后重试');
-          setResultsVisible(true);
-        }
+        setState('error', '搜索服务暂时不可用，请稍后重试');
+      }
+    };
+
+    const startSearch = (query: string, delay = 0) => {
+      // Invalidate the previous search as soon as the query changes, including during debounce.
+      const currentRequest = cancelSearch();
+      content.replaceChildren();
+      setState('loading', `正在搜索“${query}”`);
+      setResultsVisible(true);
+      if (delay > 0) {
+        searchTimeout = setTimeout(() => {
+          searchTimeout = undefined;
+          void performSearch(query, currentRequest);
+        }, delay);
+      } else {
+        void performSearch(query, currentRequest);
       }
     };
 
     const resetSearch = () => {
-      requestId += 1;
+      cancelSearch();
       content.replaceChildren();
       setState('idle');
       setResultsVisible(false);
     };
 
+    const dismissDropdown = () => {
+      if (isInline || results.classList.contains('hidden')) return;
+      cancelSearch();
+      if (!loading.classList.contains('hidden')) setState('idle');
+      setResultsVisible(false);
+    };
+
     input.addEventListener('input', () => {
-      clearTimeout(searchTimeout);
       const query = input.value.trim();
       syncQuery(query);
-      if (query.length < 2) {
-        resetSearch();
-        return;
+      if (query.length < 2) resetSearch();
+      else startSearch(query, 250);
+    });
+
+    root.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !event.isComposing) {
+        if (isInline ? event.target === input : results.classList.contains('hidden')) return;
+        event.preventDefault();
+        // Restore focus while the input's focus handler can still see the open dropdown.
+        input.focus();
+        dismissDropdown();
       }
-      searchTimeout = setTimeout(() => void performSearch(query), 250);
     });
 
     input.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        clearTimeout(searchTimeout);
-        setResultsVisible(false);
-      }
       if (event.key === 'ArrowDown') {
         const firstResult = resultLinks()[0];
         if (firstResult && !results.classList.contains('hidden')) {
@@ -233,18 +258,26 @@ const statusId = `${id}-status`;
         if (currentIndex === 0) input.focus();
         else links[currentIndex - 1]?.focus();
       }
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setResultsVisible(false);
-        input.focus();
-      }
     });
 
-    input.addEventListener('focus', () => {
-      if (input.value.trim().length >= 2 && !loading.classList.contains('hidden')) setResultsVisible(true);
-      else if (input.value.trim().length >= 2 && content.childElementCount > 0) setResultsVisible(true);
-      else if (!error.classList.contains('hidden') || !empty.classList.contains('hidden')) setResultsVisible(true);
-    });
+    if (!isInline) {
+      const reopenDropdown = () => {
+        const query = input.value.trim();
+        if (query.length < 2 || !results.classList.contains('hidden')) return;
+        if (idle.classList.contains('hidden')) setResultsVisible(true);
+        else startSearch(query);
+      };
+
+      input.addEventListener('focus', reopenDropdown);
+      input.addEventListener('click', reopenDropdown);
+      root.addEventListener('search:dismiss', dismissDropdown);
+      root.addEventListener('focusout', (event) => {
+        if (!(event.relatedTarget instanceof Node) || !root.contains(event.relatedTarget)) dismissDropdown();
+      });
+      document.addEventListener('pointerdown', (event) => {
+        if (!root.contains(event.target as Node)) dismissDropdown();
+      });
+    }
 
     form.addEventListener('submit', (event) => {
       if (input.value.trim().length < 2) {
@@ -256,11 +289,10 @@ const statusId = `${id}-status`;
 
     retry.addEventListener('click', () => {
       const query = input.value.trim();
-      if (query.length >= 2) void performSearch(query);
-    });
-
-    document.addEventListener('click', (event) => {
-      if (!root.contains(event.target as Node)) setResultsVisible(false);
+      if (query.length >= 2) {
+        input.focus();
+        startSearch(query);
+      }
     });
 
     const urlQuery = root.dataset.searchSyncUrl === 'true'
@@ -268,7 +300,7 @@ const statusId = `${id}-status`;
       : undefined;
     const initialQuery = urlQuery ?? input.value.trim();
     if (urlQuery !== undefined) input.value = initialQuery;
-    if (initialQuery.length >= 2) void performSearch(initialQuery);
+    if (initialQuery.length >= 2) startSearch(initialQuery);
     else resetSearch();
   });
 </script>
