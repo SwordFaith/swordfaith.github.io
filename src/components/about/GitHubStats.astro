@@ -63,27 +63,28 @@ const topLanguages = Object.entries(data.languageStats)
   .slice(0, 8);
 
 // 固定展示的精选仓库（类似 GitHub Pin）
+// Fallback description/star/fork values from the public GitHub API (2026-11);
+// synced data in pinnedRepositoriesData overrides them when present.
+// Both repos currently have no GitHub topics, so none are listed here.
 const pinnedRepositories = [
   {
     name: "MiniCPM",
-    full_name: "OpenBMB/MiniCPM", 
-    description: "MiniCPM-V 2.6: A GPT-4V Level MLLM for Single Image, Multi Image and Video on Your Phone",
+    full_name: "OpenBMB/MiniCPM",
+    description: "MiniCPM5: SOTA on-device LLMs, small yet powerful.",
     html_url: "https://github.com/OpenBMB/MiniCPM",
     language: "Python",
-    stargazers_count: 8100, // 实际星数会通过API更新
-    forks_count: 500,
-    topics: ["llm", "multimodal", "inference", "mobile"],
+    stargazers_count: 11900,
+    forks_count: 830,
     role: "Core Contributor" // 标明参与角色
   },
   {
     name: "veRL",
     full_name: "verl-project/verl",
-    description: "veRL: Volcano Engine Reinforcement Learning for LLM",
+    description: "verl/HybridFlow: A Flexible and Efficient RL Post-Training Framework",
     html_url: "https://github.com/verl-project/verl",
     language: "Python",
-    stargazers_count: 10400,
-    forks_count: 1700,
-    topics: ["rlhf", "reinforcement-learning", "llm", "pytorch"],
+    stargazers_count: 24300,
+    forks_count: 4950,
     role: "Core Contributor"
   }
 ];
@@ -100,9 +101,14 @@ if (showRepositories) {
       );
       
       if (syncedRepo) {
-        // 合并固定信息 + 最新的 star/fork 数据
+        // 合并固定信息 + 最新的 description/star/fork 数据
+        // Older snapshots have no description; keep the hard-coded fallback then
+        const syncedDescription = typeof syncedRepo.description === 'string'
+          ? syncedRepo.description.trim()
+          : '';
         return {
           ...pinnedRepo,
+          description: syncedDescription || pinnedRepo.description,
           stargazers_count: syncedRepo.stargazers_count,
           forks_count: syncedRepo.forks_count,
           updated_at: syncedRepo.updated_at
